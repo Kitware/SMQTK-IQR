@@ -4,15 +4,14 @@ import unittest.mock as mock
 import os
 import unittest
 
-from smqtk.algorithms import RankRelevancyWithFeedback
-from smqtk.iqr import IqrSession
-from smqtk.representation import DescriptorElement
-from smqtk.representation.classification_element.memory \
-    import MemoryClassificationElement
-from smqtk.representation.descriptor_element.local_elements \
-    import DescriptorMemoryElement
-from smqtk.utils.plugin import Pluggable
-from smqtk.web.iqr_service import IqrService
+from smqtk_relevancy import RankRelevancyWithFeedback
+
+from smqtk_descriptors import DescriptorElement
+from smqtk_classifier.impls.classification_element.memory import MemoryClassificationElement
+from smqtk_descriptors.impls.descriptor_element.memory import DescriptorMemoryElement
+from smqtk_core import Pluggable
+from smqtk_iqr.iqr.iqr_session import IqrSession
+from smqtk_iqr.web.iqr_service import IqrService
 
 from tests.web.iqr_service.stubs import \
     STUB_MODULE_PATH, \
@@ -37,8 +36,8 @@ class TestIqrService (unittest.TestCase):
         plugin_config = config['iqr_service']['plugins']
 
         # Use basic in-memory representation types.
-        key_mce = "smqtk.representation.classification_element.memory.MemoryClassificationElement"
-        key_dme = "smqtk.representation.descriptor_element.local_elements.DescriptorMemoryElement"
+        key_mce = "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement"
+        key_dme = "smqtk_descriptors.impls.descriptor_element.memory.DescriptorMemoryElement"
         key_ds_stub = "tests.web.iqr_service.stubs.StubDescriptorSet"
         plugin_config['classification_factory']['type'] = key_mce
         plugin_config['descriptor_factory']['type'] = key_dme
@@ -909,7 +908,7 @@ class TestIqrService (unittest.TestCase):
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
-    @mock.patch('smqtk.web.iqr_service.iqr_server.SupervisedClassifier'
+    @mock.patch('smqtk_iqr.web.iqr_service.iqr_server.ClassifyDescriptorSupervised'
                 '.get_impls')
     def test_classify(self, m_sc_get_impls):
         """

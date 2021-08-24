@@ -1,0 +1,16 @@
+{
+    "classifier": {
+        "smqtk_classifier.impls.classify_descriptor_supervised.libsvm.LibSvmClassifier": {
+            "normalize": 2,
+            "svm_label_map_uri": "workdir/iqr_classifier/label_map",
+            "svm_model_uri": "workdir/iqr_classifier/model",
+            "train_params": {
+                "-b": 1,
+                "-c": 2,
+                "-s": 0,
+                "-t": 0
+            }
+        },
+        "type": "smqtk_classifier.impls.classify_descriptor_supervised.libsvm.LibSvmClassifier"
+    }
+}

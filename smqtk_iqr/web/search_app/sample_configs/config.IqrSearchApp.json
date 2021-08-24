@@ -1,0 +1,35 @@
+{
+    "flask_app": {
+        "BASIC_AUTH_PASSWORD": "demo",
+        "BASIC_AUTH_USERNAME": "demo",
+        "SECRET_KEY": "MySuperUltraSecret"
+    },
+    "server": {
+        "host": "127.0.0.1",
+        "port": 5000
+    },
+    "mongo": {
+        "database": "smqtk",
+        "server": "127.0.0.1:27017"
+    },
+    "iqr_tabs": {
+        "LEEDS Butterflies": {
+            "working_directory": "workdir",
+            "data_set": {
+                "smqtk_dataprovider.impls.data_set.memory.DataMemorySet": {
+                    "cache_element": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                            "explicit_mimetype": null,
+                            "filepath": "workdir/butterflies_alexnet_fc7/data.memorySet.cache",
+                            "readonly": false
+                        },
+                        "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                    },
+                    "pickle_protocol": -1
+                },
+                "type": "smqtk_dataprovider.impls.data_set.memory.DataMemorySet"
+            },
+            "iqr_service_url": "http://localhost:5001"
+        }
+    }
+}

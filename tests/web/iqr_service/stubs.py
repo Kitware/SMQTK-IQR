@@ -5,9 +5,10 @@ from typing import Hashable, Sequence, Tuple
 
 from numpy import ndarray
 
-from smqtk.algorithms import SupervisedClassifier, DescriptorGenerator, \
-    NearestNeighborsIndex, RankRelevancyWithFeedback
-from smqtk.representation import DescriptorSet
+from smqtk_indexing import NearestNeighborsIndex
+from smqtk_descriptors import DescriptorGenerator, DescriptorSet
+from smqtk_relevancy import RankRelevancyWithFeedback
+from smqtk_classifier import ClassifyDescriptorSupervised
 
 
 STUB_MODULE_PATH = __name__
@@ -58,7 +59,7 @@ class StubDescriptorSet (DescriptorSet):
         pass
 
 
-class StubClassifier (SupervisedClassifier):
+class StubClassifier (ClassifyDescriptorSupervised):
     """
     Classifier stub for testing IqrService.
     """

@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% set active_page = module_name %}
+
+{% block head_scripts %}
+    {{super()}}
+
+    {#- Upload module stuff #}
+    <!--suppress HtmlUnknownTarget -->
+    <link rel="stylesheet" type="text/css"
+          href="{{ uploader_url }}/static/css/smqtk_upload.css"/>
+    <script type="text/javascript"
+            src="{{ uploader_url }}/static/js/flow.min.js"></script>
+    <script type="text/javascript"
+            src="{{ uploader_url }}/static/js/smqtk_upload.js"></script>
+
+    <script type="text/javascript"
+            src="static/js/FileSaver.min.js"></script>
+
+    <script type="text/javascript"
+            src="static/js/smqtk.progress_bars.js"></script>
+
+    <link rel="stylesheet" type="text/css"
+          href="static/css/smqtk.iqr.css"/>
+    <script type="text/javascript"
+            src="static/js/smqtk.data_view.js"></script>
+    <script type="text/javascript"
+            src="static/js/smqtk.iqr_status_view.js"></script>
+    <script type="text/javascript"
+            src="static/js/smqtk.iqr_refine_view.js"></script>
+    <script type="text/javascript"
+            src="static/js/smqtk.iqr_view.js"></script>
+
+
+    <!--suppress JSCheckFunctionSignatures -->
+    <script>
+    $(document).ready(function() {
+        var a = new ActivityBar($("#initialLoadProgress"),
+                                "Initializing IQR session");
+        var iqr_view = null;
+        a.on();
+
+        $.ajax({
+            url: "check_current_iqr_session",
+            success: function( data ) {
+                if( data.success ) {
+                    a.remove();
+                    iqr_view = new IqrView($("#iqr_view_container"),
+                                           "{{uploader_post_url}}");
+                }
+                else {
+                    alert_error("Failed to initialize IQR session: " + data.message);
+                }
+                a.remove();
+            },
+            error: function(jqXHR, textStatus, errorThrown) {
+                a.remove();
+                alert_error("Failed to initialize IQR session: " + textStatus
+                            + ": " + errorThrown);
+            }
+        });
+    }); // Document.ready ends
+
+    </script>
+{% endblock head_scripts %}
+
+{% block body_content %}
+    <div class="container-fluid">
+        <h1>{{ module_name }}</h1>
+        <hr>
+        <div id="initialLoadProgress"></div>
+        <div id="iqr_view_container"></div>
+    </div>
+{% endblock body_content %}

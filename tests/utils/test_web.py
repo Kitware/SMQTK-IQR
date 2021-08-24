@@ -1,5 +1,5 @@
 import unittest
-from smqtk.utils.web import ServiceProxy
+from smqtk_iqr.utils.web import ServiceProxy
 
 
 class TestServiceProxy (unittest.TestCase):

@@ -1,9 +1,7 @@
 from __future__ import division, print_function
 import unittest
 
-from smqtk.utils.url import (
-    url_join
-)
+from smqtk_iqr.utils.url import url_join
 
 
 class TestUrlTools (unittest.TestCase):
