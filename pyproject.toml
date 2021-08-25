@@ -54,6 +54,9 @@ jedi = "^0.17"
 
 [tool.poetry.scripts]
 runApplication = "smqtk_iqr.utils.runApplication:main"
+iqrTrainClassifier = "smqtk_iqr.utils.iqrTrainClassifier:main"
+iqr_app_model_generation = "smqtk_iqr.utils.iqr_app_model_generation:main"
+
 
 ###############################################################################
 [tool.pytest.ini_options]
