@@ -1,10 +1,10 @@
 import pytest
 import unittest.mock as mock
 
-from smqtk.algorithms import RankRelevancyWithFeedback
-from smqtk.iqr import IqrSession
-from smqtk.representation.descriptor_element.local_elements \
-    import DescriptorMemoryElement
+from smqtk_relevancy.interfaces.rank_relevancy import RankRelevancyWithFeedback
+from smqtk_iqr.iqr.iqr_session import IqrSession
+from smqtk_descriptors.impls.descriptor_element.memory import \
+    DescriptorMemoryElement
 
 
 class TestIqrSession (object):
@@ -486,7 +486,7 @@ class TestIqrSession (object):
         # Cache should be empty before call to ``ordered_results``
         assert self.iqrs._ordered_results is None
 
-        with mock.patch('smqtk.iqr.iqr_session.sorted',
+        with mock.patch('smqtk_iqr.iqr.iqr_session.sorted',
                         side_effect=sorted) as m_sorted:
             actual1 = self.iqrs.ordered_results()
             m_sorted.assert_called_once()
@@ -496,7 +496,7 @@ class TestIqrSession (object):
 
         # Calling the method a second time should not result in a ``sorted``
         # operation due to caching.
-        with mock.patch('smqtk.iqr.iqr_session.sorted') as m_sorted:
+        with mock.patch('smqtk_iqr.iqr.iqr_session.sorted') as m_sorted:
             actual2 = self.iqrs.ordered_results()
             m_sorted.assert_not_called()
 
@@ -622,7 +622,7 @@ class TestIqrSession (object):
         assert self.iqrs._ordered_pos is None
 
         # Test that the appropriate sorting actually occurs.
-        with mock.patch('smqtk.iqr.iqr_session.sorted',
+        with mock.patch('smqtk_iqr.iqr.iqr_session.sorted',
                         side_effect=sorted) as m_sorted:
             actual1 = self.iqrs.get_positive_adjudication_relevancy()
             m_sorted.assert_called_once()
@@ -632,7 +632,7 @@ class TestIqrSession (object):
 
         # Calling the method a second time should not result in a ``sorted``
         # operation due to caching.
-        with mock.patch('smqtk.iqr.iqr_session.sorted',
+        with mock.patch('smqtk_iqr.iqr.iqr_session.sorted',
                         side_effect=sorted) as m_sorted:
             actual2 = self.iqrs.get_positive_adjudication_relevancy()
             m_sorted.assert_not_called()
@@ -686,7 +686,7 @@ class TestIqrSession (object):
         assert self.iqrs._ordered_neg is None
 
         # Test that the appropriate sorting actually occurs.
-        with mock.patch('smqtk.iqr.iqr_session.sorted',
+        with mock.patch('smqtk_iqr.iqr.iqr_session.sorted',
                         side_effect=sorted) as m_sorted:
             actual1 = self.iqrs.get_negative_adjudication_relevancy()
             m_sorted.assert_called_once()
@@ -696,7 +696,7 @@ class TestIqrSession (object):
 
         # Calling the method a second time should not result in a ``sorted``
         # operation due to caching.
-        with mock.patch('smqtk.iqr.iqr_session.sorted',
+        with mock.patch('smqtk_iqr.iqr.iqr_session.sorted',
                         side_effect=sorted) as m_sorted:
             actual2 = self.iqrs.get_negative_adjudication_relevancy()
             m_sorted.assert_not_called()
@@ -750,7 +750,7 @@ class TestIqrSession (object):
         assert self.iqrs._ordered_non_adj is None
 
         # Test that the appropriate sorting actually occurs.
-        with mock.patch('smqtk.iqr.iqr_session.sorted',
+        with mock.patch('smqtk_iqr.iqr.iqr_session.sorted',
                         side_effect=sorted) as m_sorted:
             actual1 = self.iqrs.get_unadjudicated_relevancy()
             m_sorted.assert_called_once()
@@ -760,7 +760,7 @@ class TestIqrSession (object):
 
         # Calling the method a second time should not result in a ``sorted``
         # operation due to caching.
-        with mock.patch('smqtk.iqr.iqr_session.sorted',
+        with mock.patch('smqtk_iqr.iqr.iqr_session.sorted',
                         side_effect=sorted) as m_sorted:
             actual2 = self.iqrs.get_unadjudicated_relevancy()
             m_sorted.assert_not_called()

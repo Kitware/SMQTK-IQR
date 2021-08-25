@@ -1,0 +1,60 @@
+{
+    "classification_factory": {
+        "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement": {},
+        "type": "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement"
+    },
+    "classifier": {
+        "smqtk_classifier.impls.classify_descriptor_supervised.libsvm.LibSvmClassifier": {
+            "normalize": 2,
+            "svm_label_map_uri": "workdir/iqr_classifier/label_map",
+            "svm_model_uri": "workdir/iqr_classifier/model",
+            "train_params": {
+                "-b": 1,
+                "-c": 2,
+                "-s": 0,
+                "-t": 0
+            }
+        },
+        "type": "smqtk_classifier.impls.classify_descriptor_supervised.libsvm.LibSvmClassifier"
+    },
+    "descriptor_factory": {
+        "smqtk_descriptors.impls.descriptor_element.memory.DescriptorMemoryElement": {},
+        "type": "smqtk_descriptors.impls.descriptor_element.memory.DescriptorMemoryElement"
+    },
+    "descriptor_generator": {
+        "type": "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator",
+        "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator": {
+            "network_model": {
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement",
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                    "filepath": "bvlc_alexnet.caffemodel",
+                    "readonly":true
+                }
+            },
+            "network_prototxt": {
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement",
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                    "filepath": "bvlc_alexnet/deploy.prototxt",
+                    "readonly": true
+                }
+            },
+            "image_mean": {
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement",
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                    "filepath": "ilsvrc12/imagenet_mean.binaryproto",
+                    "readonly": true
+                }
+            },
+            "return_layer": "fc7",
+            "batch_size": 256,
+            "use_gpu": false,
+            "gpu_device_id": 0,
+            "network_is_bgr": true,
+            "data_layer": "data",
+            "load_truncated_images": false,
+            "pixel_rescale": null,
+            "input_scale": null,
+            "threads": null
+        }
+    }
+}

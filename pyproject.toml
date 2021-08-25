@@ -1,0 +1,86 @@
+[build-system]
+requires = ["poetry-core>=1.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+###############################################################################
+[tool.poetry]
+name = "smqtk-iqr"
+# REMEMBER: `distutils.version.*Version` types can be used to compare versions
+# from strings like this.
+# SMQTK prefers to use the strict numbering standard when possible.
+version = "0.15.0"
+description = "IQR datastructures and web interface"
+authors = ["Kitware, Inc. <smqtk-developers@kitware.com>"]
+license = "BSD-3-Clause"
+readme = "README.md"
+repository = "https://github.com/Kitware/SMQTK-IQR"
+documentation = "https://smqtk-iqr.readthedocs.io/"
+
+[tool.poetry.dependencies]
+python = "^3.6"
+smqtk-indexing = "^0.16.0"
+smqtk-relevancy = "^0.15.0"
+smqtk-descriptors = "^0.16.0"
+smqtk-core = "^0.18.0"
+smqtk-dataprovider = "^0.16.0"
+Flask = "^2.0.1"
+pymongo = "^3.12.0"
+Flask-Cors = "^3.0.10"
+imageio = "^2.9.0"
+Flask-BasicAuth = "^0.2.0"
+
+[tool.poetry.dev-dependencies]
+# CI
+flake8 = "^3.9.0"
+flake8-mutable = "^1.2.0"
+mypy = "^0.812"
+# Docs
+# - Also see: `docs/readthedocs-reqs.txt` for use by RTD
+Sphinx = "^3.5.3"
+sphinx-rtd-theme = "^0.5.1"
+sphinx-argparse = "^0.2.5"
+sphinx-prompt = "^1.4.0"
+livereload = "^2.6.3"
+# Testing
+coverage = "^5.5"
+pytest = "^6.2.2"
+pytest-cov = "^2.11.1"
+# Development
+ipython = "^7.16"
+# because 0.18 does not work with ipy 7.16.1 in py3.6
+jedi = "^0.17"
+
+[tool.poetry.plugins."smqtk_plugins"]
+#IQRServer
+"smqtk_iqr.web.iqr_service.iqr_server" = "smqtk_iqr.web.iqr_service.iqr_server"
+#IqrSearchDispatcher
+"smqtk_iqr.web.search_app" = "smqtk_iqr.web.search_app.__init__"
+
+[tool.poetry.scripts]
+runApplication = "smqtk_iqr.utils.runApplication:main"
+iqrTrainClassifier = "smqtk_iqr.utils.iqrTrainClassifier:main"
+iqr_app_model_generation = "smqtk_iqr.utils.iqr_app_model_generation:main"
+
+
+###############################################################################
+[tool.pytest.ini_options]
+addopts = [
+    "-lv",                      # Show local in trace-backs.
+    "--doctest-modules",        # Increased verbosity.
+    "--tb=long",                # Trace-back print mode.
+    "--cov=./smqtk_iqr",        # Cover our package specifically
+    "--cov=./tests",            # Cover tests
+    "--cov-report=term",        # Coverage report to terminal
+    "--cov-report=xml:coverage.xml", # for external tool reporting
+]
+testpaths = [
+    "tests",
+    "smqtk_iqr",
+]
+norecursedirs = [
+    "tests/data"
+]
+doctest_optionflags = [
+    "NORMALIZE_WHITESPACE",
+    "IGNORE_EXCEPTION_DETAIL",
+]
