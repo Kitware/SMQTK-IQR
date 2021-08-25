@@ -51,6 +51,10 @@ ipython = "^7.16"
 jedi = "^0.17"
 
 [tool.poetry.plugins."smqtk_plugins"]
+#IQRServer
+"smqtk_iqr.web.iqr_service.iqr_server" = "smqtk_iqr.web.iqr_service.iqr_server"
+#IqrSearchDispatcher
+"smqtk_iqr.web.search_app" = "smqtk_iqr.web.search_app.__init__"
 
 [tool.poetry.scripts]
 runApplication = "smqtk_iqr.utils.runApplication:main"
