@@ -6,7 +6,7 @@ import re
 import shutil
 import subprocess
 import time
-
+from typing import Dict, Iterable, List, Union, Optional, Any, Generator, Set
 import six
 
 from smqtk_dataprovider.utils import string
@@ -21,18 +21,18 @@ class VideoMetadata (object):
     Simple container for video file metadata values
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         #: :type: None or int
-        self.width = None
+        self.width = None  # type: Optional[int]
         #: :type: None or int
-        self.height = None
+        self.height = None  # type: Optional[int]
         #: :type: None or float
-        self.fps = None
+        self.fps = None  # type: Optional[float]
         #: :type: None or float
-        self.duration = None
+        self.duration = None  # type: Optional[float]
 
 
-def get_metadata_info(video_filepath, ffprobe_exe='ffprobe'):
+def get_metadata_info(video_filepath: str, ffprobe_exe: str = 'ffprobe') -> VideoMetadata:
     """
     Use ffmpeg to extract video file metadata parameters
 
@@ -105,8 +105,8 @@ def get_metadata_info(video_filepath, ffprobe_exe='ffprobe'):
     return md
 
 
-def ffmpeg_extract_frame(t, input_filepath, output_filepath,
-                         ffmpeg_exe='ffmpeg'):
+def ffmpeg_extract_frame(t: int, input_filepath: str, output_filepath: str,
+                         ffmpeg_exe: str = 'ffmpeg') -> None:
     """
     Extract a frame a the given time ``t`` from the input video file.
     Output file may not exist or be of 0 size if we failed to extract the frame.
@@ -122,10 +122,10 @@ def ffmpeg_extract_frame(t, input_filepath, output_filepath,
     #                        % (t, p.returncode))
 
 
-def ffmpeg_extract_frame_map(working_dir, video_filepath, second_offset=0,
-                             second_interval=0, max_duration=0, frames=(),
-                             output_image_ext="png", parallel=None,
-                             ffmpeg_exe='ffmpeg'):
+def ffmpeg_extract_frame_map(working_dir: str, video_filepath: str, second_offset: float = 0,
+                             second_interval: float = 0, max_duration: float = 0, frames: Iterable[int]=(),
+                             output_image_ext: str = "png", parallel: Optional[int] = None,
+                             ffmpeg_exe: str = 'ffmpeg') -> Dict[ int, str]:
     """
     Return a mapping of video frame index to image file in the given output
     format.
@@ -195,13 +195,13 @@ def ffmpeg_extract_frame_map(working_dir, video_filepath, second_offset=0,
     )
     safe_create_dir(frame_output_dir)
 
-    def filename_for_frame(frame, ext):
+    def filename_for_frame(frame: int, ext: str) -> str:
         """
         method standard filename for a given frame file
         """
         return "%08d.%s" % (frame, ext.lstrip('.'))
 
-    def iter_frames_for_interval():
+    def iter_frames_for_interval() -> Generator:
         """
         Return a generator expression yielding frame numbers from the input
         video that match the given query parameters. Indices returned are
@@ -217,17 +217,17 @@ def ffmpeg_extract_frame_map(working_dir, video_filepath, second_offset=0,
         _log = logging.getLogger('.'.join([__name__,
                                            'extract_frame_map',
                                            'iter_frames_for_interval']))
-        num_frames = int(video_md.fps * video_md.duration)
-        first_frame = second_offset * video_md.fps
+        num_frames = int(video_md.fps * video_md.duration)  # type: ignore
+        first_frame = second_offset * video_md.fps  # type: ignore
         _log.debug("First frame: %f", first_frame)
         if max_duration > 0:
             cutoff_frame = min(float(num_frames),
-                               (max_duration + second_offset) * video_md.fps)
+                               (max_duration + second_offset) * video_md.fps)  # type: ignore
         else:
             cutoff_frame = float(num_frames)
         _log.debug("Cutoff frame: %f", cutoff_frame)
         if second_interval:
-            incr = second_interval * video_md.fps
+            incr = second_interval * video_md.fps  # type: ignore
         else:
             incr = 1.0
         _log.debug("Frame increment: %f", incr)
@@ -241,7 +241,7 @@ def ffmpeg_extract_frame_map(working_dir, video_filepath, second_offset=0,
             next_frm += incr
 
     # noinspection PyShadowingNames
-    def extract_frames(frames_to_process):
+    def extract_frames(frames_to_process: Dict[Union[int,str], Any]) -> List[int]:
         """
         Extract specific frames from the input video file using ffmpeg. If not
         all frames could be extracted, we return what we were able to extract.
@@ -271,9 +271,10 @@ def ffmpeg_extract_frame_map(working_dir, video_filepath, second_offset=0,
         #: :type: dict[int, (AsyncResult, str)]
         rmap = {}
         for f, ofp in six.iteritems(frames_to_process):
+            f = int(f)
             tfp = os.path.join(tmp_extraction_dir,
                                filename_for_frame(f, output_image_ext))
-            t = f / video_md.fps
+            t = f / video_md.fps  # type: ignore
             rmap[f] = (
                 p.apply_async(ffmpeg_extract_frame,
                               args=(t, video_filepath, tfp, ffmpeg_exe)),
@@ -283,6 +284,7 @@ def ffmpeg_extract_frame_map(working_dir, video_filepath, second_offset=0,
         # Check for failures
         extracted_frames = []
         for f, ofp in six.iteritems(frames_to_process):
+            f = int(f)
             r, tfp = rmap[f]
             r.get()  # wait for finish
             if not os.path.isfile(tfp):
@@ -299,7 +301,7 @@ def ffmpeg_extract_frame_map(working_dir, video_filepath, second_offset=0,
         return extracted_frames
 
     # Determine frames to extract from video
-    extract_indices = set()
+    extract_indices = set()  # type: Set
     if frames:
         log.debug("Only extracting specified frames: %s", frames)
         extract_indices.update(frames)

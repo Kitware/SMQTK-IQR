@@ -541,7 +541,7 @@ class IqrSession ():
         ) -> List[Tuple[Hashable, str, List[float]]]:
             # Convert set of descriptors to list of tuples:
             #   [..., (uuid, type, vector), ...]
-            return [(d.uuid(), d.type(), d.vector().tolist()) for d in d_set]
+            return [(d.uuid(), d.type(), d.vector().tolist()) for d in d_set]  # type: ignore
 
         with self:
             # Convert session descriptors into basic values.
@@ -599,9 +599,7 @@ class IqrSession ():
             ) -> DescriptorElement:
                 _e = descriptor_factory.new_descriptor(_type_str, _uid)
                 if _e.has_vector():
-                    assert _e.vector().tolist() == vec_list, \
-                        "Found existing vector for UUID '%s' but vectors did " \
-                        "not match."
+                    assert _e.vector().tolist() == vec_list, "Found existing vector for UUID '%s' but vectors did not match."  # type: ignore
                 else:
                     _e.set_vector(np.array(vec_list))
                 return _e

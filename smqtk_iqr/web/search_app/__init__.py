@@ -7,7 +7,8 @@ import json
 import os
 import os.path
 import threading
-from typing import Dict
+import logging
+from typing import Callable, Dict, Any, Optional
 
 import flask
 from flask_cors import cross_origin  # type: ignore
@@ -23,11 +24,11 @@ from smqtk_iqr.web import SmqtkWebApp
 from .modules.login import LoginMod
 from .modules.iqr import IqrSearch
 
-
+LOG = logging.getLogger(__name__)
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 
 
-def generate_csrf_token():
+def generate_csrf_token() -> str:
     """
     Create a random string token for CSRF protection.
 
@@ -60,11 +61,11 @@ class IqrSearchDispatcher (SmqtkWebApp):
     }
 
     @classmethod
-    def is_usable(cls):
+    def is_usable(cls) -> bool:
         return True
 
     @classmethod
-    def get_default_config(cls):
+    def get_default_config(cls) -> Dict[str, Any]:
         c = super(IqrSearchDispatcher, cls).get_default_config()
         merge_dict(c, {
             "mongo": {
@@ -78,7 +79,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
         })
         return c
 
-    def __init__(self, json_config):
+    def __init__(self, json_config: Dict[str, Any]):
         super(IqrSearchDispatcher, self).__init__(json_config)
 
         #
@@ -113,7 +114,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
         self.instances_lock = threading.Lock()
 
         # Login module
-        self._log.info("Initializing Login Blueprint")
+        LOG.info("Initializing Login Blueprint")
         self.module_login = LoginMod('login', self)
         self.register_blueprint(self.module_login)
 
@@ -124,7 +125,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
             if tab_name == "__default__":
                 # skipping default config sample
                 continue
-            self._log.info("Initializing IQR instance '%s'", tab_name)
+            LOG.info("Initializing IQR instance '%s'", tab_name)
             self.init_iqr_app(tab_config, tab_name)
 
         #
@@ -132,8 +133,8 @@ class IqrSearchDispatcher (SmqtkWebApp):
         #
 
         @self.route('/', methods=['GET'])
-        def index():
-            # self._log.info("Session: %s", flask.session.items())
+        def index() -> str:
+            # LOG.info("Session: %s", flask.session.items())
             # noinspection PyUnresolvedReferences
             return flask.render_template(
                 "index.html", instance_keys=list(self.instances.keys()),
@@ -143,7 +144,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
         @self.route('/', methods=['POST'])
         @cross_origin(origins='*', vary_header=True)
         @self.module_login.login_required
-        def add_instance():
+        def add_instance() -> flask.Response:
             """
             Initialize new IQR instance given an ID for that instance, and the
             configuration for it.
@@ -155,7 +156,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
 
             # the URL prefix of the new IqrSearch instance
             new_url = flask.request.host_url + prefix
-            self._log.info("New URL with route: %s", new_url)
+            LOG.info("New URL with route: %s", new_url)
 
             self.init_iqr_app(config, prefix)
 
@@ -165,7 +166,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
             })
 
     @staticmethod
-    def _apply_csrf_protect(app):
+    def _apply_csrf_protect(app: flask.Flask) -> flask.Flask:
         # Establish CSRF protection
 
         # Synchronized keys also defined in ``/static/js/smqtk.vars.js``.
@@ -175,7 +176,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
 
         # CSRF Protection
         @app.before_request
-        def csrf_protect():
+        def csrf_protect() -> None:
             if flask.request.method in ["POST", "PUT", "DELETE"]:
                 session_token = flask.session.get(CSRF_SESSION_TOKEN_KEY, None)
 
@@ -189,7 +190,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
                                                           req_form_token):
                     flask.abort(400)
 
-        def get_csrf_session_token():
+        def get_csrf_session_token() -> flask.Response:
             """
             Initialize and return a specific, secure token for CSRF mitigation
             per session.
@@ -205,7 +206,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
 
         return app
 
-    def init_iqr_app(self, config, prefix):
+    def init_iqr_app(self, config: Dict[str, Any], prefix: str) -> "IqrSearch":
         """
         Initialize IQR sub-application given a configuration for it and a prefix
 
@@ -221,15 +222,15 @@ class IqrSearchDispatcher (SmqtkWebApp):
         """
         with self.instances_lock:
             if prefix not in self.instances:
-                self._log.info("Initializing IQR instance '%s'", prefix)
-                self._log.debug("IQR tab config:\n%s", config)
+                LOG.info("Initializing IQR instance '%s'", prefix)
+                LOG.debug("IQR tab config:\n%s", config)
                 # Strip any keys that are not expected by IqrSearch
                 # constructor
                 expected_keys = list(IqrSearch.get_default_config().keys())
                 for k in set(config).difference(expected_keys):
-                    self._log.debug("Removing unexpected key: %s", k)
+                    LOG.debug("Removing unexpected key: %s", k)
                     del config[k]
-                self._log.debug("Base app config: %s", self.config)
+                LOG.debug("Base app config: %s", self.config)
 
                 a = IqrSearch.from_config(config, self)
                 a.config.update(self.config)
@@ -240,13 +241,13 @@ class IqrSearchDispatcher (SmqtkWebApp):
 
                 self.instances[prefix] = a
             else:
-                self._log.debug("Existing IQR instance for prefix: '%s'",
+                LOG.debug("Existing IQR instance for prefix: '%s'",
                                 prefix)
                 a = self.instances[prefix]
 
         return a
 
-    def get_application(self, prefix):
+    def get_application(self, prefix: str) -> Optional[IqrSearch]:
         """
         Get the application for the given ``prefix`` or the NotFound exception
         if an application does not yet exist for the ``prefix``.
@@ -262,9 +263,9 @@ class IqrSearchDispatcher (SmqtkWebApp):
         with self.instances_lock:
             return self.instances.get(prefix, None)
 
-    def __call__(self, environ, start_response):
+    def __call__(self, environ: Dict, start_response: Callable) -> Callable:
         path_prefix = peek_path_info(environ)
-        self._log.debug("Base application __call__ path prefix: '%s'",
+        LOG.debug("Base application __call__ path prefix: '%s'",
                         path_prefix)
 
         if path_prefix and path_prefix not in self.PREFIX_BLACKLIST:
@@ -272,17 +273,19 @@ class IqrSearchDispatcher (SmqtkWebApp):
             if app is not None:
                 pop_path_info(environ)
             else:
-                self._log.debug("No IQR application registered for prefix: "
+                LOG.debug("No IQR application registered for prefix: "
                                 "'%s'", path_prefix)
-                app = NotFound()
+                app = NotFound()  # type: ignore
         else:
-            self._log.debug("No prefix or prefix in blacklist. "
+            LOG.debug("No prefix or prefix in blacklist. "
                             "Using dispatcher app.")
-            app = self.wsgi_app
+            app = self.wsgi_app  # type: ignore
 
         return app(environ, start_response)
 
-    def run(self, host=None, port=None, debug=False, **options):
+    def run(
+    self, host: Optional[str] = None, port: Optional[int] = None,
+    debug: Optional[bool] = False, load_dotenv: bool = False, **options: Any) -> None:
         # Establish CSRF protection
         self._apply_csrf_protect(self)
 

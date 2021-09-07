@@ -3,6 +3,8 @@ import json
 import unittest.mock as mock
 import os
 import unittest
+import flask
+from typing import Any, Generator
 
 from smqtk_relevancy import RankRelevancyWithFeedback
 
@@ -26,7 +28,7 @@ class TestIqrService (unittest.TestCase):
     @mock.patch.dict(os.environ, {
         Pluggable.PLUGIN_ENV_VAR: STUB_MODULE_PATH
     })
-    def setUp(self):
+    def setUp(self) -> None:
         """
         Make an instance of the IqrService flask application with stub
         algorithms.
@@ -55,14 +57,14 @@ class TestIqrService (unittest.TestCase):
 
         self.app = IqrService(config)
 
-    def assertStatusCode(self, r, code):
+    def assertStatusCode(self, r: flask.wrappers.Response, code: int) -> None:
         """
         :type r: :type: flask.wrappers.Response
         :type code: int
         """
         self.assertEqual(code, r.status_code)
 
-    def assertJsonMessageRegex(self, r, regex):
+    def assertJsonMessageRegex(self, r: flask.wrappers.Response, regex: str) -> None:
         """
         :type r: flask.wrappers.Response
         :type regex: str
@@ -71,22 +73,22 @@ class TestIqrService (unittest.TestCase):
 
     # Test Methods ############################################################
 
-    def test_is_ready(self):
+    def test_is_ready(self) -> None:
         # Test that the is_ready endpoint returns the expected values.
         #: :type: flask.wrappers.Response
         r = self.app.test_client().get('/is_ready')
-        self.assertStatusCode(r, 200)
-        self.assertJsonMessageRegex(r, "Yes, I'm alive.")
+        self.assertStatusCode(r, 200)  # type: ignore
+        self.assertJsonMessageRegex(r, "Yes, I'm alive.")  # type: ignore
         self.assertIsInstance(self.app.descriptor_set, StubDescriptorSet)
         self.assertIsInstance(self.app.descriptor_generator, StubDescrGenerator)
         self.assertIsInstance(self.app.neighbor_index, StubNearestNeighborIndex)
 
-    def test_add_descriptor_from_data_no_args(self):
+    def test_add_descriptor_from_data_no_args(self) -> None:
         """ Test that providing no arguments causes a 400 error. """
-        r = self.app.test_client().post('/add_descriptor_from_data')
+        r = self.app.test_client().post('/add_descriptor_from_data')  # type: flask.wrappers.Response
         self.assertStatusCode(r, 400)
 
-    def test_add_descriptor_from_data_no_b64(self):
+    def test_add_descriptor_from_data_no_b64(self) -> None:
         """ Test that providing no b64 data is caught + errors. """
         query_data = {
             "content_type": "text/plain"
@@ -96,7 +98,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "No or empty base64 data")
 
-    def test_add_descriptor_from_data_no_content_type(self):
+    def test_add_descriptor_from_data_no_content_type(self) -> None:
         query_data = {
             'data_b64': base64.b64encode(b"some test data").decode()
         }
@@ -105,7 +107,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "No data mimetype")
 
-    def test_add_descriptor_from_data_invalid_base64(self):
+    def test_add_descriptor_from_data_invalid_base64(self) -> None:
         """ Test sending some bad base64 data. """
         query_data = {
             'data_b64': 'not valid b64',
@@ -116,7 +118,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "Failed to parse base64 data")
 
-    def test_add_descriptor_from_data(self):
+    def test_add_descriptor_from_data(self) -> None:
         expected_bytes = b"some test bytes"
         expected_base64 = base64.b64encode(expected_bytes).decode()
         expected_contenttype = 'text/plain'
@@ -148,7 +150,7 @@ class TestIqrService (unittest.TestCase):
         r_json = json.loads(r.data.decode())
         self.assertEqual(r_json['uid'], expected_descriptor_uid)
 
-    def test_get_nn_index_status(self):
+    def test_get_nn_index_status(self) -> None:
         self.app.neighbor_index.count = mock.Mock(return_value=0)
         with self.app.test_client() as tc:
             r = tc.get('/nn_index')
@@ -164,13 +166,13 @@ class TestIqrService (unittest.TestCase):
             self.assertEqual(json.loads(r.data.decode())['index_size'],
                              89756234876)
 
-    def test_update_nn_index_no_args(self):
+    def test_update_nn_index_no_args(self) -> None:
         """ Test that error is returned when no arguments provided """
         r = self.app.test_client().post('/nn_index')
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "No descriptor UID JSON provided")
 
-    def test_update_nn_index_bad_json_parse_error(self):
+    def test_update_nn_index_bad_json_parse_error(self) -> None:
         """ Test handling a bad json string """
         r = self.app.test_client().post('/nn_index',
                                         data=dict(
@@ -179,7 +181,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "JSON parsing error")
 
-    def test_update_nn_index_bad_json_not_a_list(self):
+    def test_update_nn_index_bad_json_not_a_list(self) -> None:
         r = self.app.test_client().post('/nn_index',
                                         data=dict(
                                             descriptor_uids='6.2'
@@ -187,7 +189,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "JSON provided is not a list")
 
-    def test_update_nn_index_bad_json_empty_list(self):
+    def test_update_nn_index_bad_json_empty_list(self) -> None:
         r = self.app.test_client().post('/nn_index',
                                         data=dict(
                                             descriptor_uids='[]'
@@ -195,7 +197,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "JSON list is empty")
 
-    def test_update_nn_index_bad_json_invalid_parts(self):
+    def test_update_nn_index_bad_json_invalid_parts(self) -> None:
         """ All UIDs provided should be hashable values. """
         r = self.app.test_client().post('/nn_index',
                                         data=dict(
@@ -205,12 +207,12 @@ class TestIqrService (unittest.TestCase):
         self.assertJsonMessageRegex(r, "Not all JSON list parts were hashable "
                                        r"values\.")
 
-    def test_update_nn_index_uid_not_a_key(self):
+    def test_update_nn_index_uid_not_a_key(self) -> None:
         """
         Test that providing one or more UIDs that are not a part of the index
         yields an error.
         """
-        def key_error_raise(*_, **__):
+        def key_error_raise(*_: Any, **__: Any) -> None:
             raise KeyError('test-key')
 
         self.app.descriptor_set.get_many_descriptors = mock.Mock(
@@ -242,7 +244,7 @@ class TestIqrService (unittest.TestCase):
         r_json = json.loads(r.data.decode())
         self.assertListEqual(r_json['bad_uids'], expected_bad_uids)
 
-    def test_update_nn_index_delayed_key_error(self):
+    def test_update_nn_index_delayed_key_error(self) -> None:
         """
         Some DescriptorSet implementations of get_many_descriptors use the
         yield statement and thus won't potentially generate key errors until
@@ -251,7 +253,7 @@ class TestIqrService (unittest.TestCase):
         """
         expected_error_key = 'expected-error-key'
 
-        def generator_key_error(*_, **__):
+        def generator_key_error(*_: Any, **__: Any) -> Generator:
             raise KeyError(expected_error_key)
             # make a generator
             # noinspection PyUnreachableCode
@@ -286,7 +288,7 @@ class TestIqrService (unittest.TestCase):
         r_json = json.loads(r.data.decode())
         self.assertListEqual(r_json['bad_uids'], expected_bad_uids)
 
-    def test_update_nn_index(self):
+    def test_update_nn_index(self) -> None:
         expected_descriptors = [
             mock.Mock(spec=DescriptorElement),
             mock.Mock(spec=DescriptorElement),
@@ -321,7 +323,7 @@ class TestIqrService (unittest.TestCase):
         self.assertListEqual(r_json['descriptor_uids'], expected_uid_list)
         self.assertEqual(r_json['index_size'], expected_new_index_count)
 
-    def test_remove_from_nn_index_no_uids(self):
+    def test_remove_from_nn_index_no_uids(self) -> None:
         """
         Test that error is properly returned when failing to pass any UIDs to
         the endpoint.
@@ -331,7 +333,7 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 400)
             self.assertJsonMessageRegex(r, "No descriptor UID JSON provided")
 
-    def test_remove_from_nn_index_bad_json_parse_error(self):
+    def test_remove_from_nn_index_bad_json_parse_error(self) -> None:
         """
         Test expected error from had JSON input.
         """
@@ -341,7 +343,7 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 400)
             self.assertJsonMessageRegex(r, "JSON parsing error: ")
 
-    def test_remove_from_nn_index_bad_json_not_a_list(self):
+    def test_remove_from_nn_index_bad_json_not_a_list(self) -> None:
         """
         Test expected error from not sending a list.
         """
@@ -350,7 +352,7 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 400)
             self.assertJsonMessageRegex(r, 'JSON provided is not a list.')
 
-    def test_remove_from_nn_index_bad_json_list_empty(self):
+    def test_remove_from_nn_index_bad_json_list_empty(self) -> None:
         """
         Test expected error when passed an empty JSON list.
         """
@@ -360,7 +362,7 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 400)
             self.assertJsonMessageRegex(r, "JSON list is empty")
 
-    def test_remove_from_nn_index_bad_json_invalid_parts(self):
+    def test_remove_from_nn_index_bad_json_invalid_parts(self) -> None:
         """
         Test expected error when input JSON contains non-hashable values.
         """
@@ -373,7 +375,7 @@ class TestIqrService (unittest.TestCase):
             self.assertJsonMessageRegex(r, 'Not all JSON list parts were '
                                            r'hashable values\.')
 
-    def test_remove_from_nn_index_uid_not_a_key(self):
+    def test_remove_from_nn_index_uid_not_a_key(self) -> None:
         """
         Test expected error when providing one or more descriptor UIDs not
         currently indexed.
@@ -399,7 +401,7 @@ class TestIqrService (unittest.TestCase):
             r_json = json.loads(r.data.decode())
             self.assertListEqual(r_json['bad_uids'], [expected_exception_msg])
 
-    def test_remove_from_nn_index(self):
+    def test_remove_from_nn_index(self) -> None:
         """
         Test we can remove from the nn-index via the endpoint.
         """
@@ -422,7 +424,7 @@ class TestIqrService (unittest.TestCase):
             self.assertListEqual(r_json['descriptor_uids'], [1, 2, 3])
             self.assertEqual(r_json['index_size'], 3)
 
-    def test_data_nearest_neighbors_no_base64(self):
+    def test_data_nearest_neighbors_no_base64(self) -> None:
         """ Test not providing base64 """
         data = dict(
             # data_b64=base64.b64encode('test-data'),
@@ -434,7 +436,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, 'No or empty base64 data provided')
 
-    def test_data_nearest_neighbors_no_contenttype(self):
+    def test_data_nearest_neighbors_no_contenttype(self) -> None:
         """ Test not providing base64 """
         data = dict(
             data_b64=base64.b64encode(b'test-data').decode(),
@@ -446,7 +448,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, 'No data mimetype provided')
 
-    def test_data_nearest_neighbors_no_k(self):
+    def test_data_nearest_neighbors_no_k(self) -> None:
         """ Test not providing base64 """
         data = dict(
             data_b64=base64.b64encode(b'test-data').decode(),
@@ -458,7 +460,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "No 'k' value provided")
 
-    def test_data_nearest_neighbors_bad_k_json(self):
+    def test_data_nearest_neighbors_bad_k_json(self) -> None:
         """ Test string for k """
         data = dict(
             data_b64=base64.b64encode(b'test-data').decode(),
@@ -471,7 +473,7 @@ class TestIqrService (unittest.TestCase):
         self.assertJsonMessageRegex(r, "Failed to convert 'k' argument to an "
                                        "integer")
 
-    def test_data_nearest_neighbors_bad_base64(self):
+    def test_data_nearest_neighbors_bad_base64(self) -> None:
         data = dict(
             data_b64="not-valid-base-64%",
             content_type='text/plain',
@@ -482,7 +484,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "Failed to parse base64 data")
 
-    def test_data_nearest_neighbors(self):
+    def test_data_nearest_neighbors(self) -> None:
         expected_uids = ['a', 'b', 'c']
         expected_neighbors = []
         for uid in expected_uids:
@@ -516,7 +518,7 @@ class TestIqrService (unittest.TestCase):
         self.assertListEqual(r_json['neighbor_uids'], expected_uids)
         self.assertListEqual(r_json['neighbor_dists'], expected_dists)
 
-    def test_uid_nearest_neighbors_no_uid(self):
+    def test_uid_nearest_neighbors_no_uid(self) -> None:
         """ Test not providing base64 """
         data = dict(
             # uid='some-uid',
@@ -527,13 +529,13 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, 'No UID provided')
 
-    def test_uid_nearest_neighbors_no_k(self):
+    def test_uid_nearest_neighbors_no_k(self) -> None:
         """ Test not providing base64 """
         r = self.app.test_client().get('/uid_nearest_neighbors?uid=some-uid')
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "No 'k' value provided")
 
-    def test_uid_nearest_neighbors_bad_k_json(self):
+    def test_uid_nearest_neighbors_bad_k_json(self) -> None:
         """ Test string for k """
         # float string fails an int cast.
         r = self.app.test_client().get('/uid_nearest_neighbors?uid=some-uid&k=10.2')
@@ -541,7 +543,7 @@ class TestIqrService (unittest.TestCase):
         self.assertJsonMessageRegex(r, "Failed to convert 'k' argument to an "
                                        "integer")
 
-    def test_uid_nearest_neighbors_no_elem_for_uid(self):
+    def test_uid_nearest_neighbors_no_elem_for_uid(self) -> None:
         # Simulate that any key we provide is not indexed.
         def raise_keyerror(*_):
             raise KeyError("invalid-key")
@@ -554,7 +556,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, f"Failed to get descriptor for UID {data_uid}")
 
-    def test_uid_nearest_neighbors(self):
+    def test_uid_nearest_neighbors(self) -> None:
         expected_uids = ['a', 'b', 'c']
         expected_neighbors = []
         for uid in expected_uids:
@@ -583,13 +585,13 @@ class TestIqrService (unittest.TestCase):
         self.assertListEqual(r_json['neighbor_uids'], expected_uids)
         self.assertListEqual(r_json['neighbor_dists'], expected_dists)
 
-    def test_get_session_info_no_session_id(self):
+    def test_get_session_info_no_session_id(self) -> None:
         """
         Test that passing no session ID results in a 400 error.
         """
         self._test_getter_no_sid('session')
 
-    def test_get_session_info_invalid_session_id(self):
+    def test_get_session_info_invalid_session_id(self) -> None:
         """
         Test that passing an ID that does not map to any current session
         returns a 400 error.
@@ -602,7 +604,7 @@ class TestIqrService (unittest.TestCase):
         self.app.controller.add_session(iqrs)
         self._test_getter_sid_not_found('session')
 
-    def test_get_session_info(self):
+    def test_get_session_info(self) -> None:
         """
         Test a valid retrieval of a complex IQR session state.
         """
@@ -653,13 +655,13 @@ class TestIqrService (unittest.TestCase):
             # IQR working set expected size
             assert r_json['wi_count'] == 8
 
-    def test_refine_no_session_id(self):
+    def test_refine_no_session_id(self) -> None:
         with self.app.test_client() as tc:
             r = tc.post('/refine')
             self.assertStatusCode(r, 400)
             self.assertJsonMessageRegex(r, r"No session id \(sid\) provided")
 
-    def test_refine_invalid_session_id(self):
+    def test_refine_invalid_session_id(self) -> None:
         with self.app.test_client() as tc:
             r = tc.post('/refine',
                         data={
@@ -668,7 +670,7 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 404)
             self.assertJsonMessageRegex(r, "session id invalid-sid not found")
 
-    def _test_getter_no_sid(self, endpoint):
+    def _test_getter_no_sid(self, endpoint: str) -> None:
         """
         Test common getter response to providing no session ID.
         :param str endpoint: String endpoint of the getter method.
@@ -678,7 +680,7 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 400)
             self.assertJsonMessageRegex(r, r"No session id \(sid\) provided")
 
-    def _test_getter_sid_not_found(self, endpoint):
+    def _test_getter_sid_not_found(self, endpoint: str) -> None:
         """
         Test common getter response to when the given session ID is not present
         in the controller.
@@ -691,20 +693,20 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 404)
             self.assertJsonMessageRegex(r, "session id '0' not found")
 
-    def test_get_results_no_sid(self):
+    def test_get_results_no_sid(self) -> None:
         """
         Test getting relevancy results without providing a session ID.
         """
         self._test_getter_no_sid('get_results')
 
-    def test_get_results_sid_not_found(self):
+    def test_get_results_sid_not_found(self) -> None:
         """
         Test that the expected error is returned when the given session ID is
         not present in the controller.
         """
         self._test_getter_sid_not_found('get_results')
 
-    def test_get_results(self):
+    def test_get_results(self) -> None:
         """
         Test successfully getting results from a requested session.
         """
@@ -732,20 +734,20 @@ class TestIqrService (unittest.TestCase):
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
-    def test_get_feedback_no_sid(self):
+    def test_get_feedback_no_sid(self) -> None:
         """
         Test getting feedback results without providing a session ID.
         """
         self._test_getter_no_sid('get_feedback')
 
-    def test_get_feedback_sid_not_found(self):
+    def test_get_feedback_sid_not_found(self) -> None:
         """
         Test that the expected error is returned when the given session ID is
         not present in the controller.
         """
         self._test_getter_sid_not_found('get_feedback')
 
-    def test_get_feedback(self):
+    def test_get_feedback(self) -> None:
         """
         Test successfully getting feedback results from a requested session.
         """
@@ -773,21 +775,21 @@ class TestIqrService (unittest.TestCase):
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
-    def test_get_positive_adjudication_relevancy_no_sid(self):
+    def test_get_positive_adjudication_relevancy_no_sid(self) -> None:
         """
         Test that the expected error is returned when no session ID is
         provided.
         """
         self._test_getter_no_sid('get_positive_adjudication_relevancy')
 
-    def test_get_positive_adjudication_relevancy_sid_not_found(self):
+    def test_get_positive_adjudication_relevancy_sid_not_found(self) -> None:
         """
         Test that the expected error is returned when the given session ID is
         not present in the controller.
         """
         self._test_getter_sid_not_found('get_positive_adjudication_relevancy')
 
-    def test_get_positive_adjudication_relevancy(self):
+    def test_get_positive_adjudication_relevancy(self) -> None:
         """
         Test successfully getting results for descriptors that are positively
         adjudicated.
@@ -818,21 +820,21 @@ class TestIqrService (unittest.TestCase):
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
-    def test_get_negative_adjudication_relevancy_no_sid(self):
+    def test_get_negative_adjudication_relevancy_no_sid(self) -> None:
         """
         Test that the expected error is returned when no session ID is
         provided.
         """
         self._test_getter_no_sid('get_negative_adjudication_relevancy')
 
-    def test_get_negative_adjudication_relevancy_sid_not_found(self):
+    def test_get_negative_adjudication_relevancy_sid_not_found(self) -> None:
         """
         Test that the expected error is returned when the given session ID is
         not present in the controller.
         """
         self._test_getter_sid_not_found('get_negative_adjudication_relevancy')
 
-    def test_get_negative_adjudication_relevancy(self):
+    def test_get_negative_adjudication_relevancy(self) -> None:
         """
         Test successfully getting results for descriptors that are positively
         adjudicated.
@@ -863,21 +865,21 @@ class TestIqrService (unittest.TestCase):
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
-    def test_get_unadjudicated_relevancy_no_sid(self):
+    def test_get_unadjudicated_relevancy_no_sid(self) -> None:
         """
         Test that the expected error is returned when no session ID is
         provided.
         """
         self._test_getter_no_sid('get_unadjudicated_relevancy')
 
-    def test_get_unadjudicated_relevancy_sid_not_found(self):
+    def test_get_unadjudicated_relevancy_sid_not_found(self) -> None:
         """
         Test that the expected error is returned when the given session ID is
         not present in the controller.
         """
         self._test_getter_sid_not_found('get_unadjudicated_relevancy')
 
-    def test_get_unadjudicated_relevancy(self):
+    def test_get_unadjudicated_relevancy(self) -> None:
         """
         Test successfully getting results for descriptors that are positively
         adjudicated.
@@ -910,7 +912,7 @@ class TestIqrService (unittest.TestCase):
 
     @mock.patch('smqtk_iqr.web.iqr_service.iqr_server.ClassifyDescriptorSupervised'
                 '.get_impls')
-    def test_classify(self, m_sc_get_impls):
+    def test_classify(self, m_sc_get_impls) -> None:
         """
         Test calling the GET /classify endpoint under nominal conditions.
         """
@@ -982,13 +984,13 @@ class TestIqrService (unittest.TestCase):
             assert r_json['uuids'] == ['a', 'b', 'c']
             assert r_json['proba'] == [0.6, 0.5, 0.4]
 
-    def test_get_iqr_state_no_sid(self):
+    def test_get_iqr_state_no_sid(self) -> None:
         # Test that calling GET /state with no SID results in error.
         r = self.app.test_client().get('/state')
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, 'No session id')
 
-    def test_get_iqr_state_bad_sid_empty_controller(self):
+    def test_get_iqr_state_bad_sid_empty_controller(self) -> None:
         # Test that giving an invalid SID to get_iqr_state results in error
         # message return, when no sessions in controller.
 
@@ -1007,7 +1009,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 404)
         self.assertJsonMessageRegex(r, 'not found')
 
-    def test_get_iqr_state_base_sid_nonempty_controller(self):
+    def test_get_iqr_state_base_sid_nonempty_controller(self) -> None:
         # Test that giving an invalid SID to get_iqr_state results in error
         # message return when controller has one or more sessions in it.
 
@@ -1029,7 +1031,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 404)
         self.assertJsonMessageRegex(r, 'not found')
 
-    def test_get_iqr_state(self):
+    def test_get_iqr_state(self) -> None:
         # Test that the base64 returned is what is returned from
         #  IqrSession.get_state_bytes (mocked)
         expected_bytes = b'these-bytes'
@@ -1051,7 +1053,7 @@ class TestIqrService (unittest.TestCase):
         self.assertEqual(r_json['sid'], 'some-sid')
         self.assertEqual(r_json['state_b64'], expected_b64)
 
-    def test_set_iqr_state_no_sid(self):
+    def test_set_iqr_state_no_sid(self) -> None:
         # Test that calling set_iqr_state with no SID returns an error
         r = self.app.test_client().put('/state',
                                        data=dict(
@@ -1060,7 +1062,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, r"No session id \(sid\) provided")
 
-    def test_set_iqr_state_no_b64(self):
+    def test_set_iqr_state_no_b64(self) -> None:
         """
         Test that calling set_iqr_state with no base_64 data returns an
         error.
@@ -1072,7 +1074,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, 'No state package base64 provided')
 
-    def test_set_iqr_state_invalid_base64(self):
+    def test_set_iqr_state_invalid_base64(self) -> None:
         # Test when PUT /state is given invalid base64 data.
 
         r = self.app.test_client().put('/state',
@@ -1083,7 +1085,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 400)
         self.assertJsonMessageRegex(r, "Invalid base64 input")
 
-    def test_set_iqr_state_invalid_sid(self):
+    def test_set_iqr_state_invalid_sid(self) -> None:
         # Test that an invalid SID provided causes an error.  Must set a state
         # to an existing session.
         test_b64 = base64.b64encode(b'test')
@@ -1098,7 +1100,7 @@ class TestIqrService (unittest.TestCase):
         self.assertStatusCode(r, 404)
         self.assertJsonMessageRegex(r, 'not found')
 
-    def test_set_iqr_state(self):
+    def test_set_iqr_state(self) -> None:
         # Test that expected base64 decoded bytes are passed to
         # `IqrSession.set_state_bytes` method.
         expected_sid = 'test-sid'
@@ -1122,7 +1124,7 @@ class TestIqrService (unittest.TestCase):
         self.assertRegex(r_json['message'], 'Success')
         self.assertRegex(r_json['sid'], expected_sid)
 
-    def test_get_random_uids(self):
+    def test_get_random_uids(self) -> None:
         """
         Test getting random descriptor UIDs from the
         """
@@ -1157,7 +1159,7 @@ class TestIqrService (unittest.TestCase):
             r3_json = r3.json
             assert r3_json['results'] != result1
 
-    def test_get_random_uids_paged(self):
+    def test_get_random_uids_paged(self) -> None:
         """ Test pagination of random UIDs """
         self.app.descriptor_set.iterkeys = mock.MagicMock(
             return_value=list(map(chr, range(97, 97+26)))

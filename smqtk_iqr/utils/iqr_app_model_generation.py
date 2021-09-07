@@ -26,7 +26,7 @@ from smqtk_core.configuration import (
 __author__ = 'paul.tunison@kitware.com'
 
 
-def cli_parser():
+def cli_parser() -> argparse.ArgumentParser:
     # Forgoing the ``cli.basic_cli_parser`` due to our use of dual
     # configuration files for this utility.
     parser = argparse.ArgumentParser(
@@ -59,7 +59,7 @@ def cli_parser():
     return parser
 
 
-def main():
+def main() -> None:
     args = cli_parser().parse_args()
 
     ui_config_filepath, iqr_config_filepath = args.config
@@ -69,8 +69,6 @@ def main():
 
     # Not using `cli.utility_main_helper`` due to deviating from single-
     # config-with-default usage.
-    cli.initialize_logging(logging.getLogger('smqtk'), llevel)
-    cli.initialize_logging(logging.getLogger('__main__'), llevel)
     log = logging.getLogger(__name__)
 
     log.info("Loading UI config: '{}'".format(ui_config_filepath))

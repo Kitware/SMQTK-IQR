@@ -84,7 +84,7 @@ def cli_parser():
     return parser
 
 
-def main():
+def main() -> None:
     parser = cli_parser()
     args = parser.parse_args()
 

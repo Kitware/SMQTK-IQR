@@ -10,55 +10,13 @@ import sys
 import threading
 import time
 import warnings
+import logging
+from typing import Tuple, Dict, Optional, Any
 
 from smqtk_core.dict import merge_dict
+LOG = logging.getLogger(__name__)
 
-
-def initialize_logging(logger, stream_level=logging.WARNING,
-                       output_filepath=None, file_level=None):
-    """
-    Standard logging initialization.
-
-    :param logger: Logger instance to initialize
-    :type logger: logging.Logger
-
-    :param stream_level: Logging level to set for the stderr stream formatter.
-    :type stream_level: int
-
-    :param output_filepath: Output logging from the given logger to the provided
-        file path. Currently, we log to that file indefinitely, i.e. no
-        rollover. Rollover may be added in the future if the need arises.
-    :type output_filepath: str
-
-    :param file_level: Logging level to output to the file. This the same as the
-        stream level by default.
-
-    """
-    log_formatter = logging.Formatter(
-        "%(levelname)7s - %(asctime)s - %(name)s.%(funcName)s - %(message)s"
-    )
-
-    stream_handler = logging.StreamHandler()
-    stream_handler.setFormatter(log_formatter)
-    stream_handler.setLevel(stream_level)
-    logger.addHandler(stream_handler)
-
-    if output_filepath:
-        # TODO: Setup rotating part of the handler?
-        file_handler = logging.handlers.RotatingFileHandler(
-            output_filepath, mode='w', delay=True
-        )
-        file_handler.setFormatter(log_formatter)
-        file_handler.setLevel(file_level or stream_level)
-        logger.addHandler(file_handler)
-
-    # Because there are two levels checked before a logging message is emitted:
-    #   * the logging object's level
-    #   * The stream handlers level
-    logger.setLevel(min(stream_level, file_level or stream_level))
-
-
-def load_config(config_path, defaults=None):
+def load_config(config_path: str, defaults: Optional[Dict]=None) -> Tuple(Dict, bool):
     """
     Load the JSON configuration dictionary from the specified filepath.
 
@@ -88,8 +46,8 @@ def load_config(config_path, defaults=None):
     return defaults, loaded
 
 
-def output_config(output_path, config_dict, log=None, overwrite=False,
-                  error_rc=1):
+def output_config(output_path: str, config_dict: Dict, overwrite: bool = False,
+                  error_rc: int = 1):
     """
     If a valid output configuration path is provided, we output the given
     configuration dictionary as JSON or error if the file already exists (when
@@ -151,7 +109,7 @@ class ProgressReporter:
     TODO: Add parameter for an optionally known total number of increments.
     """
 
-    def __init__(self, log_func, interval, what_per_second="Loops"):
+    def __init__(self, log_func, interval: float, what_per_second="Loops"):
         """
         Initialize this reporter.
 
@@ -268,7 +226,7 @@ class ProgressReporter:
             self.report()
 
 
-def report_progress(log, state, interval):
+def report_progress(state: List[float], interval: float) -> None:
     """
     Loop progress reporting function that logs (when in debug) loops per
     second, loops in the last reporting period and total loops executed.
@@ -279,9 +237,6 @@ def report_progress(log, state, interval):
 
     A report can be effectively force for a call by setting ``state[3] = 0``
     or ``interval`` to ``0``.
-
-    :param log: Logger logging function to use to send reporting message to.
-    :type log: (str, *args, **kwargs) -> None
 
     :param state: Reporting state. This should be initialized to a list of 6
         zeros (floats), and then should not be modified externally from this
@@ -329,7 +284,7 @@ def report_progress(log, state, interval):
         state[0] = state[1]
 
 
-def basic_cli_parser(description=None, configuration_group=True):
+def basic_cli_parser(description: str = None, configuration_group: bool = True) -> argparse.ArgumentParser:
     """
     Generate an ``argparse.ArgumentParser`` with the given description and the
     basic options for verbosity and configuration/generation paths.
@@ -375,8 +330,9 @@ def basic_cli_parser(description=None, configuration_group=True):
     return parser
 
 
-def utility_main_helper(default_config, args, additional_logging_domains=(),
-                        skip_logging_init=False, default_config_valid=False):
+def utility_main_helper(default_config: Dict[str, Any], args: argparse.Namespace,
+    additional_logging_domains=(),
+    skip_logging_init: bool = False, default_config_valid: bool = False) -> Dict:
     """
     Helper function for utilities standardizing logging initialization, CLI
     parsing and configuration loading/generation.

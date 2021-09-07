@@ -8,8 +8,9 @@ import random
 import time
 import threading
 import traceback
-from typing import cast, Dict, Hashable, List, Optional
+from typing import cast, Dict, Hashable, List, Optional, Callable, Any, Tuple, Union, Sequence
 import uuid
+import logging
 
 import flask
 
@@ -19,6 +20,7 @@ from smqtk_core.configuration import (
     from_config_dict
 )
 from smqtk_descriptors import (
+    DescriptorElement,
     DescriptorGenerator,
     DescriptorElementFactory,
     DescriptorSet
@@ -33,19 +35,20 @@ from smqtk_relevancy import RankRelevancyWithFeedback
 from smqtk_dataprovider.impls.data_element.memory import DataMemoryElement
 
 from smqtk_iqr.web import SmqtkWebApp
-
+import smqtk_iqr
 from smqtk_iqr.iqr import (
     iqr_controller,
     iqr_session,
 )
 
+LOG = logging.getLogger(__name__)
 
-def new_uuid():
+def new_uuid() -> str:
     return str(uuid.uuid1(clock_seq=int(time.time() * 1000000)))\
         .replace('-', '')
 
 
-def make_response_json(message, **params):
+def make_response_json(message: str, **params: Union[Hashable, Sequence[Hashable], Sequence[Sequence[Hashable]]]) -> flask.Response:
     r = {
         "message": message,
         "time": {
@@ -57,12 +60,11 @@ def make_response_json(message, **params):
     return flask.jsonify(**r)
 
 
-def parse_hashable_json_list(json_str):
+def parse_hashable_json_list(json_str: str) -> List[Hashable]:
     """
     Parse and check input string, looking for a JSON list of hashable values.
 
     :param json_str: String to parse and check.
-    :type json_str: str
 
     :raises ValueError: Expected value check failed.
 
@@ -97,11 +99,11 @@ class IqrService (SmqtkWebApp):
     """
 
     @classmethod
-    def is_usable(cls):
+    def is_usable(cls) -> bool:
         return True
 
     @classmethod
-    def get_default_config(cls):
+    def get_default_config(cls) -> Dict[str, Any]:
         c = super(IqrService, cls).get_default_config()
 
         merge_dict(c, {
@@ -177,7 +179,7 @@ class IqrService (SmqtkWebApp):
         })
         return c
 
-    def __init__(self, json_config):
+    def __init__(self, json_config: Dict):
         super(IqrService, self).__init__(json_config)
         sc_config = json_config['iqr_service']['session_control']
 
@@ -238,17 +240,16 @@ class IqrService (SmqtkWebApp):
         self.session_classifier_dirty: Dict[Hashable, bool] = {}
 
         # Cache of random UIDs from the configured descriptor set for use
-        #: :type: list[collections.abc.Hashable] | None
-        self._random_uid_list_cache = None
+        self._random_uid_list_cache = None  # type: Optional[List[Hashable]]
         # Lock for mutation of this list cache
         self._random_lock = threading.RLock()
 
-        def session_expire_callback(session):
+        def session_expire_callback(session: smqtk_iqr.iqr.IqrSession) -> None:
             """
             :type session: smqtk_iqr.iqr.IqrSession
             """
             with session:
-                self._log.debug("Removing session %s classifier", session.uuid)
+                LOG.debug("Removing session %s classifier", session.uuid)
                 del self.session_classifiers[session.uuid]
                 del self.session_classification_results[session.uuid]
                 del self.session_classifier_dirty[session.uuid]
@@ -263,7 +264,7 @@ class IqrService (SmqtkWebApp):
 
         self.add_routes()
 
-    def add_routes(self):
+    def add_routes(self) -> None:
         """
         Setup Flask URL rules.
         """
@@ -355,7 +356,7 @@ class IqrService (SmqtkWebApp):
                           view_func=self.set_iqr_state,
                           methods=['PUT'])
 
-    def describe_base64_data(self, b64, content_type):
+    def describe_base64_data(self, b64: str, content_type: str) -> DescriptorElement:
         """
         Compute and return the descriptor element for the given base64 data.
 
@@ -379,7 +380,7 @@ class IqrService (SmqtkWebApp):
 
     # GET /is_ready
     # noinspection PyMethodMayBeStatic
-    def is_ready(self):
+    def is_ready(self) -> Tuple[Callable, int]:
         """
         Simple function that returns True, indicating that the server is
         active.
@@ -387,7 +388,7 @@ class IqrService (SmqtkWebApp):
         return make_response_json("Yes, I'm alive."), 200
 
     # POST /add_descriptor_from_data
-    def add_descriptor_from_data(self):
+    def add_descriptor_from_data(self) -> Tuple[Callable, int]:
         """
         Add the description of the given base64 data with content type to the
         descriptor set.
@@ -436,7 +437,7 @@ class IqrService (SmqtkWebApp):
                                   size=self.descriptor_set.count()), 201
 
     # GET /nn_index
-    def get_nn_index_status(self):
+    def get_nn_index_status(self) -> Tuple[Callable, int]:
         """
         Get status/state information about the nearest-neighbor index.
 
@@ -454,7 +455,7 @@ class IqrService (SmqtkWebApp):
             )
 
     # POST /nn_index
-    def update_nn_index(self):
+    def update_nn_index(self) -> Tuple[Callable, int]:
         """
         Tell the configured nearest-neighbor-index instance to update with the
         descriptors associated with the provided list of UIDs.
@@ -514,7 +515,7 @@ class IqrService (SmqtkWebApp):
             )
 
     # DELETE /nn_index
-    def remove_from_nn_index(self):
+    def remove_from_nn_index(self) -> Tuple[Callable, int]:
         """
         Remove descriptors from the nearest-neighbors index given their UIDs.
 
@@ -571,7 +572,7 @@ class IqrService (SmqtkWebApp):
             )
 
     # POST /data_nearest_neighbors
-    def data_nearest_neighbors(self):
+    def data_nearest_neighbors(self) -> Tuple[Callable, int]:
         """
         Take in data in base64 encoding with a mimetype and find its 'k'
         nearest neighbors according to the current index, including their
@@ -632,7 +633,7 @@ class IqrService (SmqtkWebApp):
                                   neighbor_dists=[d for d in n_dists]), 200
 
     # GET /uid_nearest_neighbors
-    def uid_nearest_neighbors(self):
+    def uid_nearest_neighbors(self) -> Tuple[Callable, int]:
         """
         Take in the UID that matches an ingested descriptor and find that
         descriptor's 'k' nearest neighbors according to the current index,
@@ -693,7 +694,7 @@ class IqrService (SmqtkWebApp):
                                   neighbor_dists=[d for d in n_dists]), 200
 
     # GET /session_ids
-    def get_sessions_ids(self):
+    def get_sessions_ids(self) -> Tuple[Callable, int]:
         """
         Get the list of current, active session IDs.
         """
@@ -702,7 +703,7 @@ class IqrService (SmqtkWebApp):
                                   session_uuids=session_uuids), 200
 
     # GET /session
-    def get_session_info(self):
+    def get_session_info(self) -> Tuple[Callable, int]:
         """
         Get a JSON return with session state information.
 
@@ -751,7 +752,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -784,7 +785,7 @@ class IqrService (SmqtkWebApp):
                                   wi_count=wi_count), 200
 
     # POST /session
-    def init_session(self):
+    def init_session(self) -> Tuple[Callable, int]:
         """
         Initialize a new session in the controller.
 
@@ -818,7 +819,7 @@ class IqrService (SmqtkWebApp):
                                   sid=sid), 201  # CREATED
 
     # PUT /session
-    def reset_session(self):
+    def reset_session(self) -> Tuple[Callable, int]:
         """
         Reset an existing session. This does not remove the session, so actions
         may
@@ -837,7 +838,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -853,7 +854,7 @@ class IqrService (SmqtkWebApp):
                                   sid=sid), 200
 
     # DELETE /session
-    def clean_session(self):
+    def clean_session(self) -> Tuple[Callable, int]:
         """
         Clean resources associated with the session of the given UUID.
 
@@ -885,7 +886,7 @@ class IqrService (SmqtkWebApp):
                                   sid=sid), 200
 
     # POST /add_external_pos
-    def add_external_positive(self):
+    def add_external_positive(self) -> Tuple[Callable, int]:
         """
         Describe the given data and store as a positive example from external
         data.
@@ -923,12 +924,12 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
             iqrs.external_descriptors(positive=[descriptor])
-            self._log.debug("[%s] session ClassifyDescriptor dirty", sid)
+            LOG.debug("[%s] session ClassifyDescriptor dirty", sid)
             self.session_classifier_dirty[sid] = True
         finally:
             iqrs.lock.release()
@@ -936,7 +937,7 @@ class IqrService (SmqtkWebApp):
         return make_response_json("Success", descr_uuid=descriptor.uuid()), 201
 
     # POST /add_external_neg
-    def add_external_negative(self):
+    def add_external_negative(self) -> Tuple[Callable, int]:
         """
         Describe the given data and store as a negative example from external
         data.
@@ -975,12 +976,12 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
             iqrs.external_descriptors(negative=[descriptor])
-            self._log.debug("[%s] session ClassifyDescriptor dirty", sid)
+            LOG.debug("[%s] session ClassifyDescriptor dirty", sid)
             self.session_classifier_dirty[sid] = True
         finally:
             iqrs.lock.release()
@@ -989,7 +990,7 @@ class IqrService (SmqtkWebApp):
                                   descr_uuid=descriptor.uuid()), 201
 
     # GET /adjudicate
-    def get_adjudication(self):
+    def get_adjudication(self) -> Tuple[Callable, int]:
         """
         Get the adjudication state of a descriptor given its UID.
 
@@ -1011,7 +1012,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1034,7 +1035,7 @@ class IqrService (SmqtkWebApp):
                                   is_pos=is_pos, is_neg=is_neg), 200
 
     # POST /adjudicate
-    def adjudicate(self):
+    def adjudicate(self) -> Tuple[Callable, int]:
         """
         Incrementally update internal adjudication state given new positives
         and negatives, and optionally IDs for descriptors now marked neutral.
@@ -1059,26 +1060,26 @@ class IqrService (SmqtkWebApp):
 
         """
         sid = flask.request.form.get('sid', None)
-        pos_uuids = flask.request.form.get('pos', '[]')
-        neg_uuids = flask.request.form.get('neg', '[]')
-        neu_uuids = flask.request.form.get('neutral', '[]')
+        pos_uuids_str = flask.request.form.get('pos', '[]')
+        neg_uuids_str = flask.request.form.get('neg', '[]')
+        neu_uuids_str = flask.request.form.get('neutral', '[]')
 
         if sid is None:
             return make_response_json("No session id (sid) provided"), 400
 
-        pos_uuids = set(json.loads(pos_uuids))
-        neg_uuids = set(json.loads(neg_uuids))
-        neu_uuids = set(json.loads(neu_uuids))
+        pos_uuids = set(json.loads(pos_uuids_str))
+        neg_uuids = set(json.loads(neg_uuids_str))
+        neu_uuids = set(json.loads(neu_uuids_str))
 
         with self.controller:
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
-            self._log.debug("Determining UIDs for query.")
+            LOG.debug("Determining UIDs for query.")
             # Reduce number of UIDs we query the descriptor set for based on
             # what we already have in our pos/neg adjudication sets.
             have_elems = iqrs.positive_descriptors | iqrs.negative_descriptors
@@ -1099,11 +1100,11 @@ class IqrService (SmqtkWebApp):
             # Combine UID sets into one in order to make a single
             # descriptor-set query
             # - get_many_descriptors can raise KeyError
-            self._log.debug("Getting the descriptors for UUIDs")
+            LOG.debug("Getting the descriptors for UUIDs")
             descr_iter = self.descriptor_set.get_many_descriptors(
                 itertools.chain(q_pos_uids, q_neg_uids, q_neu_uids)
             )
-            self._log.debug("- Slicing out positive descriptors...")
+            LOG.debug("- Slicing out positive descriptors...")
             pos_d = set(itertools.chain(
                 have_pos_elems,
                 itertools.islice(descr_iter, len(q_pos_uids)))
@@ -1115,7 +1116,7 @@ class IqrService (SmqtkWebApp):
                 "Result positive descriptor element UIDs don't match input " \
                 "uids."
 
-            self._log.debug("- Slicing out negative descriptors...")
+            LOG.debug("- Slicing out negative descriptors...")
             neg_d = set(itertools.chain(
                 have_neg_elems,
                 itertools.islice(descr_iter, len(q_neg_uids))
@@ -1127,7 +1128,7 @@ class IqrService (SmqtkWebApp):
                 "Result negative descriptor element UIDs don't match input " \
                 "uids."
 
-            self._log.debug("- Slicing out neutral descriptors...")
+            LOG.debug("- Slicing out neutral descriptors...")
             neu_d = set(itertools.chain(
                 have_neu_elems,
                 itertools.islice(descr_iter, len(q_neu_uids))
@@ -1138,7 +1139,7 @@ class IqrService (SmqtkWebApp):
             assert set(d.uuid() for d in neu_d) == neu_uuids, \
                 "Result neutral descriptor element UIDs don't match input " \
                 "uids."
-            self._log.debug("Getting the descriptors for UUIDs -- Done")
+            LOG.debug("Getting the descriptors for UUIDs -- Done")
 
             # Record previous pos/neg descriptors via shallow copy for
             # determining if an existing classifier is dirty after this
@@ -1146,7 +1147,7 @@ class IqrService (SmqtkWebApp):
             orig_pos = set(iqrs.positive_descriptors)
             orig_neg = set(iqrs.negative_descriptors)
 
-            self._log.debug("[%s] Adjudicating", sid)
+            LOG.debug("[%s] Adjudicating", sid)
             iqrs.adjudicate(pos_d, neg_d, neu_d, neu_d)
 
             # Flag classifier as dirty if change in pos/neg sets
@@ -1155,12 +1156,12 @@ class IqrService (SmqtkWebApp):
             diff_neg = \
                 iqrs.negative_descriptors.symmetric_difference(orig_neg)
             if diff_pos or diff_neg:
-                self._log.debug("[%s] session ClassifyDescriptor dirty", sid)
+                LOG.debug("[%s] session ClassifyDescriptor dirty", sid)
                 self.session_classifier_dirty[sid] = True
 
         except KeyError as ex:
             err_uuid = str(ex)
-            self._log.warning(traceback.format_exc())
+            LOG.warning(traceback.format_exc())
             return make_response_json(
                 "Descriptor UUID '%s' cannot be found in the "
                 "configured descriptor set."
@@ -1178,7 +1179,7 @@ class IqrService (SmqtkWebApp):
         ), 200
 
     # POST /initialize
-    def initialize(self):
+    def initialize(self) -> Tuple[Callable, int]:
         """
         Update the working set based on the currently positive examples and
         adjudications.
@@ -1196,7 +1197,7 @@ class IqrService (SmqtkWebApp):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid,
                                           success=False), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1214,7 +1215,7 @@ class IqrService (SmqtkWebApp):
         return make_response_json("Success", sid=sid, success=True), 200
 
     # POST /refine
-    def refine(self):
+    def refine(self) -> Tuple[Callable, int]:
         """
         (Re)Create ranking of working set content by order of relevance to
         examples and adjudications.
@@ -1233,11 +1234,11 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id %s not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
-            self._log.info("[%s] Refining", sid)
+            LOG.info("[%s] Refining", sid)
             iqrs.refine()
         except RuntimeError as ex:
             ex_s = str(ex)
@@ -1251,7 +1252,7 @@ class IqrService (SmqtkWebApp):
         return make_response_json("Refine complete", sid=sid), 201
 
     # GET /num_results
-    def num_results(self):
+    def num_results(self) -> Tuple[Callable, int]:
         """
         Get the total number of results that have been ranked.
 
@@ -1272,7 +1273,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1290,7 +1291,7 @@ class IqrService (SmqtkWebApp):
                                   sid=sid), 200
 
     # GET /get_results
-    def get_results(self):
+    def get_results(self) -> Tuple[Callable, int]:
         """
         Get the relevancy score for working set descriptor elements between
         the optionally specified offset and limit indices, ordered by
@@ -1337,8 +1338,8 @@ class IqrService (SmqtkWebApp):
 
         """
         sid = flask.request.args.get('sid', None)
-        i = flask.request.args.get('i', None)
-        j = flask.request.args.get('j', None)
+        i = cast(Optional[int], flask.request.args.get('i', None))
+        j = cast(Optional[int], flask.request.args.get('j', None))
 
         if sid is None:
             return make_response_json("No session id (sid) provided"), 400
@@ -1347,7 +1348,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1370,7 +1371,7 @@ class IqrService (SmqtkWebApp):
                                   results=r), 200
 
     # GET /get_feedback
-    def get_feedback(self):
+    def get_feedback(self) -> Tuple[Callable, int]:
         """
         Get the feedback results for working set descriptor elements that are
         recommended for adjudication feedback. They are listed with the most
@@ -1411,8 +1412,8 @@ class IqrService (SmqtkWebApp):
 
         """
         sid = flask.request.args.get('sid', None)
-        i = flask.request.args.get('i', None)
-        j = flask.request.args.get('j', None)
+        i = cast(Optional[int], flask.request.args.get('i', None))
+        j = cast(Optional[int], flask.request.args.get('j', None))
 
         if sid is None:
             return make_response_json("No session id (sid) provided"), 400
@@ -1421,7 +1422,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1444,7 +1445,7 @@ class IqrService (SmqtkWebApp):
                                   results=r), 200
 
     # GET /get_positive_adjudication_relevancy
-    def get_positive_adjudication_relevancy(self):
+    def get_positive_adjudication_relevancy(self) -> Tuple[Callable, int]:
         """
         Get the relevancy scores for positively adjudicated elements in the
         working set between the optionally provided index offset and limit,
@@ -1488,8 +1489,8 @@ class IqrService (SmqtkWebApp):
 
         """
         sid = flask.request.args.get('sid', None)
-        i = flask.request.args.get('i', None)
-        j = flask.request.args.get('j', None)
+        i = cast(Optional[int], flask.request.args.get('i', None))
+        j = cast(Optional[int], flask.request.args.get('j', None))
 
         if sid is None:
             return make_response_json("No session id (sid) provided"), 400
@@ -1498,7 +1499,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1519,7 +1520,7 @@ class IqrService (SmqtkWebApp):
         ), 200
 
     # GET /get_negative_adjudication_relevancy
-    def get_negative_adjudication_relevancy(self):
+    def get_negative_adjudication_relevancy(self) -> Tuple[Callable, int]:
         """
         Get the relevancy scores for negatively adjudicated elements in the
         working set between the optionally provided offset and limit,
@@ -1563,8 +1564,8 @@ class IqrService (SmqtkWebApp):
 
         """
         sid = flask.request.args.get('sid', None)
-        i = flask.request.args.get('i', None)
-        j = flask.request.args.get('j', None)
+        i = cast(Optional[int], flask.request.args.get('i', None))
+        j = cast(Optional[int], flask.request.args.get('j', None))
 
         if sid is None:
             return make_response_json("No session id (sid) provided"), 400
@@ -1573,7 +1574,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1594,7 +1595,7 @@ class IqrService (SmqtkWebApp):
         ), 200
 
     # GET /get_unadjudicated_relevancy
-    def get_unadjudicated_relevancy(self):
+    def get_unadjudicated_relevancy(self) -> Tuple[Callable, int]:
         """
         Get the relevancy scores for non-adjudicated elements in the working
         set between the optionally provided index offset and limit, ordered
@@ -1638,8 +1639,8 @@ class IqrService (SmqtkWebApp):
 
         """
         sid = flask.request.args.get('sid', None)
-        i = flask.request.args.get('i', None)
-        j = flask.request.args.get('j', None)
+        i = cast(Optional[int], flask.request.args.get('i', None))
+        j = cast(Optional[int], flask.request.args.get('j', None))
         # TODO: Add optional parameter that is used instead of i/j that causes
         #       the return of N uniformly distributed examples in this result
         #       subset based on relevancy score.
@@ -1652,7 +1653,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1672,7 +1673,7 @@ class IqrService (SmqtkWebApp):
             total=total, results=r
         ), 200
 
-    def get_random_uids(self):
+    def get_random_uids(self) -> Tuple[Callable, int]:
         """
         Get a slice of random descriptor UIDs from the global set between the
         optionally provided index offset and limit.
@@ -1699,7 +1700,7 @@ class IqrService (SmqtkWebApp):
                 Total number of UIDs in the global set.
         """
         i = flask.request.args.get('i', 0)
-        j = flask.request.args.get('j', None)
+        j = cast(Optional[int], flask.request.args.get('j', None))
         refresh_str = flask.request.args.get('refresh', 'false')
 
         try:
@@ -1724,7 +1725,7 @@ class IqrService (SmqtkWebApp):
             "success", total=total, results=results
         ), 200
 
-    def _ensure_session_classifier(self, iqrs):
+    def _ensure_session_classifier(self, iqrs: smqtk_iqr.iqr.IqrSession) -> Tuple[ClassifyDescriptorSupervised, str, str]:
         """
         Return the binary pos/neg classifier for this session.
 
@@ -1761,7 +1762,7 @@ class IqrService (SmqtkWebApp):
         neg_label = "negative"
 
         if self.session_classifier_dirty[sid] or maybe_classifier is None:
-            self._log.debug("Training new classifier for current "
+            LOG.debug("Training new classifier for current "
                             "adjudication state...")
             classifier = cast(
                 ClassifyDescriptorSupervised,
@@ -1784,7 +1785,7 @@ class IqrService (SmqtkWebApp):
         return classifier, pos_label, neg_label
 
     # GET /classify
-    def classify(self):
+    def classify(self) -> Tuple[Callable, int]:
         """
         Given a refined session ID and some number of descriptor UUIDs, create
         a classifier according to the current state and classify the given
@@ -1826,11 +1827,11 @@ class IqrService (SmqtkWebApp):
 
         with self.controller:
             if not self.controller.has_session_uuid(sid):
-                self._log.warning("No IQR Session with UID '{}' found."
+                LOG.warning("No IQR Session with UID '{}' found."
                                   .format(sid))
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1861,7 +1862,7 @@ class IqrService (SmqtkWebApp):
                 for c in classifications:
                     c_cache[c.uuid] = c[pos_label]
             elif uuids:
-                self._log.info("No classifications necessary, using cache.")
+                LOG.info("No classifications necessary, using cache.")
 
             # Format output to be parallel lists of UUIDs input and
             # positive class classification scores.
@@ -1870,7 +1871,7 @@ class IqrService (SmqtkWebApp):
 
         except KeyError as ex:
             err_uuid = str(ex)
-            self._log.warning(traceback.format_exc())
+            LOG.warning(traceback.format_exc())
             return make_response_json(
                 "Descriptor UUID '%s' cannot be found in the "
                 "configured descriptor set."
@@ -1892,7 +1893,7 @@ class IqrService (SmqtkWebApp):
     # TODO: Save/Export classifier model/state/configuration?
 
     # GET /state
-    def get_iqr_state(self):
+    def get_iqr_state(self) -> Tuple[Callable, int]:
         """ [See api.rst]
         Create and return a binary package representing this IQR session's
         state.
@@ -1928,7 +1929,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1945,7 +1946,7 @@ class IqrService (SmqtkWebApp):
                                   state_b64=iqrs_state_b64), 200
 
     # PUT /state
-    def set_iqr_state(self):
+    def set_iqr_state(self) -> Tuple[Callable, int]:
         """ [See api.rst]
         Set the IQR session state for a given session ID.
 
@@ -2002,7 +2003,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)
+            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:

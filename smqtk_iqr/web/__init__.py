@@ -10,6 +10,7 @@ import flask
 from smqtk_core import Plugfigurable
 from smqtk_core.dict import merge_dict
 
+from typing import Dict, Type, Any, Optional
 
 # noinspection PyAbstractClass
 class SmqtkWebApp (flask.Flask, Plugfigurable):
@@ -18,15 +19,14 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
     """
 
     @classmethod
-    def impl_directory(cls):
+    def impl_directory(cls) -> str:
         """
         :return: Directory in which this implementation is contained.
-        :rtype: str
         """
         return os.path.dirname(os.path.abspath(inspect.getfile(cls)))
 
     @classmethod
-    def get_default_config(cls):
+    def get_default_config(cls) -> Dict:
         """
         Generate and return a default configuration dictionary for this class.
         This will be primarily used for generating what the configuration
@@ -36,7 +36,6 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
         appropriate configuration.
 
         :return: Default configuration dictionary for the class.
-        :rtype: dict
 
         """
         return {
@@ -52,7 +51,9 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
         }
 
     @classmethod
-    def from_config(cls, config_dict, merge_default=True):
+    def from_config(
+        cls: Type["SmqtkWebApp"], config_dict: Dict[str, Any],
+        merge_default: bool = True)-> "SmqtkWebApp":
         """
         Override to just pass the configuration dictionary to constructor
         """
@@ -63,7 +64,7 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
             config_dict = merged
         return cls(config_dict)
 
-    def __init__(self, json_config):
+    def __init__(self, json_config: Dict[str, Any]) -> None:
         """
         Initialize application based of supplied JSON configuration
 
@@ -91,10 +92,12 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
         #
         self.secret_key = self.config['SECRET_KEY']
 
-    def get_config(self):
+    def get_config(self) -> Dict[str, Any]:
         return self.json_config
 
-    def run(self, host=None, port=None, debug=False, **options):
+    def run(
+        self, host: Optional[str] = None, port: Optional[int] = None,
+        debug: Optional[bool] = False,  load_dotenv: bool = False, **options: Any) -> None:
         """
         Override of the run method, drawing running host and port from
         configuration by default. 'host' and 'port' values specified as argument
@@ -104,4 +107,5 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
             .run(host=(host or self.json_config['server']['host']),
                  port=(port or self.json_config['server']['port']),
                  debug=debug,
+                 load_dotenv=load_dotenv,
                  **options)

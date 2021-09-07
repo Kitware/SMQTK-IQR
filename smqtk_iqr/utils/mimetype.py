@@ -6,7 +6,7 @@ MT_CACHE_LOCK = threading.RLock()
 MT_CACHE = None
 
 
-def get_mimetypes():
+def get_mimetypes() -> pymimetypes.MimeTypes:
     """
     Get the singleton SMQTK-adjusted mimetypes instance.
 

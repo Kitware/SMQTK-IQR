@@ -5,7 +5,7 @@ from smqtk_iqr.utils.web import ServiceProxy
 class TestServiceProxy (unittest.TestCase):
     """ Tests for the ServiceProxy helper class """
 
-    def test_init_no_scheme_fill_in(self):
+    def test_init_no_scheme_fill_in(self) -> None:
         """ Test that when no http/https scheme is present at the beginning
         of the URL provided at construction time that a "http://" scheme is
         prepended.
@@ -18,7 +18,7 @@ class TestServiceProxy (unittest.TestCase):
         expected = "http://://foo/bar"
         assert ServiceProxy(test_url).url == expected
 
-    def test_init_url_hash_scheme(self):
+    def test_init_url_hash_scheme(self) -> None:
         """ Test that if a scheme is present at the head of the URL that it is
         not changed.
         """
