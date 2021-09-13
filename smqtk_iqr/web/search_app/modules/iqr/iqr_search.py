@@ -31,7 +31,7 @@ from smqtk_iqr.web.search_app import IqrSearchDispatcher
 from smqtk_iqr.iqr import IqrSession
 from smqtk_iqr.utils.mimetype import get_mimetypes
 from smqtk_iqr.utils.preview_cache import PreviewCache
-from smqtk_iqr.web.search_app.modules.file_upload import FileUploadMod
+from smqtk_iqr.web.search_app.modules.file_upload.FileUploadMod import FileUploadMod
 from smqtk_iqr.web.search_app.modules.static_host import StaticDirectoryHost
 
 
@@ -82,7 +82,7 @@ class IqrSearch (flask.Flask, Configurable):
     # noinspection PyMethodOverriding
     @classmethod
     def from_config(
-        cls: Type[T], config: Dict,
+        cls: Type[T], config: Dict[str, Any],
         parent_app: IqrSearchDispatcher
     ) -> T:
         """
@@ -97,7 +97,6 @@ class IqrSearch (flask.Flask, Configurable):
         :type parent_app: smqtk_iqr.web.search_app.app.search_app
 
         :return: Constructed instance from the provided config.
-        :rtype: IqrSearch
 
         """
         merged = cls.get_default_config()
@@ -368,7 +367,7 @@ class IqrSearch (flask.Flask, Configurable):
             # Update service state
             self._iqr_service.put('state',
                                   sid=sid,
-                                  state_base64=service_zip_base64)
+                                  state_base64=base64.b64decode(service_zip_base64).decode('acii'))
 
             return flask.jsonify(return_obj)
 
@@ -487,7 +486,7 @@ class IqrSearch (flask.Flask, Configurable):
             data_b64 = base64.b64encode(upload_data.get_bytes())
             data_ct = upload_data.content_type()
             r = self._iqr_service.post('add_external_pos', sid=sid,
-                                       base64=data_b64, content_type=data_ct)
+                                    base64=base64.b64decode(data_b64).decode('acii'), content_type=data_ct)
             r.raise_for_status()
 
             return str(uuid)
@@ -714,7 +713,7 @@ class IqrSearch (flask.Flask, Configurable):
         :rtype: str
 
         """
-        sid = str(flask.session.sid)
+        sid = str(flask.session.sid)  # type: ignore
 
         # Ensure there is an initialized session on the configured service.
         created_session = False

@@ -54,18 +54,18 @@ class ServiceProxy (object):
     def _compose(self, endpoint: str) -> str:
         return '/'.join([self.url, endpoint])
 
-    def get(self, endpoint: str, **params: str) -> requests.Response:
+    def get(self, endpoint: str, **params: Optional[str]) -> requests.Response:
         # Make params None if its empty.
         return requests.get(self._compose(endpoint), params)
 
-    def post(self, endpoint: str, **params: str) -> requests.Response:
+    def post(self, endpoint: str, **params: Optional[str]) -> requests.Response:
         # Make params None if its empty.
         return requests.post(self._compose(endpoint), data=params)
 
-    def put(self, endpoint: str, **params: str) -> requests.Response:
+    def put(self, endpoint: str, **params: Optional[str]) -> requests.Response:
         # Make params None if its empty.
         return requests.put(self._compose(endpoint), data=params)
 
-    def delete(self, endpoint: str, **params: str) -> requests.Response:
+    def delete(self, endpoint: str, **params: Optional[str]) -> requests.Response:
         # Make params None if its empty.
         return requests.delete(self._compose(endpoint), params=params)

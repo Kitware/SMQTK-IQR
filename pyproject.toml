@@ -18,6 +18,7 @@ documentation = "https://smqtk-iqr.readthedocs.io/"
 
 [tool.poetry.dependencies]
 python = "^3.6"
+pillow = "^8.2.0"
 smqtk-indexing = "^0.16.0"
 smqtk-relevancy = "^0.15.0"
 smqtk-descriptors = "^0.16.0"

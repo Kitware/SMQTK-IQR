@@ -4,7 +4,8 @@ import unittest.mock as mock
 import os
 import unittest
 import flask
-from typing import Any, Generator
+from werkzeug.test import TestResponse
+from typing import Any, Generator, Dict
 
 from smqtk_relevancy import RankRelevancyWithFeedback
 
@@ -57,14 +58,14 @@ class TestIqrService (unittest.TestCase):
 
         self.app = IqrService(config)
 
-    def assertStatusCode(self, r: flask.wrappers.Response, code: int) -> None:
+    def assertStatusCode(self, r: TestResponse, code: int) -> None:
         """
         :type r: :type: flask.wrappers.Response
         :type code: int
         """
         self.assertEqual(code, r.status_code)
 
-    def assertJsonMessageRegex(self, r: flask.wrappers.Response, regex: str) -> None:
+    def assertJsonMessageRegex(self, r: TestResponse, regex: str) -> None:
         """
         :type r: flask.wrappers.Response
         :type regex: str
@@ -77,15 +78,15 @@ class TestIqrService (unittest.TestCase):
         # Test that the is_ready endpoint returns the expected values.
         #: :type: flask.wrappers.Response
         r = self.app.test_client().get('/is_ready')
-        self.assertStatusCode(r, 200)  # type: ignore
-        self.assertJsonMessageRegex(r, "Yes, I'm alive.")  # type: ignore
+        self.assertStatusCode(r, 200)
+        self.assertJsonMessageRegex(r, "Yes, I'm alive.")
         self.assertIsInstance(self.app.descriptor_set, StubDescriptorSet)
         self.assertIsInstance(self.app.descriptor_generator, StubDescrGenerator)
         self.assertIsInstance(self.app.neighbor_index, StubNearestNeighborIndex)
 
     def test_add_descriptor_from_data_no_args(self) -> None:
         """ Test that providing no arguments causes a 400 error. """
-        r = self.app.test_client().post('/add_descriptor_from_data')  # type: flask.wrappers.Response
+        r = self.app.test_client().post('/add_descriptor_from_data')
         self.assertStatusCode(r, 400)
 
     def test_add_descriptor_from_data_no_b64(self) -> None:
@@ -126,10 +127,10 @@ class TestIqrService (unittest.TestCase):
         expected_descriptor = mock.MagicMock(spec=DescriptorElement)
         expected_descriptor.uuid.return_value = expected_descriptor_uid
 
-        self.app.describe_base64_data = mock.Mock(
+        self.app.describe_base64_data = mock.MagicMock(  # type: ignore
             return_value=expected_descriptor
         )
-        self.app.descriptor_set.add_descriptor = mock.Mock()
+        self.app.descriptor_set.add_descriptor = mock.MagicMock()  # type: ignore
 
         query_data = {
             "data_b64": expected_base64,
@@ -151,14 +152,14 @@ class TestIqrService (unittest.TestCase):
         self.assertEqual(r_json['uid'], expected_descriptor_uid)
 
     def test_get_nn_index_status(self) -> None:
-        self.app.neighbor_index.count = mock.Mock(return_value=0)
+        self.app.neighbor_index.count = mock.MagicMock(return_value=0)  # type: ignore
         with self.app.test_client() as tc:
             r = tc.get('/nn_index')
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "Success")
             self.assertEqual(json.loads(r.data.decode())['index_size'], 0)
 
-        self.app.neighbor_index.count = mock.Mock(return_value=89756234876)
+        self.app.neighbor_index.count = mock.MagicMock(return_value=89756234876)  # type: ignore
         with self.app.test_client() as tc:
             r = tc.get('/nn_index')
             self.assertStatusCode(r, 200)
@@ -215,11 +216,11 @@ class TestIqrService (unittest.TestCase):
         def key_error_raise(*_: Any, **__: Any) -> None:
             raise KeyError('test-key')
 
-        self.app.descriptor_set.get_many_descriptors = mock.Mock(
+        self.app.descriptor_set.get_many_descriptors = mock.MagicMock(  # type: ignore
             side_effect=key_error_raise
         )
         # Pretend any UID except 2 and "hello" are not contained.
-        self.app.descriptor_set.has_descriptor = mock.Mock(
+        self.app.descriptor_set.has_descriptor = mock.MagicMock(   # type: ignore
             side_effect=lambda k: k == 2 or k == "hello"
         )
 
@@ -259,11 +260,11 @@ class TestIqrService (unittest.TestCase):
             # noinspection PyUnreachableCode
             yield
 
-        self.app.descriptor_set.get_many_descriptors = mock.Mock(
+        self.app.descriptor_set.get_many_descriptors = mock.MagicMock(  # type: ignore
             side_effect=generator_key_error
         )
         # Pretend any UID except 2 and "hello" are not contained.
-        self.app.descriptor_set.has_descriptor = mock.Mock(
+        self.app.descriptor_set.has_descriptor = mock.MagicMock(  # type: ignore
             side_effect=lambda k: k == 2 or k == "hello"
         )
 
@@ -298,11 +299,11 @@ class TestIqrService (unittest.TestCase):
         expected_uid_list_json = json.dumps(expected_uid_list)
         expected_new_index_count = 10
 
-        self.app.descriptor_set.get_many_descriptors = mock.Mock(
+        self.app.descriptor_set.get_many_descriptors = mock.MagicMock(  # type: ignore
             return_value=expected_descriptors
         )
-        self.app.neighbor_index.update_index = mock.Mock()
-        self.app.neighbor_index.count = mock.Mock(
+        self.app.neighbor_index.update_index = mock.MagicMock()  # type: ignore
+        self.app.neighbor_index.count = mock.MagicMock(  # type: ignore
             return_value=expected_new_index_count
         )
 
@@ -382,11 +383,11 @@ class TestIqrService (unittest.TestCase):
         """
         expected_exception_msg = 'expected KeyError value'
 
-        def raiseKeyError(*_, **__):
+        def raiseKeyError(*_: Any, **__: Any) -> None:
             raise KeyError(expected_exception_msg)
 
         # Simulate a KeyError being raised by nn-index remove call.
-        self.app.neighbor_index.remove_from_index = mock.Mock(
+        self.app.neighbor_index.remove_from_index = mock.MagicMock(  # type: ignore
             side_effect=raiseKeyError
         )
 
@@ -405,8 +406,8 @@ class TestIqrService (unittest.TestCase):
         """
         Test we can remove from the nn-index via the endpoint.
         """
-        self.app.neighbor_index.remove_from_index = mock.Mock()
-        self.app.neighbor_index.count = mock.Mock(return_value=3)
+        self.app.neighbor_index.remove_from_index = mock.MagicMock()  # type: ignore
+        self.app.neighbor_index.count = mock.MagicMock(return_value=3)  # type: ignore
 
         with self.app.test_client() as tc:
             r = tc.delete('/nn_index',
@@ -488,13 +489,13 @@ class TestIqrService (unittest.TestCase):
         expected_uids = ['a', 'b', 'c']
         expected_neighbors = []
         for uid in expected_uids:
-            e = mock.Mock(spec=DescriptorElement)
+            e = mock.MagicMock(spec=DescriptorElement)
             e.uuid.return_value = uid
             expected_neighbors.append(e)
         expected_dists = [1, 2, 3]
 
-        self.app.describe_base64_data = mock.Mock()
-        self.app.neighbor_index.nn = mock.Mock(
+        self.app.describe_base64_data = mock.MagicMock()  # type: ignore
+        self.app.neighbor_index.nn = mock.MagicMock(  # type: ignore
             return_value=[expected_neighbors, expected_dists]
         )
 
@@ -545,9 +546,9 @@ class TestIqrService (unittest.TestCase):
 
     def test_uid_nearest_neighbors_no_elem_for_uid(self) -> None:
         # Simulate that any key we provide is not indexed.
-        def raise_keyerror(*_):
+        def raise_keyerror(*_: Any) -> None:
             raise KeyError("invalid-key")
-        self.app.descriptor_set.get_descriptor = mock.Mock(
+        self.app.descriptor_set.get_descriptor = mock.MagicMock(  # type: ignore
             side_effect=raise_keyerror
         )
 
@@ -560,13 +561,13 @@ class TestIqrService (unittest.TestCase):
         expected_uids = ['a', 'b', 'c']
         expected_neighbors = []
         for uid in expected_uids:
-            e = mock.Mock(spec=DescriptorElement)
+            e = mock.MagicMock(spec=DescriptorElement)
             e.uuid.return_value = uid
             expected_neighbors.append(e)
         expected_dists = [1, 2, 3]
 
-        self.app.descriptor_set.get_descriptor = mock.Mock()
-        self.app.neighbor_index.nn = mock.Mock(
+        self.app.descriptor_set.get_descriptor = mock.MagicMock()  # type: ignore
+        self.app.neighbor_index.nn = mock.MagicMock(  # type: ignore
             return_value=[expected_neighbors, expected_dists]
         )
 
@@ -640,20 +641,20 @@ class TestIqrService (unittest.TestCase):
             r = tc.get('/session?sid=abc')
             self.assertStatusCode(r, 200)
             r_json = r.json
-            assert r_json['sid'] == 'abc'
+            assert r_json['sid'] == 'abc'  # type: ignore
             # That everything included in "current" adjudications is included
             # here.
-            assert set(r_json['uuids_pos_ext']) == {'a'}
-            assert set(r_json['uuids_pos']) == {'c', 'd', 'e'}
-            assert set(r_json['uuids_neg_ext']) == {'b'}
-            assert set(r_json['uuids_neg']) == {'f', 'g', 'j'}
+            assert set(r_json['uuids_pos_ext']) == {'a'}  # type: ignore
+            assert set(r_json['uuids_pos']) == {'c', 'd', 'e'}  # type: ignore
+            assert set(r_json['uuids_neg_ext']) == {'b'}  # type: ignore
+            assert set(r_json['uuids_neg']) == {'f', 'g', 'j'}  # type: ignore
             # That those marked as "contributing" are included here
-            assert set(r_json['uuids_pos_in_model']) == {'d', 'h'}
-            assert set(r_json['uuids_pos_ext_in_model']) == {'a'}
-            assert set(r_json['uuids_neg_in_model']) == {'f', 'j', 'i'}
-            assert set(r_json['uuids_neg_ext_in_model']) == set()
+            assert set(r_json['uuids_pos_in_model']) == {'d', 'h'}  # type: ignore
+            assert set(r_json['uuids_pos_ext_in_model']) == {'a'}  # type: ignore
+            assert set(r_json['uuids_neg_in_model']) == {'f', 'j', 'i'}  # type: ignore
+            assert set(r_json['uuids_neg_ext_in_model']) == set()  # type: ignore
             # IQR working set expected size
-            assert r_json['wi_count'] == 8
+            assert r_json['wi_count'] == 8  # type: ignore
 
     def test_refine_no_session_id(self) -> None:
         with self.app.test_client() as tc:
@@ -711,9 +712,8 @@ class TestIqrService (unittest.TestCase):
         Test successfully getting results from a requested session.
         """
         # Mock controller interaction to get a mock IqrSession instance.
-        self.app.controller.has_session_uuid = \
-            mock.MagicMock(return_value=True)
-        self.app.controller.get_session = mock.MagicMock()
+        self.app.controller.has_session_uuid = mock.MagicMock(return_value=True)  # type: ignore
+        self.app.controller.get_session = mock.MagicMock()  # type: ignore
         # Mock IQR session instance to have
         # Mock results return to be something valid.
         d0 = DescriptorMemoryElement('', 0).set_vector([0])
@@ -729,8 +729,8 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "Returning result pairs")
             r_json = r.json
-            assert r_json['total_results'] == 3
-            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]
+            assert r_json['total_results'] == 3  # type: ignore
+            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]  # type: ignore
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
@@ -752,9 +752,8 @@ class TestIqrService (unittest.TestCase):
         Test successfully getting feedback results from a requested session.
         """
         # Mock controller interaction to get a mock IqrSession instance.
-        self.app.controller.has_session_uuid = \
-            mock.MagicMock(return_value=True)
-        self.app.controller.get_session = mock.MagicMock()
+        self.app.controller.has_session_uuid = mock.MagicMock(return_value=True)  # type: ignore
+        self.app.controller.get_session = mock.MagicMock()  # type: ignore
         # Mock IQR session instance to have
         # Mock feedback_results return to be something valid.
         d0 = DescriptorMemoryElement('', 0).set_vector([0])
@@ -770,8 +769,8 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "Returning feedback uuids")
             r_json = r.json
-            assert r_json['total_results'] == 3
-            assert r_json['results'] == [0, 2, 1]
+            assert r_json['total_results'] == 3  # type: ignore
+            assert r_json['results'] == [0, 2, 1]  # type: ignore
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
@@ -795,9 +794,8 @@ class TestIqrService (unittest.TestCase):
         adjudicated.
         """
         # Mock controller interaction to get a mock IqrSession instance.
-        self.app.controller.has_session_uuid = \
-            mock.MagicMock(return_value=True)
-        self.app.controller.get_session = mock.MagicMock()
+        self.app.controller.has_session_uuid = mock.MagicMock(return_value=True)  # type: ignore
+        self.app.controller.get_session = mock.MagicMock()  # type: ignore
         # Mock IQR session instance to have
         # Mock results return to be something valid.
         d0 = DescriptorMemoryElement('', 0).set_vector([0])
@@ -815,8 +813,8 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "success")
             r_json = r.json
-            assert r_json['total'] == 3
-            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]
+            assert r_json['total'] == 3  # type: ignore
+            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]  # type: ignore
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
@@ -840,9 +838,8 @@ class TestIqrService (unittest.TestCase):
         adjudicated.
         """
         # Mock controller interaction to get a mock IqrSession instance.
-        self.app.controller.has_session_uuid = \
-            mock.MagicMock(return_value=True)
-        self.app.controller.get_session = mock.MagicMock()
+        self.app.controller.has_session_uuid = mock.MagicMock(return_value=True)  # type: ignore
+        self.app.controller.get_session = mock.MagicMock()  # type: ignore
         # Mock IQR session instance to have
         # Mock results return to be something valid.
         d0 = DescriptorMemoryElement('', 0).set_vector([0])
@@ -860,8 +857,8 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "success")
             r_json = r.json
-            assert r_json['total'] == 3
-            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]
+            assert r_json['total'] == 3  # type: ignore
+            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]  # type: ignore
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
@@ -885,9 +882,8 @@ class TestIqrService (unittest.TestCase):
         adjudicated.
         """
         # Mock controller interaction to get a mock IqrSession instance.
-        self.app.controller.has_session_uuid = \
-            mock.MagicMock(return_value=True)
-        self.app.controller.get_session = mock.MagicMock()
+        self.app.controller.has_session_uuid = mock.MagicMock(return_value=True)  # type: ignore
+        self.app.controller.get_session = mock.MagicMock()  # type: ignore
         # Mock IQR session instance to have
         # Mock results return to be something valid.
         d0 = DescriptorMemoryElement('', 0).set_vector([0])
@@ -905,14 +901,14 @@ class TestIqrService (unittest.TestCase):
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "success")
             r_json = r.json
-            assert r_json['total'] == 3
-            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]
+            assert r_json['total'] == 3  # type: ignore
+            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]  # type: ignore
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
     @mock.patch('smqtk_iqr.web.iqr_service.iqr_server.ClassifyDescriptorSupervised'
                 '.get_impls')
-    def test_classify(self, m_sc_get_impls) -> None:
+    def test_classify(self, m_sc_get_impls: Any) -> None:
         """
         Test calling the GET /classify endpoint under nominal conditions.
         """
@@ -926,7 +922,7 @@ class TestIqrService (unittest.TestCase):
             DescriptorMemoryElement('', 'b').set_vector([0.5]),
             DescriptorMemoryElement('', 'c').set_vector([0.6]),
         ]
-        self.app.descriptor_set.get_many_descriptors = mock.MagicMock(
+        self.app.descriptor_set.get_many_descriptors = mock.MagicMock(  # type: ignore
             return_value=mock_descriptors
         )
         # Mock stub classifier return
@@ -941,7 +937,7 @@ class TestIqrService (unittest.TestCase):
             {'positive': 0.5, 'negative': 0.5})
         mock_classifications[2].set_classification(
             {'positive': 0.4, 'negative': 0.6})
-        StubClassifier.classify_elements = mock.MagicMock(
+        StubClassifier.classify_elements = mock.MagicMock(  # type: ignore
             return_value=iter(mock_classifications)
         )
 
@@ -980,9 +976,9 @@ class TestIqrService (unittest.TestCase):
             # for the expected classification "positive" probabilities as in
             # the mocked classification results.
             r_json = r.json
-            assert r_json['sid'] == '0'
-            assert r_json['uuids'] == ['a', 'b', 'c']
-            assert r_json['proba'] == [0.6, 0.5, 0.4]
+            assert r_json['sid'] == '0'  # type: ignore
+            assert r_json['uuids'] == ['a', 'b', 'c']  # type: ignore
+            assert r_json['proba'] == [0.6, 0.5, 0.4]  # type: ignore
 
     def test_get_iqr_state_no_sid(self) -> None:
         # Test that calling GET /state with no SID results in error.
@@ -1038,8 +1034,8 @@ class TestIqrService (unittest.TestCase):
         expected_b64 = base64.b64encode(expected_bytes).decode()
 
         # Pretend input SID is valid
-        self.app.controller.has_session_uuid = mock.Mock(return_value=True)
-        self.app.controller.get_session = mock.Mock()
+        self.app.controller.has_session_uuid = mock.MagicMock(return_value=True)  # type: ignore
+        self.app.controller.get_session = mock.MagicMock()  # type: ignore
         self.app.controller.get_session().get_state_bytes.return_value = \
             expected_bytes
 
@@ -1107,8 +1103,8 @@ class TestIqrService (unittest.TestCase):
         expected_bytes = b'expected-state-bytes'
         expected_bytes_b64 = base64.b64encode(expected_bytes).decode()
 
-        self.app.controller.has_session_uuid = mock.Mock(return_value=True)
-        self.app.controller.get_session = mock.Mock()
+        self.app.controller.has_session_uuid = mock.MagicMock(return_value=True)  # type: ignore
+        self.app.controller.get_session = mock.MagicMock()  # type: ignore
 
         r = self.app.test_client().put('/state',
                                        data=dict(
@@ -1129,25 +1125,25 @@ class TestIqrService (unittest.TestCase):
         Test getting random descriptor UIDs from the
         """
         expected = list(map(chr, range(97, 97+26)))
-        self.app.descriptor_set.iterkeys = mock.MagicMock(
+        self.app.descriptor_set.iterkeys = mock.MagicMock(  # type: ignore
             return_value=list(map(chr, range(97, 97+26)))
         )
         with self.app.test_client() as tc:
             r = tc.get('/random_uids')
             self.assertStatusCode(r, 200)
             r_json = r.json
-            assert r_json['total'] == 26
+            assert r_json['total'] == 26  # type: ignore
             # The results should have the expected contents but not be in the
             # same order, cause ya know, random.
-            assert sorted(r_json['results']) == expected
-            assert r_json['results'] != expected
-            result1 = r_json['results']
+            assert sorted(r_json['results']) == expected  # type: ignore
+            assert r_json['results'] != expected  # type: ignore
+            result1 = r_json['results']  # type: ignore
 
             # A second call should return the same list due to caching
             r2 = tc.get('/random_uids')
             self.assertStatusCode(r, 200)
             r2_json = r2.json
-            assert r2_json['results'] == result1
+            assert r2_json['results'] == result1  # type: ignore
 
             # Calling with refresh should re-query the descriptor set and
             # reorder. Result (should) be different.
@@ -1157,31 +1153,31 @@ class TestIqrService (unittest.TestCase):
             r3 = tc.get('/random_uids?refresh=true')
             self.assertStatusCode(r, 200)
             r3_json = r3.json
-            assert r3_json['results'] != result1
+            assert r3_json['results'] != result1  # type: ignore
 
     def test_get_random_uids_paged(self) -> None:
         """ Test pagination of random UIDs """
-        self.app.descriptor_set.iterkeys = mock.MagicMock(
+        self.app.descriptor_set.iterkeys = mock.MagicMock(  # type: ignore
             return_value=list(map(chr, range(97, 97+26)))
         )
         with self.app.test_client() as tc:
             # Lets get a baseline to test pagination
             rbase = tc.get('/random_uids')
             self.assertStatusCode(rbase, 200)
-            result_all = rbase.json['results']
+            result_all = rbase.json['results']  # type: ignore
 
             r = tc.get('/random_uids?i=3')
             self.assertStatusCode(r, 200)
-            assert r.json['results'] == result_all[3:]
+            assert r.json['results'] == result_all[3:]  # type: ignore
 
             r = tc.get('/random_uids?j=-4')
             self.assertStatusCode(r, 200)
-            assert r.json['results'] == result_all[:-4]
+            assert r.json['results'] == result_all[:-4]  # type: ignore
 
             r = tc.get('/random_uids?j=10')
             self.assertStatusCode(r, 200)
-            assert r.json['results'] == result_all[:10]
+            assert r.json['results'] == result_all[:10]  # type: ignore
 
             r = tc.get('/random_uids?i=7&j=10')
             self.assertStatusCode(r, 200)
-            assert r.json['results'] == result_all[7:10]
+            assert r.json['results'] == result_all[7:10]  # type: ignore

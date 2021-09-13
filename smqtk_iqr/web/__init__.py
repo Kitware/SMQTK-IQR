@@ -10,8 +10,7 @@ import flask
 from smqtk_core import Plugfigurable
 from smqtk_core.dict import merge_dict
 
-from typing import Dict, Type, Any, Optional
-
+from typing import Dict, Type, Any, Optional, TypeVar
 # noinspection PyAbstractClass
 class SmqtkWebApp (flask.Flask, Plugfigurable):
     """
@@ -52,7 +51,7 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
 
     @classmethod
     def from_config(
-        cls: Type["SmqtkWebApp"], config_dict: Dict[str, Any],
+        cls: "SmqtkWebApp", config_dict: Dict[str, Any],
         merge_default: bool = True)-> "SmqtkWebApp":
         """
         Override to just pass the configuration dictionary to constructor

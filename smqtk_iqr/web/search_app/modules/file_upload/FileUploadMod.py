@@ -5,6 +5,7 @@ import os
 import tempfile
 from typing import Dict, Optional, Callable
 import smqtk_iqr
+from smqtk_iqr.web.search_app import IqrSearchDispatcher
 from smqtk_dataprovider.utils.file import safe_create_dir
 import logging
 
@@ -17,7 +18,7 @@ class FileUploadMod (flask.Blueprint):
     Flask blueprint for file uploading.
     """
 
-    def __init__(self, name: str, parent_app: smqtk_iqr.Web.search_app.base_app.search_app,
+    def __init__(self, name: str, parent_app: IqrSearchDispatcher,
         working_directory: str, url_prefix: Optional[str]=None):
         """
         Initialize uploading module
@@ -84,7 +85,7 @@ class FileUploadMod (flask.Blueprint):
                 # - Need to explicitly copy the buffered data as the file object
                 #   closes between chunk messages.
                 self._file_chunks.setdefault(fid, {})[current_chunk] \
-                    = BytesIO(chunk_data.read())
+                    = BytesIO(chunk_data.read())  # type: ignore
                 message = "Uploaded chunk #%d of %d for file '%s'" \
                     % (current_chunk, total_chunks, filename)
 

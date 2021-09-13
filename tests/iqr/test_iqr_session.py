@@ -1,17 +1,19 @@
 import pytest
 import unittest.mock as mock
+import numpy
+from typing import Optional, Dict, Any, List, Tuple
 
 from smqtk_relevancy.interfaces.rank_relevancy import RankRelevancyWithFeedback
 from smqtk_iqr.iqr.iqr_session import IqrSession
 from smqtk_descriptors.impls.descriptor_element.memory import \
     DescriptorMemoryElement
-
+from smqtk_descriptors import DescriptorElement
 
 class TestIqrSession (object):
     """
     Unit tests pertaining to the IqrSession class.
     """
-
+    iqrs = None  # type: IqrSession
     @classmethod
     def setup_method(cls) -> None:
         """
@@ -221,16 +223,16 @@ class TestIqrSession (object):
         ways.
         """
         e = DescriptorMemoryElement('', 0).set_vector([0])
-
-        self.iqrs._ordered_pos = True
-        self.iqrs._ordered_neg = True
-        self.iqrs._ordered_non_adj = True
+        a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
+        self.iqrs._ordered_pos = a
+        self.iqrs._ordered_neg = a
+        self.iqrs._ordered_non_adj = a
 
         # Check that adding a positive adjudication resets the positive and
         # non-adjudicated result caches.
         self.iqrs.adjudicate(new_positives=[e])
         assert self.iqrs._ordered_pos is None  # reset
-        assert self.iqrs._ordered_neg is True  # NOT reset
+        assert self.iqrs._ordered_neg is not None  # NOT reset
         assert self.iqrs._ordered_non_adj is None  # reset
 
     def test_adjudicate_cache_resetting_negative(self) -> None:
@@ -239,15 +241,15 @@ class TestIqrSession (object):
         ways.
         """
         e = DescriptorMemoryElement('', 0).set_vector([0])
-
-        self.iqrs._ordered_pos = True
-        self.iqrs._ordered_neg = True
-        self.iqrs._ordered_non_adj = True
+        a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
+        self.iqrs._ordered_pos =  a
+        self.iqrs._ordered_neg = a
+        self.iqrs._ordered_non_adj = a
 
         # Check that adding a positive adjudication resets the positive and
         # non-adjudicated result caches.
         self.iqrs.adjudicate(new_negatives=[e])
-        assert self.iqrs._ordered_pos is True  # NOT reset
+        assert self.iqrs._ordered_pos is not None  # NOT reset
         assert self.iqrs._ordered_neg is None  # reset
         assert self.iqrs._ordered_non_adj is None  # reset
 
@@ -257,6 +259,7 @@ class TestIqrSession (object):
         change occurs under different circumstances
         """
         # setup initial IQR session state.
+        a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
         p0 = DescriptorMemoryElement('', 0).set_vector([0])
         p1 = DescriptorMemoryElement('', 1).set_vector([1])
         p2 = DescriptorMemoryElement('', 2).set_vector([2])
@@ -264,7 +267,7 @@ class TestIqrSession (object):
         n4 = DescriptorMemoryElement('', 4).set_vector([4])
         self.iqrs.positive_descriptors = {p0, p1, p2}
         self.iqrs.negative_descriptors = {n3, n4}
-        self.iqrs._ordered_pos = self.iqrs._ordered_neg = self.iqrs._ordered_non_adj = True
+        self.iqrs._ordered_pos = self.iqrs._ordered_neg = self.iqrs._ordered_non_adj = a
 
         # Empty adjudication
         self.iqrs.adjudicate()
@@ -326,7 +329,7 @@ class TestIqrSession (object):
         # Mock return dictionary, probabilities don't matter much other than
         # they are not 1.0 or 0.0.
         pool_ids = [de.uuid() for de in desc_list]
-        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (  # type: ignore
           [0.5, 0.5, 0.5],
           pool_ids
         )
@@ -354,7 +357,7 @@ class TestIqrSession (object):
         # - value of ``results`` attribute is what we expect.
         pool_uids, pool_de = zip(*self.iqrs.working_set.items())
         pool = [de.vector() for de in pool_de]
-        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once_with(
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once_with(  # type: ignore
             [test_in_pos_elem.vector(), test_ex_pos_elem.vector()],
             [test_in_neg_elem.vector(), test_ex_neg_elem.vector()],
             pool,
@@ -389,7 +392,7 @@ class TestIqrSession (object):
         # Mock return dictionary, probabilities don't matter much other than
         # they are not 1.0 or 0.0.
         pool_ids = [*self.iqrs.working_set.iterkeys()]
-        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (  # type: ignore
           [0.5, 0.5, 0.5],
           pool_ids
         )
@@ -402,7 +405,7 @@ class TestIqrSession (object):
             test_other_elem: 0.2,
             # ``refine`` replaces the previous dict, so disjoint keys are
             # NOT retained.
-            'something else': 0.3,
+            'something else': 0.3,  # type: ignore
         }
 
         # Create a "previous state" of the feedback results.
@@ -429,7 +432,7 @@ class TestIqrSession (object):
         # - value of ``results`` attribute is what we expect.
         pool_uids, pool_de = zip(*self.iqrs.working_set.items())
         pool = [de.vector() for de in pool_de]
-        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once_with(
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once_with(  # type: ignore
             [test_in_pos_elem.vector(), test_ex_pos_elem.vector()],
             [test_in_neg_elem.vector(), test_ex_neg_elem.vector()],
             pool,

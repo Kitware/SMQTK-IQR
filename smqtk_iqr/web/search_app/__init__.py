@@ -92,9 +92,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
         # Use mongo for session storage.
         # -> This allows session modification during Flask methods called from
         #    AJAX routines (default Flask sessions do not)
-        self.session_interface = MongoSessionInterface(self.db_info.host,
-                                                       self.db_info.port,
-                                                       self.db_info.name)
+        self.session_interface = MongoSessionInterface(self.db_info.host, self.db_info.port, self.db_info.name)  # type: ignore
 
         #
         # Misc. Setup
@@ -281,7 +279,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
                             "Using dispatcher app.")
             app = self.wsgi_app  # type: ignore
 
-        return app(environ, start_response)
+        return app(environ, start_response)  # type: ignore
 
     def run(
     self, host: Optional[str] = None, port: Optional[int] = None,
