@@ -1,19 +1,18 @@
 import pytest
 import unittest.mock as mock
-import numpy
-from typing import Optional, Dict, Any, List, Tuple
 
 from smqtk_relevancy.interfaces.rank_relevancy import RankRelevancyWithFeedback
 from smqtk_iqr.iqr.iqr_session import IqrSession
 from smqtk_descriptors.impls.descriptor_element.memory import \
     DescriptorMemoryElement
-from smqtk_descriptors import DescriptorElement
+
 
 class TestIqrSession (object):
     """
     Unit tests pertaining to the IqrSession class.
     """
     iqrs = None  # type: IqrSession
+
     @classmethod
     def setup_method(cls) -> None:
         """
@@ -224,6 +223,7 @@ class TestIqrSession (object):
         """
         e = DescriptorMemoryElement('', 0).set_vector([0])
         a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
+        assert a is not None
         self.iqrs._ordered_pos = a
         self.iqrs._ordered_neg = a
         self.iqrs._ordered_non_adj = a
@@ -242,7 +242,7 @@ class TestIqrSession (object):
         """
         e = DescriptorMemoryElement('', 0).set_vector([0])
         a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
-        self.iqrs._ordered_pos =  a
+        self.iqrs._ordered_pos = a
         self.iqrs._ordered_neg = a
         self.iqrs._ordered_non_adj = a
 
@@ -463,7 +463,7 @@ class TestIqrSession (object):
         a cache.
         """
         # Simulate there being a cache
-        self.iqrs._ordered_pos = ['simulated', 'cache']
+        self.iqrs._ordered_pos = ['simulated', 'cache']  # type: ignore
         actual = self.iqrs.get_positive_adjudication_relevancy()
         assert actual == self.iqrs._ordered_pos
         assert id(actual) != id(self.iqrs._ordered_pos)
@@ -548,7 +548,7 @@ class TestIqrSession (object):
         a cache.
         """
         # Simulate there being a cache
-        self.iqrs.feedback_list = ['simulated', 'cache']
+        self.iqrs.feedback_list = ['simulated', 'cache']  # type: ignore
         actual = self.iqrs.feedback_results()
         assert actual == self.iqrs.feedback_list
         assert id(actual) != id(self.iqrs.feedback_list)
@@ -564,12 +564,12 @@ class TestIqrSession (object):
         d1 = DescriptorMemoryElement('', 1).set_vector([1])
         d2 = DescriptorMemoryElement('', 2).set_vector([2])
         d3 = DescriptorMemoryElement('', 3).set_vector([3])
-        self.iqrs.feedback_list = {
+        self.iqrs.feedback_list = [
             d0,
             d1,
             d2,
             d3,
-        }
+        ]
 
         # Initial call to ``ordered_results`` should have a non-None return.
         assert self.iqrs.feedback_results() is not None
@@ -586,7 +586,7 @@ class TestIqrSession (object):
         cache.
         """
 
-        self.iqrs._ordered_pos = ['simulation', 'cache']
+        self.iqrs._ordered_pos = ['simulation', 'cache']  # type: ignore
         actual = self.iqrs.get_positive_adjudication_relevancy()
         assert actual == ['simulation', 'cache']
         assert id(actual) != id(self.iqrs._ordered_pos)
@@ -650,7 +650,7 @@ class TestIqrSession (object):
         Test that a shallow copy of the cached list is returned if there is a
         cache.
         """
-        self.iqrs._ordered_neg = ['simulation', 'cache']
+        self.iqrs._ordered_neg = ['simulation', 'cache']  # type: ignore
         actual = self.iqrs.get_negative_adjudication_relevancy()
         assert actual == ['simulation', 'cache']
         assert id(actual) != id(self.iqrs._ordered_neg)
@@ -714,7 +714,7 @@ class TestIqrSession (object):
         Test that a shallow copy of the cached list is returned if there is a
         cache.
         """
-        self.iqrs._ordered_non_adj = ['simulation', 'cache']
+        self.iqrs._ordered_non_adj = ['simulation', 'cache']  # type: ignore
         actual = self.iqrs.get_unadjudicated_relevancy()
         assert actual == ['simulation', 'cache']
         assert id(actual) != id(self.iqrs._ordered_non_adj)
@@ -779,7 +779,7 @@ class TestIqrSession (object):
         None.
         """
         # Setup initial IQR session state
-        self.iqrs._ordered_pos = self.iqrs._ordered_neg = self.iqrs._ordered_non_adj = True
+        self.iqrs._ordered_pos = self.iqrs._ordered_neg = self.iqrs._ordered_non_adj
 
         self.iqrs.reset()
         assert self.iqrs._ordered_pos is None

@@ -81,7 +81,7 @@ class IqrSearch (flask.Flask, Configurable):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def from_config(
+    def from_config(  # type: ignore
         cls: Type[T], config: Dict[str, Any],
         parent_app: IqrSearchDispatcher
     ) -> T:
@@ -109,8 +109,8 @@ class IqrSearch (flask.Flask, Configurable):
         return cls(parent_app, **merged)
 
     def __init__(
-        self, parent_app: IqrSearchDispatcher, iqr_service_url: str,
-        data_set: DataSet, working_directory: str):
+                self, parent_app: IqrSearchDispatcher, iqr_service_url: str,
+                data_set: DataSet, working_directory: str):
         """
         Initialize a generic IQR Search module with a single descriptor and
         indexer.
@@ -308,7 +308,7 @@ class IqrSearch (flask.Flask, Configurable):
                 return_obj['message'] = 'No file ID provided.'
 
             LOG.debug("[%s::%s] Getting temporary filepath from "
-                            "uploader module", sid, fid)
+                      "uploader module", sid, fid)
             upload_filepath = self.mod_upload.get_path_for_id(fid)  # type: ignore
             self.mod_upload.clear_completed(fid)  # type: ignore
 
@@ -367,7 +367,7 @@ class IqrSearch (flask.Flask, Configurable):
             # Update service state
             self._iqr_service.put('state',
                                   sid=sid,
-                                  state_base64=base64.b64decode(service_zip_base64).decode('acii'))
+                                  state_base64=service_zip_base64)
 
             return flask.jsonify(return_obj)
 
@@ -454,7 +454,6 @@ class IqrSearch (flask.Flask, Configurable):
             uploader.
 
             :return: string of data/descriptor element's UUID
-            :rtype: str
 
             """
             # TODO: Add status dict with a "GET" method branch for getting that
@@ -465,12 +464,11 @@ class IqrSearch (flask.Flask, Configurable):
             sid = self.get_current_iqr_session()
 
             LOG.debug("[%s::%s] Getting temporary filepath from "
-                            "uploader module", sid, fid)
+                      "uploader module", sid, fid)
             upload_filepath = self.mod_upload.get_path_for_id(fid)
             self.mod_upload.clear_completed(fid)
 
-            LOG.debug("[%s::%s] Moving uploaded file",
-                            sid, fid)
+            LOG.debug("[%s::%s] Moving uploaded file", sid, fid)
             sess_upload = osp.join(self._iqr_work_dirs[sid],
                                    osp.basename(upload_filepath))
             os.rename(upload_filepath, sess_upload)
@@ -482,11 +480,11 @@ class IqrSearch (flask.Flask, Configurable):
 
             # Extend session ingest -- modifying
             LOG.debug("[%s::%s] Adding new data to session "
-                            "external positives", sid, fid)
+                      "external positives", sid, fid)
             data_b64 = base64.b64encode(upload_data.get_bytes())
             data_ct = upload_data.content_type()
             r = self._iqr_service.post('add_external_pos', sid=sid,
-                                    base64=base64.b64decode(data_b64).decode('acii'), content_type=data_ct)
+                                       base64=data_b64, content_type=data_ct)
             r.raise_for_status()
 
             return str(uuid)
@@ -702,7 +700,6 @@ class IqrSearch (flask.Flask, Configurable):
     def work_dir(self) -> str:
         """
         :return: Common work directory for this instance.
-        :rtype: str
         """
         return osp.expanduser(osp.abspath(self._working_dir))
 
@@ -710,7 +707,6 @@ class IqrSearch (flask.Flask, Configurable):
         """
         Get the current IQR Session UUID.
 
-        :rtype: str
 
         """
         sid = str(flask.session.sid)  # type: ignore

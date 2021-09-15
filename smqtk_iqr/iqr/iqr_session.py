@@ -4,7 +4,7 @@ import logging
 import threading
 from types import TracebackType
 from typing import (
-    cast, Dict, Hashable, Iterable, List, Optional, Set, Tuple, Union
+    cast, Dict, Hashable, Iterable, List, Optional, Set, Tuple, Union, Sequence
 )
 import uuid
 import zipfile
@@ -83,24 +83,19 @@ class IqrSession ():
 
         # Book-keeping set so we know what positive descriptors
         # UUIDs we've used to query the neighbor index with already.
-        #: :type: set[collections.abc.Hashable]
         self._wi_seeds_used: Set[Hashable] = set()
 
         # Descriptor elements representing data from external sources.
         # These may be arbitrary descriptor elements not present in
         #   ``working_index``.
-        #: :type: set[smqtk_descriptors.DescriptorElement]
         self.external_positive_descriptors: Set[DescriptorElement] = set()
-        #: :type: set[smqtk_descriptors.DescriptorElement]
         self.external_negative_descriptors: Set[DescriptorElement] = set()
 
         # Descriptor references from ``working_set`` that have been
         #   adjudicated.
         # These should be sub-sets of the descriptors contained in the
         #   ``working_set``.
-        #: :type: set[smqtk_descriptors.DescriptorElement]
         self.positive_descriptors: Set[DescriptorElement] = set()
-        #: :type: set[smqtk_descriptors.DescriptorElement]
         self.negative_descriptors: Set[DescriptorElement] = set()
 
         # Sets of descriptor elements that were used in the last refinement
@@ -108,48 +103,39 @@ class IqrSession ():
         #   current results state.
         # These sets are empty before the first refine after construction or a
         #   reset.
-        #: :type: set[smqtk_descriptors.DescriptorElement]
         self.rank_contrib_pos: Set[DescriptorElement] = set()
-        #: :type: set[smqtk_descriptors.DescriptorElement]
         self.rank_contrib_pos_ext: Set[DescriptorElement] = set()
-        #: :type: set[smqtk_descriptors.DescriptorElement]
         self.rank_contrib_neg: Set[DescriptorElement] = set()
-        #: :type: set[smqtk_descriptors.DescriptorElement]
         self.rank_contrib_neg_ext: Set[DescriptorElement] = set()
 
         # Mapping of a DescriptorElement in our relevancy search index (not the
         #   set that the nn_index uses) to the relevancy score given the
         #   recorded positive and negative adjudications.
         # This is None before any initialization or refinement occurs.
-        #: :type: None | dict[smqtk_descriptors.DescriptorElement, float]
         self.results: Optional[Dict[DescriptorElement, float]] = None
 
         # List of UID's representing the descriptors that we recommend for
         #   adjudicationfeedback.
         # This is None before any initialization or refinement occurs.
-        self.feedback_list: Optional[List[DescriptorElement]] = None
+        self.feedback_list: Optional[Sequence[DescriptorElement]] = None
 
         # Cache variables for views of refinement results.
         # All results as a list in order of relevancy score.
-        #: :type: None | list[(smqtk_descriptors.DescriptorElement, float)]
         self._ordered_results: Optional[
-            List[Tuple[DescriptorElement, float]]
+            Sequence[Tuple[DescriptorElement, float]]
         ] = None
         #: Positively adjudicated descriptors in order of relevancy score.
-        #: :type: None | list[(smqtk_descriptors.DescriptorElement, float)]
         self._ordered_pos: Optional[
-            List[Tuple[DescriptorElement, float]]
+            Sequence[Tuple[DescriptorElement, float]]
         ] = None
         # Negatively adjudicated descriptors in order of relevancy score.
-        #: :type: None | list[(smqtk_descriptors.DescriptorElement, float)]
         self._ordered_neg: Optional[
-            List[Tuple[DescriptorElement, float]]
+            Sequence[Tuple[DescriptorElement, float]]
         ] = None
         # Non-adjudicated descriptors in our working set in order of
         # relevancy score.
-        #: :type: None | list[(smqtk_descriptors.DescriptorElement, float)]
         self._ordered_non_adj: Optional[
-            List[Tuple[DescriptorElement, float]]
+            Sequence[Tuple[DescriptorElement, float]]
         ] = None
 
         #
@@ -159,9 +145,6 @@ class IqrSession ():
         self.rank_relevancy_with_feedback = rank_relevancy_with_feedback
 
     def __enter__(self) -> "IqrSession":
-        """
-        :rtype: IqrSession
-        """
         self.lock.acquire()
         return self
 
@@ -599,7 +582,7 @@ class IqrSession ():
             ) -> DescriptorElement:
                 _e = descriptor_factory.new_descriptor(_type_str, _uid)
                 if _e.has_vector():
-                    assert _e.vector().tolist() == vec_list, "Found existing vector for UUID '%s' but vectors did not match."  # type: ignore
+                    assert _e.vector().tolist() == vec_list, "Found existing vector for UUID '%s' but vectors did not match."  # type: ignore  # noqa: E501
                 else:
                     _e.set_vector(np.array(vec_list))
                 return _e

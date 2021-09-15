@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Any, Tuple, Optional
+from typing import Dict, Any, Tuple, Iterable, Union
 import flask
 import requests
 
@@ -20,7 +20,6 @@ def make_response_json(message: str, return_code: int = 200, **params: Dict[str,
     :type params: JSON-compliant
 
     :return: Flask response and HTTP status code pair.
-    :rtype: (flask.Response, int)
 
     """
     r = {
@@ -54,18 +53,18 @@ class ServiceProxy (object):
     def _compose(self, endpoint: str) -> str:
         return '/'.join([self.url, endpoint])
 
-    def get(self, endpoint: str, **params: Optional[str]) -> requests.Response:
+    def get(self, endpoint: str, **params: Union[str, Iterable[str], bytes, None]) -> requests.Response:
         # Make params None if its empty.
         return requests.get(self._compose(endpoint), params)
 
-    def post(self, endpoint: str, **params: Optional[str]) -> requests.Response:
+    def post(self, endpoint: str, **params: Union[str, Iterable[str], bytes, None]) -> requests.Response:
         # Make params None if its empty.
         return requests.post(self._compose(endpoint), data=params)
 
-    def put(self, endpoint: str, **params: Optional[str]) -> requests.Response:
+    def put(self, endpoint: str, **params: Union[str, Iterable[str], bytes, None]) -> requests.Response:
         # Make params None if its empty.
         return requests.put(self._compose(endpoint), data=params)
 
-    def delete(self, endpoint: str, **params: Optional[str]) -> requests.Response:
+    def delete(self, endpoint: str, **params: Union[str, Iterable[str], bytes, None]) -> requests.Response:
         # Make params None if its empty.
         return requests.delete(self._compose(endpoint), params=params)

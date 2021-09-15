@@ -21,5 +21,6 @@ Fixes
 
 * Update CI configurations to use `Poetry`_.
 
+* Fixed MyPy and flake8 issues
 
 .. _Poetry: https://python-poetry.org/

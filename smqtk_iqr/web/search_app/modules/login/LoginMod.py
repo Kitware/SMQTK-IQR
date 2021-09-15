@@ -14,9 +14,13 @@ script_dir = os.path.dirname(os.path.abspath(__file__))
 LOG = logging.getLogger(__name__)
 
 # noinspection PyUnusedLocal
+
+
 class LoginMod (flask.Blueprint):
 
-    def __init__(self, name: str, parent_app: flask.Flask, url_prefix: Optional[str]=None):
+    def __init__(
+                self, name: str, parent_app: flask.Flask,
+                url_prefix: Optional[str] = None):
         """
         Initialize the login module
 
@@ -100,7 +104,9 @@ class LoginMod (flask.Blueprint):
     #
 
     @staticmethod
-    def _login_user(userid: str, user_info: Dict[str, Union[str,List[str]]]) -> None:
+    def _login_user(
+                    userid: str, user_info: Dict[str, Union[str, List[str]]]
+                ) -> None:
         """
         "log-in" the user in the current session. This adds the name and role
         list to the session. Only one user logged in at a time.

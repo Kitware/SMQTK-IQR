@@ -43,12 +43,16 @@ from smqtk_iqr.iqr import (
 
 LOG = logging.getLogger(__name__)
 
+
 def new_uuid() -> str:
     return str(uuid.uuid1(clock_seq=int(time.time() * 1000000)))\
         .replace('-', '')
 
 
-def make_response_json(message: str, **params: Union[Hashable, Sequence[Hashable], Sequence[Sequence[Hashable]]]) -> flask.Response:
+def make_response_json(
+                        message: str,
+                        **params: Union[Hashable, Sequence[Hashable], Sequence[Sequence[Hashable]]]
+                    ) -> flask.Response:
     r = {
         "message": message,
         "time": {
@@ -69,7 +73,6 @@ def parse_hashable_json_list(json_str: str) -> List[Hashable]:
     :raises ValueError: Expected value check failed.
 
     :return: List of hashable-type values.
-    :rtype: list[collections.abc.Hashable]
 
     """
     try:
@@ -371,7 +374,6 @@ class IqrService (SmqtkWebApp):
         :raises TypeError: Failed to parse base64 data.
 
         :return: Computed descriptor element.
-        :rtype: smqtk_descriptors.DescriptorElement
         """
         de = DataMemoryElement.from_base64(b64, content_type)
         return self.descriptor_generator.generate_one_element(
@@ -1725,7 +1727,9 @@ class IqrService (SmqtkWebApp):
             "success", total=total, results=results
         ), 200
 
-    def _ensure_session_classifier(self, iqrs: smqtk_iqr.iqr.IqrSession) -> Tuple[ClassifyDescriptorSupervised, str, str]:
+    def _ensure_session_classifier(
+                                    self, iqrs: smqtk_iqr.iqr.IqrSession
+                                ) -> Tuple[ClassifyDescriptorSupervised, str, str]:
         """
         Return the binary pos/neg classifier for this session.
 
@@ -1741,7 +1745,6 @@ class IqrService (SmqtkWebApp):
         :return:
             Binary classifier for the given IQR session, the positive
             classification label and the negative classification label.
-        :rtype: (smqtk_classifier.ClassifyDescriptorSupervised, str, str)
         """
         sid = iqrs.uuid
 
@@ -1763,7 +1766,7 @@ class IqrService (SmqtkWebApp):
 
         if self.session_classifier_dirty[sid] or maybe_classifier is None:
             LOG.debug("Training new classifier for current "
-                            "adjudication state...")
+                      "adjudication state...")
             classifier = cast(
                 ClassifyDescriptorSupervised,
                 from_config_dict(
@@ -1827,8 +1830,7 @@ class IqrService (SmqtkWebApp):
 
         with self.controller:
             if not self.controller.has_session_uuid(sid):
-                LOG.warning("No IQR Session with UID '{}' found."
-                                  .format(sid))
+                LOG.warning("No IQR Session with UID '{}' found.".format(sid))
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
             iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession

@@ -5,7 +5,6 @@ import re
 from typing import Union
 
 
-
 PROTOCOL_HEADER = re.compile(r'\w+://')
 URL_SEP = '/'
 
@@ -35,7 +34,6 @@ def url_join(url: str, *urls: Union[str, int]) -> str:
     :type urls: string-castable
 
     :return: Joined URL string
-    :rtype: str
 
     """
     # State-builder methods

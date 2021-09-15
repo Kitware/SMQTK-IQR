@@ -33,7 +33,6 @@ class DatabaseInfo (object):
         :param name:
         :type name:
         :return:
-        :rtype:
         """
         self.host = str(host)
         self.port = int(port)
@@ -54,7 +53,6 @@ class DatabaseInfo (object):
 
         :return: a completely new DatabaseInfo instance with the same data as
             this one.
-        :rtype: DatabaseInfo
 
         """
         return DatabaseInfo(self.host, self.port, self.name)

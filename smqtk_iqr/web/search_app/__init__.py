@@ -92,7 +92,8 @@ class IqrSearchDispatcher (SmqtkWebApp):
         # Use mongo for session storage.
         # -> This allows session modification during Flask methods called from
         #    AJAX routines (default Flask sessions do not)
-        self.session_interface = MongoSessionInterface(self.db_info.host, self.db_info.port, self.db_info.name)  # type: ignore
+        self.session_interface = \
+            MongoSessionInterface(self.db_info.host, self.db_info.port, self.db_info.name)  # type: ignore
 
         #
         # Misc. Setup
@@ -215,7 +216,6 @@ class IqrSearchDispatcher (SmqtkWebApp):
         :type prefix: str
 
         :return: Application instance.
-        :rtype: IqrSearch
 
         """
         with self.instances_lock:
@@ -239,8 +239,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
 
                 self.instances[prefix] = a
             else:
-                LOG.debug("Existing IQR instance for prefix: '%s'",
-                                prefix)
+                LOG.debug("Existing IQR instance for prefix: '%s'", prefix)
                 a = self.instances[prefix]
 
         return a
@@ -255,35 +254,32 @@ class IqrSearchDispatcher (SmqtkWebApp):
 
         :return: Application instance or None if there is no instance for the
             given ``prefix``.
-        :rtype: IqrSearch | None
-
         """
         with self.instances_lock:
             return self.instances.get(prefix, None)
 
     def __call__(self, environ: Dict, start_response: Callable) -> Callable:
         path_prefix = peek_path_info(environ)
-        LOG.debug("Base application __call__ path prefix: '%s'",
-                        path_prefix)
+        LOG.debug("Base application __call__ path prefix: '%s'", path_prefix)
 
         if path_prefix and path_prefix not in self.PREFIX_BLACKLIST:
             app = self.get_application(path_prefix)
             if app is not None:
                 pop_path_info(environ)
             else:
-                LOG.debug("No IQR application registered for prefix: "
-                                "'%s'", path_prefix)
+                LOG.debug("No IQR application registered for prefix: '%s'",
+                          path_prefix)
                 app = NotFound()  # type: ignore
         else:
-            LOG.debug("No prefix or prefix in blacklist. "
-                            "Using dispatcher app.")
+            LOG.debug("No prefix or prefix in blacklist. Using dispatcher app.")
             app = self.wsgi_app  # type: ignore
 
         return app(environ, start_response)  # type: ignore
 
     def run(
-    self, host: Optional[str] = None, port: Optional[int] = None,
-    debug: Optional[bool] = False, load_dotenv: bool = False, **options: Any) -> None:
+            self, host: Optional[str] = None, port: Optional[int] = None,
+            debug: Optional[bool] = False, load_dotenv: bool = False,
+            **options: Any) -> None:
         # Establish CSRF protection
         self._apply_csrf_protect(self)
 

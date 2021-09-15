@@ -14,7 +14,6 @@ def get_mimetypes() -> pymimetypes.MimeTypes:
     conversion, e.g. image/jpeg -> .jfif.
 
     :return: SMQTK singleton MimeTypes instance.
-    :rtype: mimetypes.MimeTypes
 
     """
     global MT_CACHE

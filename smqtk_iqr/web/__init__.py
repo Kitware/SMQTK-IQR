@@ -4,14 +4,16 @@ SMQTK Web Applications
 
 import inspect
 import os
-
 import flask
 
 from smqtk_core import Plugfigurable
 from smqtk_core.dict import merge_dict
 
 from typing import Dict, Type, Any, Optional, TypeVar
+T = TypeVar("T", bound="SmqtkWebApp")
 # noinspection PyAbstractClass
+
+
 class SmqtkWebApp (flask.Flask, Plugfigurable):
     """
     Base class for SMQTK web applications
@@ -51,8 +53,9 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
 
     @classmethod
     def from_config(
-        cls: "SmqtkWebApp", config_dict: Dict[str, Any],
-        merge_default: bool = True)-> "SmqtkWebApp":
+                    cls: Type[T], config_dict: Dict[str, Any],
+                    merge_default: bool = True
+                    ) -> T:
         """
         Override to just pass the configuration dictionary to constructor
         """
@@ -95,8 +98,10 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
         return self.json_config
 
     def run(
-        self, host: Optional[str] = None, port: Optional[int] = None,
-        debug: Optional[bool] = False,  load_dotenv: bool = False, **options: Any) -> None:
+            self, host: Optional[str] = None, port: Optional[int] = None,
+            debug: Optional[bool] = False,  load_dotenv: bool = False,
+            **options: Any
+            ) -> None:
         """
         Override of the run method, drawing running host and port from
         configuration by default. 'host' and 'port' values specified as argument

@@ -2,6 +2,7 @@
 Runs conforming SMQTK Web Applications.
 """
 
+from argparse import ArgumentParser
 import logging
 from typing import cast
 
@@ -13,7 +14,7 @@ from smqtk_iqr.utils import cli
 import smqtk_iqr.web
 
 
-def cli_parser():
+def cli_parser() -> ArgumentParser:
     parser = cli.basic_cli_parser(__doc__)
 
     # Application options
@@ -103,7 +104,7 @@ def main() -> None:
     logging.getLogger().setLevel(logging.WARN)
     log = logging.getLogger(__name__)
     # SMQTK level always at least INFO level for standard internals reporting.
-    logging.getLogger("smqtk").setLevel(logging.INFO)
+    logging.getLogger("smqtk_iqr").setLevel(logging.INFO)
     # Enable DEBUG level on applicable namespaces available to us at this time.
     for ns in debug_ns_list:
         log.info("Enabling debug logging on '{}' namespace"
@@ -141,16 +142,16 @@ def main() -> None:
     # If the application class's logger does not already report as having INFO/
     # DEBUG level logging (due to being a child of an above handled namespace)
     # then set the app namespace's logger level appropriately
-    app_class_logger_level = app_class.get_logger().getEffectiveLevel()
+    app_class_logger_level = logging.getLogger(app_class.name).getEffectiveLevel()
     app_class_target_level = logging.INFO - (10 * debug_app)
     if app_class_logger_level > app_class_target_level:
         level_name = \
             "DEBUG" if app_class_target_level == logging.DEBUG else "INFO"
         log.info("Enabling '{}' logging for '{}' logger namespace."
-                 .format(level_name, app_class.get_logger().name))
-        app_class.get_logger().setLevel(logging.INFO - (10 * debug_app))
+                 .format(level_name, logging.getLogger(app_class.name).name))
+        logging.getLogger(app_class.name).setLevel(logging.INFO - (10 * debug_app))
 
-    config = cli.utility_main_helper(app_class.get_default_config, args,
+    config = cli.utility_main_helper(app_class.get_default_config(), args,
                                      skip_logging_init=True)
 
     host = args.host

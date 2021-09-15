@@ -63,7 +63,6 @@ def main() -> None:
     args = cli_parser().parse_args()
 
     ui_config_filepath, iqr_config_filepath = args.config
-    llevel = logging.DEBUG if args.verbose else logging.INFO
     tab = args.tab
     input_files_globs = args.input_files
 

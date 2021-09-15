@@ -16,6 +16,7 @@ will be used to train the configured SupervisedClassifier.
 import logging
 import os
 import unittest.mock as mock
+import argparse
 from typing import Dict, Any
 
 from smqtk_relevancy import RankRelevancy
@@ -36,7 +37,7 @@ from smqtk_core.configuration import (
 )
 
 
-def get_cli_parser():
+def get_cli_parser() -> argparse.ArgumentParser:
     parser = basic_cli_parser(__doc__)
     parser.add_argument('-i', '--iqr-state',
                         help="Path to the ZIP file saved from an IQR session.")

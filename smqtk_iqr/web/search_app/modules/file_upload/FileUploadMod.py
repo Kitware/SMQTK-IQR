@@ -4,7 +4,6 @@ import multiprocessing
 import os
 import tempfile
 from typing import Dict, Optional, Callable
-import smqtk_iqr
 from smqtk_iqr.web.search_app import IqrSearchDispatcher
 from smqtk_dataprovider.utils.file import safe_create_dir
 import logging
@@ -18,8 +17,9 @@ class FileUploadMod (flask.Blueprint):
     Flask blueprint for file uploading.
     """
 
-    def __init__(self, name: str, parent_app: IqrSearchDispatcher,
-        working_directory: str, url_prefix: Optional[str]=None):
+    def __init__(
+                self, name: str, parent_app: IqrSearchDispatcher,
+                working_directory: str, url_prefix: Optional[str] = None):
         """
         Initialize uploading module
 
@@ -90,8 +90,7 @@ class FileUploadMod (flask.Blueprint):
                     % (current_chunk, total_chunks, filename)
 
                 if total_chunks == len(self._file_chunks[fid]):
-                    LOG.debug("[%s] Final chunk uploaded",
-                                    filename+"::"+fid)
+                    LOG.debug("[%s] Final chunk uploaded", filename+"::"+fid)
                     # have all chucks in memory now
                     try:
                         # Combine chunks into single file
@@ -100,7 +99,7 @@ class FileUploadMod (flask.Blueprint):
                             self._file_chunks[fid], file_ext
                         )
                         LOG.debug("[%s] saved from chunks: %s",
-                                        filename+"::"+fid, file_saved_path)
+                                  filename+"::"+fid, file_saved_path)
                         # now in file, free up dict memory
 
                         self._completed_files[fid] = file_saved_path
@@ -108,7 +107,7 @@ class FileUploadMod (flask.Blueprint):
 
                     except IOError as ex:
                         LOG.debug("[%s] Failed to write combined chunks",
-                                        filename+"::"+fid)
+                                  filename+"::"+fid)
                         message = "Failed to write out combined chunks for " \
                                   "file %s: %s" % (filename, str(ex))
                         raise RuntimeError(message)
@@ -136,7 +135,6 @@ class FileUploadMod (flask.Blueprint):
         """
         :return: The url string to give to the JS upload zone for POSTing file
             chunks.
-        :rtype: str
         """
         return (self.url_prefix and self.url_prefix+"/" or "") + 'upload_chunk'
 
@@ -173,8 +171,9 @@ class FileUploadMod (flask.Blueprint):
         del self._completed_files[file_unique_id]
 
     # noinspection PyMethodMayBeStatic
-    def _write_file_chunks(self, chunk_map: Dict[int, BytesIO],
-        file_extension:str='') -> str:
+    def _write_file_chunks(
+                            self, chunk_map: Dict[int, BytesIO],
+                            file_extension: str = '') -> str:
         """
         Given a mapping of chunks, write their contents to a temporary file,
         returning the path to that file.
@@ -190,7 +189,6 @@ class FileUploadMod (flask.Blueprint):
         :raises OSError: OS problems creating temporary file or writing it out.
 
         :return: Path to temporary combined file
-        :rtype: str
 
         """
         # Make sure write dir exists...

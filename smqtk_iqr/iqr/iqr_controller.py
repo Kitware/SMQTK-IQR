@@ -1,12 +1,13 @@
 import atexit
 import threading
 import time
-from typing import Optional, Callable, Hashable, TypeVar, Tuple, Type, Dict
+from typing import Optional, Callable, Hashable, Tuple, Type, Dict
 from types import TracebackType
 from smqtk_iqr.iqr import IqrSession
 import logging
 
 LOG = logging.getLogger(__name__)
+
 
 class IqrController:
     """
@@ -23,9 +24,9 @@ class IqrController:
     """
 
     def __init__(
-        self, expire_enabled: bool = False,
-        expire_check: float = 30,
-        expire_callback: Optional[Callable] = None) -> None:
+                    self, expire_enabled: bool = False,
+                    expire_check: float = 30,
+                    expire_callback: Optional[Callable] = None) -> None:
         """
         Initialize the controller.
 
@@ -81,9 +82,10 @@ class IqrController:
         self._map_rlock.acquire()
         return self
 
-    def __exit__(self, exc_type: Optional[Type],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType]) -> None:
+    def __exit__(
+                    self, exc_type: Optional[Type],
+                    exc_val: Optional[BaseException],
+                    exc_tb: Optional[TracebackType]) -> None:
         self._map_rlock.release()
 
     def _handle_session_expiration(self) -> None:
@@ -102,8 +104,8 @@ class IqrController:
                     t = now - la
                     if t > to:
                         LOG.debug("-> Expiring session '%s' "
-                                        "(last-access: %s, timeout: %s, "
-                                        "now: %s)", sid, la, to, now)
+                                  "(last-access: %s, timeout: %s, "
+                                  "now: %s)", sid, la, to, now)
                         if hasattr(self._expire_callback, '__call__'):
                             LOG.debug("   - Executing callback")
                             self._expire_callback(self._iqr_sessions[sid])  # type: ignore
@@ -142,8 +144,7 @@ class IqrController:
                 self._expire_thread_stop_event.set()
                 self._expire_thread.join()
                 self._expire_thread = None
-                LOG.debug("Stopping session expiration monitor thread "
-                                "-- Done")
+                LOG.debug("Stopping session expiration monitor thread -- Done")
 
     def session_uuids(self) -> Tuple:
         """

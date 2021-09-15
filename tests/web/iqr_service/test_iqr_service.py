@@ -3,9 +3,8 @@ import json
 import unittest.mock as mock
 import os
 import unittest
-import flask
 from werkzeug.test import TestResponse
-from typing import Any, Generator, Dict
+from typing import Any, Generator
 
 from smqtk_relevancy import RankRelevancyWithFeedback
 

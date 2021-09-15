@@ -11,7 +11,6 @@ from smqtk_descriptors import DescriptorGenerator, DescriptorSet, DescriptorElem
 from smqtk_relevancy import RankRelevancyWithFeedback
 from smqtk_classifier import ClassifyDescriptorSupervised
 from smqtk_classifier.interfaces.classification_element import (
-    ClassificationElement,
     CLASSIFICATION_DICT_T
 )
 

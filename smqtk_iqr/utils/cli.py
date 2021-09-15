@@ -10,13 +10,54 @@ import sys
 import threading
 import time
 import warnings
-import logging
-from typing import Tuple, Dict, Optional, Any
+from typing import Tuple, Dict, Optional, Callable, List, Iterable, Any
 
 from smqtk_core.dict import merge_dict
 LOG = logging.getLogger(__name__)
 
-def load_config(config_path: str, defaults: Optional[Dict]=None) -> Tuple(Dict, bool):
+
+def initialize_logging(
+            logger: logging.Logger, stream_level: int = logging.WARNING,
+            output_filepath: str = None, file_level: Optional[int] = None
+        ) -> None:
+    """
+    Standard logging initialization.
+    :param logger: Logger instance to initialize
+    :type logger: logging.Logger
+    :param stream_level: Logging level to set for the stderr stream formatter.
+    :type stream_level: int
+    :param output_filepath: Output logging from the given logger to the provided
+        file path. Currently, we log to that file indefinitely, i.e. no
+        rollover. Rollover may be added in the future if the need arises.
+    :type output_filepath: str
+    :param file_level: Logging level to output to the file. This the same as the
+        stream level by default.
+    """
+    log_formatter = logging.Formatter(
+        "%(levelname)7s - %(asctime)s - %(name)s.%(funcName)s - %(message)s"
+    )
+
+    stream_handler = logging.StreamHandler()
+    stream_handler.setFormatter(log_formatter)
+    stream_handler.setLevel(stream_level)
+    logger.addHandler(stream_handler)
+
+    if output_filepath:
+        # TODO: Setup rotating part of the handler?
+        file_handler = logging.handlers.RotatingFileHandler(
+            output_filepath, mode='w', delay=True
+        )
+        file_handler.setFormatter(log_formatter)
+        file_handler.setLevel(file_level or stream_level)
+        logger.addHandler(file_handler)
+
+    # Because there are two levels checked before a logging message is emitted:
+    #   * the logging object's level
+    #   * The stream handlers level
+    logger.setLevel(min(stream_level, file_level or stream_level))
+
+
+def load_config(config_path: str, defaults: Optional[Dict] = None) -> Tuple[Dict, bool]:
     """
     Load the JSON configuration dictionary from the specified filepath.
 
@@ -33,7 +74,6 @@ def load_config(config_path: str, defaults: Optional[Dict]=None) -> Tuple(Dict, 
 
     :return: The result configuration dictionary and if we successfully loaded
         a JSON dictionary from the given filepath.
-    :rtype: (dict, bool)
 
     """
     if defaults is None:
@@ -46,8 +86,10 @@ def load_config(config_path: str, defaults: Optional[Dict]=None) -> Tuple(Dict, 
     return defaults, loaded
 
 
-def output_config(output_path: str, config_dict: Dict, overwrite: bool = False,
-                  error_rc: int = 1):
+def output_config(
+                    output_path: str, config_dict: Dict, overwrite: bool = False,
+                    error_rc: int = 1, log: Optional[logging.Logger] = None
+                    ) -> None:
     """
     If a valid output configuration path is provided, we output the given
     configuration dictionary as JSON or error if the file already exists (when
@@ -78,7 +120,6 @@ def output_config(output_path: str, config_dict: Dict, overwrite: bool = False,
 
     :param log: Optionally logging instance. Otherwise we use a local one.
     :type log: logging.Logger
-
     """
     error_rc = int(error_rc)
     if error_rc == 0:
@@ -109,7 +150,7 @@ class ProgressReporter:
     TODO: Add parameter for an optionally known total number of increments.
     """
 
-    def __init__(self, log_func, interval: float, what_per_second="Loops"):
+    def __init__(self, log_func: Callable, interval: float, what_per_second: str = "Loops"):
         """
         Initialize this reporter.
 
@@ -148,7 +189,7 @@ class ProgressReporter:
 
         self.started = False
 
-    def start(self):
+    def start(self) -> "ProgressReporter":
         """ Start the timing state of this reporter.
 
         Repeated calls to this method resets the state of the reporting for
@@ -157,7 +198,6 @@ class ProgressReporter:
         This method is thread-safe.
 
         :returns: Self
-        :rtype: ProgressReporter
 
         """
         with self.lock:
@@ -167,7 +207,7 @@ class ProgressReporter:
             self.t_delta = 0.0
         return self
 
-    def increment_report(self):
+    def increment_report(self) -> None:
         """
         Increment counter and time since last report, reporting if delta exceeds
         the set reporting interval period.
@@ -185,7 +225,7 @@ class ProgressReporter:
             self.t_last = self.t
             self.c_last = self.c
 
-    def increment_report_threadsafe(self):
+    def increment_report_threadsafe(self) -> None:
         """
         The same as ``increment_report`` but additionally acquires a lock on
         resources first for thread-safety.
@@ -196,7 +236,7 @@ class ProgressReporter:
         with self.lock:
             self.increment_report()
 
-    def report(self):
+    def report(self) -> None:
         """
         Report the current state.
 
@@ -214,7 +254,7 @@ class ProgressReporter:
                              self.c_delta,
                              self.c))
 
-    def report_threadsafe(self):
+    def report_threadsafe(self) -> None:
         """
         The same as ``report`` but additionally acquires a lock on
         resources first for thread-safety.
@@ -226,7 +266,7 @@ class ProgressReporter:
             self.report()
 
 
-def report_progress(state: List[float], interval: float) -> None:
+def report_progress(log: logging.Logger, state: List[float], interval: float) -> None:
     """
     Loop progress reporting function that logs (when in debug) loops per
     second, loops in the last reporting period and total loops executed.
@@ -276,10 +316,8 @@ def report_progress(state: List[float], interval: float) -> None:
         except ZeroDivisionError:
             loops_per_second = 0
             avg_loops_per_second = 0
-        log("Loops per second %f (avg %f) (%d this interval / %d total)"
-            % (loops_per_second,
-               avg_loops_per_second,
-               state[2], state[1]))
+        log.info("Loops per second %f (avg %f) (%d this interval / %d total)"
+                 % (loops_per_second, avg_loops_per_second, state[2], state[1]))
         state[3] = state[4]
         state[0] = state[1]
 
@@ -302,7 +340,6 @@ def basic_cli_parser(description: str = None, configuration_group: bool = True) 
     :type configuration_group: bool
 
     :return: Argument parser instance with basic options.
-    :rtype: argparse.ArgumentParser
 
     """
     parser = argparse.ArgumentParser(
@@ -330,9 +367,11 @@ def basic_cli_parser(description: str = None, configuration_group: bool = True) 
     return parser
 
 
-def utility_main_helper(default_config: Dict[str, Any], args: argparse.Namespace,
-    additional_logging_domains=(),
-    skip_logging_init: bool = False, default_config_valid: bool = False) -> Dict:
+def utility_main_helper(
+                        default_config: Dict[str, Any], args: argparse.Namespace,
+                        additional_logging_domains: Iterable[str] = (),
+                        skip_logging_init: bool = False, default_config_valid: bool = False
+                        ) -> Dict:
     """
     Helper function for utilities standardizing logging initialization, CLI
     parsing and configuration loading/generation.
@@ -368,7 +407,6 @@ def utility_main_helper(default_config: Dict[str, Any], args: argparse.Namespace
     :type default_config_valid: bool
 
     :return: Loaded configuration dictionary.
-    :rtype: dict
 
     """
     # noinspection PyUnresolvedReferences
@@ -382,12 +420,12 @@ def utility_main_helper(default_config: Dict[str, Any], args: argparse.Namespace
         llevel = logging.INFO
         if verbose:
             llevel = logging.DEBUG
-        initialize_logging(logging.getLogger('smqtk'), llevel)
-        initialize_logging(logging.getLogger('__main__'), llevel)
+        logging.getLogger('smqtk_iqr'), llevel
+        logging.getLogger('__main__'), llevel
         for d in additional_logging_domains:
-            initialize_logging(logging.getLogger(d), llevel)
+            logging.getLogger(d), llevel
 
-    config, config_loaded = load_config(config_filepath, default_config())
+    config, config_loaded = load_config(config_filepath, default_config)
     output_config(config_generate, config, overwrite=True)
 
     if not (config_loaded or default_config_valid):

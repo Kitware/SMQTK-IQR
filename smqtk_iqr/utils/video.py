@@ -43,7 +43,6 @@ def get_metadata_info(video_filepath: str, ffprobe_exe: str = 'ffprobe') -> Vide
         try to use the version that's on the PATH.
 
     :return: VideoMetadata instance
-    :rtype: VideoMetadata
 
     """
     log = logging.getLogger('.'.join([__name__, 'get_metadata_info']))
@@ -123,9 +122,9 @@ def ffmpeg_extract_frame(t: int, input_filepath: str, output_filepath: str,
 
 
 def ffmpeg_extract_frame_map(working_dir: str, video_filepath: str, second_offset: float = 0,
-                             second_interval: float = 0, max_duration: float = 0, frames: Iterable[int]=(),
+                             second_interval: float = 0, max_duration: float = 0, frames: Iterable[int] = (),
                              output_image_ext: str = "png", parallel: Optional[int] = None,
-                             ffmpeg_exe: str = 'ffmpeg') -> Dict[ int, str]:
+                             ffmpeg_exe: str = 'ffmpeg') -> Dict[int, str]:
     """
     Return a mapping of video frame index to image file in the given output
     format.
@@ -180,7 +179,6 @@ def ffmpeg_extract_frame_map(working_dir: str, video_filepath: str, second_offse
     :type ffmpeg_exe: str or unicode
 
     :return: Map of frame-to-filepath for requested video frames
-    :rtype: dict[int, str]
 
     """
     log = logging.getLogger('.'.join([__name__, 'extract_frame_map']))
@@ -211,7 +209,6 @@ def ffmpeg_extract_frame_map(working_dir: str, video_filepath: str, second_offse
         speeds of over 1000Hz and rounding frame frame times to the neared
         thousandth of a second to mitigate floating point error.
 
-        :rtype: list of int
 
         """
         _log = logging.getLogger('.'.join([__name__,
@@ -241,7 +238,7 @@ def ffmpeg_extract_frame_map(working_dir: str, video_filepath: str, second_offse
             next_frm += incr
 
     # noinspection PyShadowingNames
-    def extract_frames(frames_to_process: Dict[Union[int,str], Any]) -> List[int]:
+    def extract_frames(frames_to_process: Dict[Union[int, str], Any]) -> List[int]:
         """
         Extract specific frames from the input video file using ffmpeg. If not
         all frames could be extracted, we return what we were able to extract.
@@ -251,7 +248,6 @@ def ffmpeg_extract_frame_map(working_dir: str, video_filepath: str, second_offse
         :type frames_to_process: dict[int,str or unicode]
 
         :return: List of frames that were successfully extracted.
-        :rtype: list[int]
 
         """
         _log = logging.getLogger('.'.join([__name__,

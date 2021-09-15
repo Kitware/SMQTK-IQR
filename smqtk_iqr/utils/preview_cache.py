@@ -59,7 +59,6 @@ class PreviewCache (object):
         :type elem: smqtk_dataprovider.DataElement
 
         :return: Path to the preview image for the given data element.
-        :rtype: str
 
         """
         if elem.uuid() in self._preview_cache:
@@ -68,15 +67,15 @@ class PreviewCache (object):
         # else, generate preview image based on content type / content class
         if elem.content_type() in self.PREVIEW_GEN_METHOD:
             LOG.debug("Generating preview image based on content type: "
-                            "%s", elem.content_type)
+                      "%s", elem.content_type)
             safe_create_dir(self._cache_dir)
             fp = self.PREVIEW_GEN_METHOD[elem.content_type()](self, elem,
                                                               self._cache_dir)
         else:
-            content_class = elem.content_type().split('/', 1)[0] # type: ignore
+            content_class = elem.content_type().split('/', 1)[0]  # type: ignore
             if content_class in self.PREVIEW_GEN_METHOD:
                 LOG.debug("Generating preview image based on content "
-                                "class: %s", content_class)
+                          "class: %s", content_class)
                 safe_create_dir(self._cache_dir)
                 fp = self.PREVIEW_GEN_METHOD[content_class](self, elem,
                                                             self._cache_dir)
