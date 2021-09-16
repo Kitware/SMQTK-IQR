@@ -604,7 +604,7 @@ python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*"
 
 [[package]]
 name = "smqtk-classifier"
-version = "0.17.0"
+version = "0.18.0"
 description = "Algorithms, data structures and utilities around performing classificationof inputs."
 category = "main"
 optional = false
@@ -946,7 +946,7 @@ testing = ["pytest (>=4.6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytes
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.6"
-content-hash = "9cb3c23a9e3a33309387fa120629ba11c1692bc073ac98be2fdf4cfca1a71fa1"
+content-hash = "35c2d0c8dc41c8d94ff71bc8d890aaadd54e459db747dfc5a090a23c0092e644"
 
 [metadata.files]
 alabaster = [
@@ -1451,8 +1451,8 @@ six = [
     {file = "six-1.16.0.tar.gz", hash = "sha256:1e61c37477a1626458e36f7b1d82aa5c9b094fa4802892072e49de9c60c4c926"},
 ]
 smqtk-classifier = [
-    {file = "smqtk_classifier-0.17.0-py3-none-any.whl", hash = "sha256:55ca160a122463aa4656db738a56e7111a9175f1d9b00e71b7cb390b7f58bc69"},
-    {file = "smqtk_classifier-0.17.0.tar.gz", hash = "sha256:e0f21c4b3f2ca78abc21be340ca7c0d6ee2fc9ff88e07d332a15bd9d6993c004"},
+    {file = "smqtk_classifier-0.18.0-py3-none-any.whl", hash = "sha256:b3ad914223373efe3c7e93b7387f8a25be89d70f22e9605ca3c4c383c3f276f4"},
+    {file = "smqtk_classifier-0.18.0.tar.gz", hash = "sha256:76bf6fa645fe10c4f9a0bc4687c9214988c33c5fa6d790610b614f3b77c689fe"},
 ]
 smqtk-core = [
     {file = "smqtk-core-0.18.0.tar.gz", hash = "sha256:a5ae14cc83003fa13fd19f071bec484552c9f018f5e4e833c163e2cd609cae0f"},
