@@ -10,31 +10,31 @@ Taken from: http://flask.pocoo.org/snippets/110/
 from datetime import datetime, timedelta
 import logging
 from uuid import uuid4
-from typing import Union, Iterable, Tuple, Mapping, TypeVar, Optional, Any, Type
+from typing import Union, Iterable, Tuple, Mapping, Optional, Any
 
 import flask
 from flask.sessions import SessionInterface, SessionMixin
 from flask.wrappers import Request, Response
 from werkzeug.datastructures import CallbackDict
-from pymongo import MongoClient  # type: ignore
+from pymongo import MongoClient
 
 
 LOG = logging.getLogger(__name__)
-
-T = TypeVar("T", bound="MongoSession")
 
 
 class MongoSession(CallbackDict, SessionMixin):
 
     def __init__(
-                self, initial: Union[Mapping, Iterable[Tuple[Any, Any]], None] = None,
-                sid: Optional[str] = None):
-        super(MongoSession, self).__init__(initial, MongoSession.on_update)
+        self,
+        initial: Union[Mapping, Iterable[Tuple[Any, Any]], None] = None,
+        sid: Optional[str] = None
+    ):
+        def on_update(_: Mapping) -> None:
+            self.modified = True
+
+        super(MongoSession, self).__init__(initial, on_update)
         self.sid = sid
         self.modified = False
-
-    def on_update(self) -> None:
-        self.modified = True
 
 
 class MongoSessionInterface(SessionInterface):
@@ -45,7 +45,7 @@ class MongoSessionInterface(SessionInterface):
         self.store = client[db][collection]
         self._delete_on_empty = delete_on_empty
 
-    def open_session(self, app: flask.Flask, request: Request) -> Type[T]:
+    def open_session(self, app: flask.Flask, request: Request) -> "MongoSession":
         sid = request.cookies.get(app.session_cookie_name)
         if sid:
             stored_session = self.store.find_one({'_id': sid})
