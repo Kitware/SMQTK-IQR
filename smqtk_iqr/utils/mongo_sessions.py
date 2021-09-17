@@ -76,11 +76,12 @@ class MongoSessionInterface(SessionInterface):
         if not expiration:
             expiration = datetime.utcnow() + timedelta(hours=1)
         # Assuming that the SessionMixin has an sid attribute
-        self.store.update({'_id': session.sid},  # type: ignore
+        ssid = session.sid  # type: ignore
+        self.store.update({'_id': ssid},
                           {'data': session,
                            'expiration': expiration},
                           upsert=True)
-        LOG.debug("Setting session cookie for SID={}".format(session.sid))  # type: ignore
-        response.set_cookie(app.session_cookie_name, session.sid,  # type: ignore
+        LOG.debug("Setting session cookie for SID={}".format(ssid))
+        response.set_cookie(app.session_cookie_name, ssid,
                             expires=expiration,
                             httponly=True, domain=domain)

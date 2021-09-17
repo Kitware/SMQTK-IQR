@@ -63,11 +63,14 @@ def main() -> None:
     args = cli_parser().parse_args()
 
     ui_config_filepath, iqr_config_filepath = args.config
+    llevel = logging.DEBUG if args.verbose else logging.INFO
     tab = args.tab
     input_files_globs = args.input_files
 
     # Not using `cli.utility_main_helper`` due to deviating from single-
     # config-with-default usage.
+    cli.initialize_logging(logging.getLogger('smqtk_iqr'), llevel)
+    cli.initialize_logging(logging.getLogger('__main__'), llevel)
     log = logging.getLogger(__name__)
 
     log.info("Loading UI config: '{}'".format(ui_config_filepath))
@@ -125,7 +128,7 @@ def main() -> None:
         from_config_dict(descriptor_generator_config,
                          DescriptorGenerator.get_impls())
 
-    nn_index:NearestNeighborsIndex = \
+    nn_index: NearestNeighborsIndex = \
         from_config_dict(nn_index_config,
                          NearestNeighborsIndex.get_impls())
 

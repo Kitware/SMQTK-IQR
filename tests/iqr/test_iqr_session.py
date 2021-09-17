@@ -777,8 +777,6 @@ class TestIqrSession (object):
         Test that calling the reset method resets the result view caches to
         None.
         """
-        # Setup initial IQR session state
-        self.iqrs._ordered_pos = self.iqrs._ordered_neg = self.iqrs._ordered_non_adj
 
         self.iqrs.reset()
         assert self.iqrs._ordered_pos is None

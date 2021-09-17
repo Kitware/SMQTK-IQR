@@ -23,8 +23,8 @@ class VideoMetadata (object):
 
     def __init__(self) -> None:
         self.width: Optional[int] = None
-        self.height:Optional[int] = None
-        self.fps:Optional[float] = None
+        self.height: Optional[int] = None
+        self.fps: Optional[float] = None
         self.duration: Optional[float] = None
 
 

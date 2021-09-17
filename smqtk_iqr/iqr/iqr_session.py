@@ -37,7 +37,8 @@ class IqrSession ():
             "[%s]" % self.uuid
         )
 
-    def __init__(self, rank_relevancy_with_feedback: RankRelevancyWithFeedback,
+    def __init__(
+        self, rank_relevancy_with_feedback: RankRelevancyWithFeedback,
         pos_seed_neighbors: int = 500,
         session_uid: Optional[Union[str, uuid.UUID]] = None
     ) -> None:

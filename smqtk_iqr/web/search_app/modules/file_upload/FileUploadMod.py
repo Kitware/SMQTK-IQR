@@ -13,6 +13,7 @@ from werkzeug.datastructures import FileStorage
 LOG = logging.getLogger(__name__)
 script_dir = os.path.dirname(os.path.abspath(__file__))
 
+
 class FileUploadMod (flask.Blueprint):
     """
     Flask blueprint for file uploading.

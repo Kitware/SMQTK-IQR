@@ -9,8 +9,7 @@ import os
 import sys
 import threading
 import time
-import warnings
-from typing import Tuple, Dict, Optional, Callable, List, Iterable, Any
+from typing import Tuple, Dict, Optional, Callable, Iterable, Any
 
 from smqtk_core.dict import merge_dict
 
@@ -260,62 +259,6 @@ class ProgressReporter:
             self.report()
 
 
-def report_progress(
-    log: logging.Logger, state: List[float], interval: float
-) -> None:
-    """
-    Loop progress reporting function that logs (when in debug) loops per
-    second, loops in the last reporting period and total loops executed.
-
-    The ``state`` given to this function must be a list of 7 integers, initially
-    all set to 0. This function will update the fields of the state as its is
-    called to control when reporting should happen and what to report.
-
-    A report can be effectively force for a call by setting ``state[3] = 0``
-    or ``interval`` to ``0``.
-
-    :param state: Reporting state. This should be initialized to a list of 6
-        zeros (floats), and then should not be modified externally from this
-        function.
-
-    :param interval: Frequency in seconds that reporting messages should be
-        made. This should be greater than 0.
-
-    """
-    warnings.warn("``report_progress`` is deprecated. Please use the"
-                  "``ProgressReporter`` class instead.",
-                  DeprecationWarning)
-    # State format (c=count, t=time:
-    #   [last_c, c, delta_c, last_t, t, delta_t, starting_t]
-    #   [  0,    1,    2,       3,   4,    5,         6    ]
-
-    warnings.warn(
-        'report_progress is deprecated, use ProgressReporter instead.',
-        DeprecationWarning)
-
-    # Starting time
-    if not state[6]:
-        state[3] = state[6] = time.time()
-
-    state[1] += 1
-    state[4] = time.time()
-    state[5] = state[4] - state[3]
-    if state[5] >= interval:
-        state[2] = state[1] - state[0]
-        # TODO: Could possibly to something with ncurses
-        #       - to maintain a single line.
-        try:
-            loops_per_second = state[2] / state[5]
-            avg_loops_per_second = state[1] / (state[4] - state[6])
-        except ZeroDivisionError:
-            loops_per_second = 0
-            avg_loops_per_second = 0
-        log.info("Loops per second %f (avg %f) (%d this interval / %d total)"
-                 % (loops_per_second, avg_loops_per_second, state[2], state[1]))
-        state[3] = state[4]
-        state[0] = state[1]
-
-
 def basic_cli_parser(
     description: str = None, configuration_group: bool = True
 ) -> argparse.ArgumentParser:
@@ -409,10 +352,11 @@ def utility_main_helper(
         llevel = logging.INFO
         if verbose:
             llevel = logging.DEBUG
-        logging.getLogger('smqtk_iqr'), llevel
-        logging.getLogger('__main__'), llevel
+
+        initialize_logging(logging.getLogger('smqtk_iqr'), llevel)
+        initialize_logging(logging.getLogger('__main__'), llevel)
         for d in additional_logging_domains:
-            logging.getLogger(d), llevel
+            initialize_logging(logging.getLogger(d), llevel)
 
     config, config_loaded = load_config(config_filepath, default_config)
     output_config(config_generate, config, overwrite=True)

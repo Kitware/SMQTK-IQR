@@ -13,6 +13,8 @@ from typing import Dict, Type, Any, Optional, TypeVar
 
 
 T = TypeVar("T", bound="SmqtkWebApp")
+
+
 class SmqtkWebApp (flask.Flask, Plugfigurable):
     """
     Base class for SMQTK web applications
