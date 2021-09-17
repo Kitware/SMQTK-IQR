@@ -7,10 +7,11 @@ from typing import Dict, Optional, Callable
 from smqtk_iqr.web.search_app import IqrSearchDispatcher
 from smqtk_dataprovider.utils.file import safe_create_dir
 import logging
+from werkzeug.datastructures import FileStorage
+
 
 LOG = logging.getLogger(__name__)
 script_dir = os.path.dirname(os.path.abspath(__file__))
-
 
 class FileUploadMod (flask.Blueprint):
     """
@@ -18,17 +19,16 @@ class FileUploadMod (flask.Blueprint):
     """
 
     def __init__(
-                self, name: str, parent_app: IqrSearchDispatcher,
-                working_directory: str, url_prefix: Optional[str] = None):
+        self, name: str, parent_app: IqrSearchDispatcher,
+        working_directory: str, url_prefix: Optional[str] = None
+    ):
         """
         Initialize uploading module
 
         :param parent_app: Parent Flask app
-        :type parent_app: smqtk_iqr.Web.search_app.base_app.search_app
 
         :param working_directory: Directory for temporary file storage during
             upload up to the time a user takes control of the file.
-        :type working_directory: str
 
         """
         super(FileUploadMod, self).__init__(
@@ -46,12 +46,10 @@ class FileUploadMod (flask.Blueprint):
         #   Top level key is the file ID of the upload. The dictionary
         #   underneath that is the index ID'd chunks. When all chunks are
         #   present, the file is written and the entry in this map is removed.
-        #: :type: dict of (str, dict of (int, BytesIO))
         self._file_chunks: Dict[
             str, Dict[int, BytesIO]
         ] = {}
         # Lock per file ID so as to not collide when uploading multiple chunks
-        #: :type: dict of (str, RLock)
         self._fid_locks: Dict[str, multiprocessing.synchronize.RLock] = {}
 
         # FileID to temporary path that a completed file is located at.
@@ -77,8 +75,7 @@ class FileUploadMod (flask.Blueprint):
             total_chunks = int(form['flowTotalChunks'])
             filename = form['flowFilename']
 
-            #: :type: FileStorage
-            chunk_data = flask.request.files['file']
+            chunk_data: FileStorage = flask.request.files['file']
 
             with self._fid_locks.setdefault(fid, multiprocessing.RLock()):
                 # Create new entry in chunk map / add to existing entry
@@ -146,7 +143,6 @@ class FileUploadMod (flask.Blueprint):
         being used, or move it else where.
 
         :param file_unique_id: Unique ID of the uploaded file
-        :type file_unique_id: str
 
         :return: The path to the complete uploaded file.
 
@@ -165,15 +161,15 @@ class FileUploadMod (flask.Blueprint):
 
         :param file_unique_id: Unique ID of an uploaded file to clear from the
             completed cache.
-        :type file_unique_id: str
 
         """
         del self._completed_files[file_unique_id]
 
     # noinspection PyMethodMayBeStatic
     def _write_file_chunks(
-                            self, chunk_map: Dict[int, BytesIO],
-                            file_extension: str = '') -> str:
+        self, chunk_map: Dict[int, BytesIO],
+        file_extension: str = ''
+    ) -> str:
         """
         Given a mapping of chunks, write their contents to a temporary file,
         returning the path to that file.
@@ -181,10 +177,8 @@ class FileUploadMod (flask.Blueprint):
         Returned file path should be manually removed by the user.
 
         :param chunk_map: Mapping of integer index to file-like chunk
-        :type chunk_map: dict[int, BytesIO]
         :param file_extension: String extension to suffix the temporary file
             with
-        :type file_extension: str
 
         :raises OSError: OS problems creating temporary file or writing it out.
 

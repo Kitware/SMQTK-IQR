@@ -28,10 +28,8 @@ def url_join(url: str, *urls: Union[str, int]) -> str:
     that do not start with a protocol component.
 
     :param url: First URL component
-    :type url: str
 
     :param urls: path components to join with slashes.
-    :type urls: string-castable
 
     :return: Joined URL string
 

@@ -223,7 +223,6 @@ class TestIqrSession (object):
         """
         e = DescriptorMemoryElement('', 0).set_vector([0])
         a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
-        assert a is not None
         self.iqrs._ordered_pos = a
         self.iqrs._ordered_neg = a
         self.iqrs._ordered_non_adj = a

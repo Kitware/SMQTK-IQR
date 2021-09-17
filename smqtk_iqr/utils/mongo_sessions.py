@@ -39,13 +39,15 @@ class MongoSession(CallbackDict, SessionMixin):
 
 class MongoSessionInterface(SessionInterface):
 
-    def __init__(self, host: str = 'localhost', port: int = 27017, db: str = '',
-                 collection: str = 'sessions', delete_on_empty: bool = False):
+    def __init__(
+        self, host: str = 'localhost', port: int = 27017, db: str = '',
+        collection: str = 'sessions', delete_on_empty: bool = False
+    ):
         client = MongoClient(host, port)
         self.store = client[db][collection]
         self._delete_on_empty = delete_on_empty
 
-    def open_session(self, app: flask.Flask, request: Request) -> "MongoSession":
+    def open_session(self, app: flask.Flask, request: Request) -> MongoSession:
         sid = request.cookies.get(app.session_cookie_name)
         if sid:
             stored_session = self.store.find_one({'_id': sid})
@@ -60,7 +62,9 @@ class MongoSessionInterface(SessionInterface):
                   .format(sid))
         return MongoSession(sid=sid)
 
-    def save_session(self, app: flask.Flask, session: SessionMixin, response: Response) -> None:
+    def save_session(
+        self, app: flask.Flask, session: SessionMixin, response: Response
+    ) -> None:
         domain = self.get_cookie_domain(app)
         if self._delete_on_empty and not session:
             LOG.debug("Session cookie content was empty, deleting.")

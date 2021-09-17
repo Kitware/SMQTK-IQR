@@ -13,23 +13,22 @@ import warnings
 from typing import Tuple, Dict, Optional, Callable, List, Iterable, Any
 
 from smqtk_core.dict import merge_dict
+
+
 LOG = logging.getLogger(__name__)
 
 
 def initialize_logging(
-            logger: logging.Logger, stream_level: int = logging.WARNING,
-            output_filepath: str = None, file_level: Optional[int] = None
-        ) -> None:
+    logger: logging.Logger, stream_level: int = logging.WARNING,
+    output_filepath: str = None, file_level: Optional[int] = None
+) -> None:
     """
     Standard logging initialization.
     :param logger: Logger instance to initialize
-    :type logger: logging.Logger
     :param stream_level: Logging level to set for the stderr stream formatter.
-    :type stream_level: int
     :param output_filepath: Output logging from the given logger to the provided
         file path. Currently, we log to that file indefinitely, i.e. no
         rollover. Rollover may be added in the future if the need arises.
-    :type output_filepath: str
     :param file_level: Logging level to output to the file. This the same as the
         stream level by default.
     """
@@ -57,7 +56,9 @@ def initialize_logging(
     logger.setLevel(min(stream_level, file_level or stream_level))
 
 
-def load_config(config_path: str, defaults: Optional[Dict] = None) -> Tuple[Dict, bool]:
+def load_config(
+    config_path: str, defaults: Optional[Dict] = None
+) -> Tuple[Dict, bool]:
     """
     Load the JSON configuration dictionary from the specified filepath.
 
@@ -66,11 +67,9 @@ def load_config(config_path: str, defaults: Optional[Dict] = None) -> Tuple[Dict
     as our second return argument.
 
     :param config_path: Path to the (valid) JSON configuration file.
-    :type config_path: str
 
     :param defaults: Optional default configuration dictionary to merge loaded
         configuration into. If provided, it will be modified in place.
-    :type defaults: dict | None
 
     :return: The result configuration dictionary and if we successfully loaded
         a JSON dictionary from the given filepath.
@@ -87,9 +86,9 @@ def load_config(config_path: str, defaults: Optional[Dict] = None) -> Tuple[Dict
 
 
 def output_config(
-                    output_path: str, config_dict: Dict, overwrite: bool = False,
-                    error_rc: int = 1, log: Optional[logging.Logger] = None
-                    ) -> None:
+    output_path: str, config_dict: Dict, overwrite: bool = False,
+    error_rc: int = 1, log: Optional[logging.Logger] = None
+) -> None:
     """
     If a valid output configuration path is provided, we output the given
     configuration dictionary as JSON or error if the file already exists (when
@@ -104,22 +103,17 @@ def output_config(
     :raises ValueError: If the given error return code is 0.
 
     :param output_path: Path to write the configuration file to.
-    :type output_path: str
 
     :param config_dict: Configuration dictionary containing JSON-compliant
         values.
-    :type config_dict: dict
 
     :param overwrite: If we should clobber any existing file at the specified
         path. We exit with the error code if this is false and a file exists at
         ``output_path``.
-    :type overwrite: bool
 
     :param error_rc: Custom integer error return code to use instead of 1.
-    :type error_rc: int
 
     :param log: Optionally logging instance. Otherwise we use a local one.
-    :type log: logging.Logger
     """
     error_rc = int(error_rc)
     if error_rc == 0:
@@ -150,17 +144,17 @@ class ProgressReporter:
     TODO: Add parameter for an optionally known total number of increments.
     """
 
-    def __init__(self, log_func: Callable, interval: float, what_per_second: str = "Loops"):
+    def __init__(
+        self, log_func: Callable, interval: float, what_per_second: str = "Loops"
+    ):
         """
         Initialize this reporter.
 
         :param log_func: Logging function to use.
-        :type log_func: (str, *args, **kwds) -> None
 
         :param interval: Time interval to perform reporting in seconds.  If no
             reporting during incrementation should occur, infinity should be
             passed.
-        :type interval: float
 
         :param str what_per_second:
             String label about what is happening or being iterated over per
@@ -266,7 +260,9 @@ class ProgressReporter:
             self.report()
 
 
-def report_progress(log: logging.Logger, state: List[float], interval: float) -> None:
+def report_progress(
+    log: logging.Logger, state: List[float], interval: float
+) -> None:
     """
     Loop progress reporting function that logs (when in debug) loops per
     second, loops in the last reporting period and total loops executed.
@@ -281,11 +277,9 @@ def report_progress(log: logging.Logger, state: List[float], interval: float) ->
     :param state: Reporting state. This should be initialized to a list of 6
         zeros (floats), and then should not be modified externally from this
         function.
-    :type state: list[float]
 
     :param interval: Frequency in seconds that reporting messages should be
         made. This should be greater than 0.
-    :type interval: float
 
     """
     warnings.warn("``report_progress`` is deprecated. Please use the"
@@ -322,7 +316,9 @@ def report_progress(log: logging.Logger, state: List[float], interval: float) ->
         state[0] = state[1]
 
 
-def basic_cli_parser(description: str = None, configuration_group: bool = True) -> argparse.ArgumentParser:
+def basic_cli_parser(
+    description: str = None, configuration_group: bool = True
+) -> argparse.ArgumentParser:
     """
     Generate an ``argparse.ArgumentParser`` with the given description and the
     basic options for verbosity and configuration/generation paths.
@@ -333,11 +329,9 @@ def basic_cli_parser(description: str = None, configuration_group: bool = True) 
     default).
 
     :param description: Optional description string for the parser.
-    :type description: str
 
     :param configuration_group: Whether or not to include the configuration
         group options.
-    :type configuration_group: bool
 
     :return: Argument parser instance with basic options.
 
@@ -368,10 +362,10 @@ def basic_cli_parser(description: str = None, configuration_group: bool = True) 
 
 
 def utility_main_helper(
-                        default_config: Dict[str, Any], args: argparse.Namespace,
-                        additional_logging_domains: Iterable[str] = (),
-                        skip_logging_init: bool = False, default_config_valid: bool = False
-                        ) -> Dict:
+    default_config: Dict[str, Any], args: argparse.Namespace,
+    additional_logging_domains: Iterable[str] = (),
+    skip_logging_init: bool = False, default_config_valid: bool = False
+) -> Dict:
     """
     Helper function for utilities standardizing logging initialization, CLI
     parsing and configuration loading/generation.
@@ -387,24 +381,19 @@ def utility_main_helper(
 
     :param default_config: Function returning default configuration (JSON)
         dictionary for the utility. This should take no arguments.
-    :type default_config: () -> dict
 
     :param args: Parsed arguments from argparse.ArgumentParser instance as
         returned from ``parser.parse_args()``.
-    :type args: argparse.Namespace
 
     :param additional_logging_domains: We initialize logging on the base
         ``smqtk`` and ``__main__`` namespace. Any additional namespaces under
         which logging should be reported should be added here as an iterable.
-    :type additional_logging_domains: collections.abc.Iterable[str]
 
     :param skip_logging_init: Skip initialize logging in this function because
         it is done elsewhere externally.
-    :type skip_logging_init: bool
 
     :param default_config_valid: Whether the default config returned from the
         generator is a valid config to continue execution with or not.
-    :type default_config_valid: bool
 
     :return: Loaded configuration dictionary.
 

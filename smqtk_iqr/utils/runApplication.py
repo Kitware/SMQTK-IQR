@@ -4,11 +4,10 @@ Runs conforming SMQTK Web Applications.
 
 from argparse import ArgumentParser
 import logging
-from typing import cast
+from typing import cast, Dict, Type
 
-from flask_basicauth import BasicAuth  # type: ignore
-from flask_cors import CORS  # type: ignore
-import six
+from flask_basicauth import BasicAuth
+from flask_cors import CORS
 
 from smqtk_iqr.utils import cli
 import smqtk_iqr.web
@@ -112,17 +111,16 @@ def main() -> None:
         logging.getLogger(ns).setLevel(logging.DEBUG)
 
     webapp_types = smqtk_iqr.web.SmqtkWebApp.get_impls()
-    web_applications = {t.__name__: t for t in webapp_types}
-
+    web_applications: Dict[str, Type[smqtk_iqr.web.SmqtkWebApp]] = {t.__name__: t for t in webapp_types}
     if args.list:
         log.info("")
         log.info("Available applications:")
         log.info("")
-        for label, cls in six.iteritems(web_applications):
+        for label in web_applications:
             log.info("\t" + label)
             if debug_smqtk:
                 log.info('\t' + ('^'*len(label)) + '\n' +
-                         cast(str, cls.__doc__) + '\n' +
+                         cast(str, web_applications[label].__doc__) + '\n' +
                          ('*' * 80) + '\n')
         log.info("")
         exit(0)
@@ -136,8 +134,7 @@ def main() -> None:
         log.error("Invalid application label '%s'", application_name)
         exit(1)
 
-    #: :type: smqtk.web.SmqtkWebApp
-    app_class = web_applications[application_name]
+    app_class: Type[smqtk_iqr.web.SmqtkWebApp] = web_applications[application_name]
 
     # If the application class's logger does not already report as having INFO/
     # DEBUG level logging (due to being a child of an above handled namespace)
@@ -161,9 +158,7 @@ def main() -> None:
     use_basic_auth = args.use_basic_auth
     use_simple_cors = args.use_simple_cors
 
-    # noinspection PyUnresolvedReferences
-    #: :type: smqtk.web.SmqtkWebApp
-    app = app_class.from_config(config)
+    app: smqtk_iqr.web.SmqtkWebApp = app_class.from_config(config)
     if use_basic_auth:
         app.config["BASIC_AUTH_FORCE"] = True
         BasicAuth(app)

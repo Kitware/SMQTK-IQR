@@ -27,11 +27,8 @@ class DatabaseInfo (object):
         'foobar'
 
         :param host:
-        :type host:
         :param port:
-        :type port:
         :param name:
-        :type name:
         :return:
         """
         self.host = str(host)

@@ -117,18 +117,15 @@ def main() -> None:
     # IQR demo application, in preparation for model training.
     #
     log.info("Instantiating plugins")
-    #: :type: representation.DataSet
-    data_set = \
+    data_set: DataSet = \
         from_config_dict(data_set_config, DataSet.get_impls())
     descriptor_elem_factory = DescriptorElementFactory \
         .from_config(descriptor_elem_factory_config)
-    #: :type: algorithms.DescriptorGenerator
-    descriptor_generator = \
+    descriptor_generator: DescriptorGenerator = \
         from_config_dict(descriptor_generator_config,
                          DescriptorGenerator.get_impls())
 
-    #: :type: algorithms.NearestNeighborsIndex
-    nn_index = \
+    nn_index:NearestNeighborsIndex = \
         from_config_dict(nn_index_config,
                          NearestNeighborsIndex.get_impls())
 

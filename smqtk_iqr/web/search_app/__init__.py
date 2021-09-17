@@ -11,8 +11,7 @@ import logging
 from typing import Callable, Dict, Any, Optional
 
 import flask
-from flask_cors import cross_origin  # type: ignore
-import six
+from flask_cors import cross_origin
 from werkzeug.exceptions import NotFound
 from werkzeug.wsgi import peek_path_info, pop_path_info
 
@@ -92,8 +91,8 @@ class IqrSearchDispatcher (SmqtkWebApp):
         # Use mongo for session storage.
         # -> This allows session modification during Flask methods called from
         #    AJAX routines (default Flask sessions do not)
-        self.session_interface = \
-            MongoSessionInterface(self.db_info.host, self.db_info.port, self.db_info.name)  # type: ignore
+        self.session_interface = MongoSessionInterface(  # type: ignore
+            self.db_info.host, self.db_info.port, self.db_info.name)
 
         #
         # Misc. Setup
@@ -109,7 +108,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
         #
 
         # Mapping of IqrSearch application instances from their ID string
-        self.instances = {}  # type: Dict[str, IqrSearch]
+        self.instances: Dict[str, IqrSearch] = {}
         self.instances_lock = threading.Lock()
 
         # Login module
@@ -120,7 +119,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
         # IQR modules
         # - for each entry in 'iqr_tabs', initialize a separate IqrSearch
         #   instance.
-        for tab_name, tab_config in six.iteritems(self.json_config['iqr_tabs']):
+        for tab_name, tab_config in self.json_config['iqr_tabs']:
             if tab_name == "__default__":
                 # skipping default config sample
                 continue
@@ -210,10 +209,8 @@ class IqrSearchDispatcher (SmqtkWebApp):
         Initialize IQR sub-application given a configuration for it and a prefix
 
         :param config: IqrSearch plugin configuration dictionary
-        :type config: dict
 
         :param prefix: URL prefix for the instance
-        :type prefix: str
 
         :return: Application instance.
 
@@ -250,7 +247,6 @@ class IqrSearchDispatcher (SmqtkWebApp):
         if an application does not yet exist for the ``prefix``.
 
         :param prefix: Prefix name of the IQR application instance
-        :type prefix: str
 
         :return: Application instance or None if there is no instance for the
             given ``prefix``.
@@ -277,9 +273,10 @@ class IqrSearchDispatcher (SmqtkWebApp):
         return app(environ, start_response)  # type: ignore
 
     def run(
-            self, host: Optional[str] = None, port: Optional[int] = None,
-            debug: Optional[bool] = False, load_dotenv: bool = False,
-            **options: Any) -> None:
+        self, host: Optional[str] = None, port: Optional[int] = None,
+        debug: Optional[bool] = False, load_dotenv: bool = False,
+        **options: Any
+    ) -> None:
         # Establish CSRF protection
         self._apply_csrf_protect(self)
 

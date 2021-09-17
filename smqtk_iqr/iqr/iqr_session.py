@@ -38,8 +38,9 @@ class IqrSession ():
         )
 
     def __init__(self, rank_relevancy_with_feedback: RankRelevancyWithFeedback,
-                 pos_seed_neighbors: int = 500,
-                 session_uid: Optional[Union[str, uuid.UUID]] = None) -> None:
+        pos_seed_neighbors: int = 500,
+        session_uid: Optional[Union[str, uuid.UUID]] = None
+    ) -> None:
         """
         Initialize the IQR session
 
@@ -206,22 +207,18 @@ class IqrSession ():
 
         :param new_positives: Descriptors of elements in our working set to
             now be considered to be positively relevant.
-        :type new_positives:
             collections.abc.Iterable[smqtk_descriptors.DescriptorElement]
 
         :param new_negatives: Descriptors of elements in our working set to
             now be considered to be negatively relevant.
-        :type new_negatives:
             collections.abc.Iterable[smqtk_descriptors.DescriptorElement]
 
         :param un_positives: Descriptors of elements in our working set to now
             be considered not positive any more.
-        :type un_positives:
             collections.abc.Iterable[smqtk_descriptors.DescriptorElement]
 
         :param un_negatives: Descriptors of elements in our working set to now
             be considered not negative any more.
-        :type un_negatives:
             collections.abc.Iterable[smqtk_descriptors.DescriptorElement]
 
         """
@@ -544,7 +541,9 @@ class IqrSession ():
         z.close()
         return z_buffer.getvalue()
 
-    def set_state_bytes(self, b: bytes, descriptor_factory: DescriptorElementFactory) -> None:
+    def set_state_bytes(
+        self, b: bytes, descriptor_factory: DescriptorElementFactory
+    ) -> None:
         """
         Set this session's state to the given byte representation, resetting
         this session in the process.

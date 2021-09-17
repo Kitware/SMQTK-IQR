@@ -51,8 +51,7 @@ def get_default_config() -> Dict[str, Any]:
 
 
 def train_classifier_iqr(config: Dict[str, Any], iqr_state_fp: str) -> None:
-    #: :type: smqtk.algorithms.SupervisedClassifier
-    classifier = from_config_dict(
+    classifier: ClassifyDescriptorSupervised = from_config_dict(
         config['classifier'],
         ClassifyDescriptorSupervised.get_impls()
     )

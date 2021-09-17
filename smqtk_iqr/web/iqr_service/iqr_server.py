@@ -50,9 +50,9 @@ def new_uuid() -> str:
 
 
 def make_response_json(
-                        message: str,
-                        **params: Union[Hashable, Sequence[Hashable], Sequence[Sequence[Hashable]]]
-                    ) -> flask.Response:
+    message: str,
+    **params: Union[Hashable, Sequence[Hashable], Sequence[Sequence[Hashable]]]
+) -> flask.Response:
     r = {
         "message": message,
         "time": {
@@ -199,20 +199,17 @@ class IqrService (SmqtkWebApp):
             json_config['iqr_service']['plugins']['descriptor_factory']
         )
 
-        #: :type: smqtk_descriptors.DescriptorGenerator
-        self.descriptor_generator = from_config_dict(
+        self.descriptor_generator: DescriptorGenerator = from_config_dict(
             json_config['iqr_service']['plugins']['descriptor_generator'],
             DescriptorGenerator.get_impls(),
         )
 
-        #: :type: smqtk_descriptors.DescriptorSet
-        self.descriptor_set = from_config_dict(
+        self.descriptor_set: DescriptorSet = from_config_dict(
             json_config['iqr_service']['plugins']['descriptor_set'],
             DescriptorSet.get_impls(),
         )
 
-        #: :type: smqtk_indexing.NearestNeighborsIndex
-        self.neighbor_index = from_config_dict(
+        self.neighbor_index: NearestNeighborsIndex = from_config_dict(
             json_config['iqr_service']['plugins']['neighbor_index'],
             NearestNeighborsIndex.get_impls(),
         )
@@ -243,14 +240,11 @@ class IqrService (SmqtkWebApp):
         self.session_classifier_dirty: Dict[Hashable, bool] = {}
 
         # Cache of random UIDs from the configured descriptor set for use
-        self._random_uid_list_cache = None  # type: Optional[List[Hashable]]
+        self._random_uid_list_cache: Optional[List[Hashable]] = None
         # Lock for mutation of this list cache
         self._random_lock = threading.RLock()
 
         def session_expire_callback(session: smqtk_iqr.iqr.IqrSession) -> None:
-            """
-            :type session: smqtk_iqr.iqr.IqrSession
-            """
             with session:
                 LOG.debug("Removing session %s classifier", session.uuid)
                 del self.session_classifiers[session.uuid]
@@ -366,10 +360,8 @@ class IqrService (SmqtkWebApp):
         The given data bytes are not retained.
 
         :param b64: Base64 data string.
-        :type b64: str
 
         :param content_type: Data content type.
-        :type content_type: str
 
         :raises TypeError: Failed to parse base64 data.
 
@@ -754,7 +746,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -840,7 +832,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -926,7 +918,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -978,7 +970,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1014,7 +1006,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1077,7 +1069,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1199,7 +1191,7 @@ class IqrService (SmqtkWebApp):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid,
                                           success=False), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1236,7 +1228,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id %s not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1275,7 +1267,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1350,7 +1342,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1424,7 +1416,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1501,7 +1493,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1576,7 +1568,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1655,7 +1647,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1728,8 +1720,8 @@ class IqrService (SmqtkWebApp):
         ), 200
 
     def _ensure_session_classifier(
-                                    self, iqrs: smqtk_iqr.iqr.IqrSession
-                                ) -> Tuple[ClassifyDescriptorSupervised, str, str]:
+        self, iqrs: smqtk_iqr.iqr.IqrSession
+    ) -> Tuple[ClassifyDescriptorSupervised, str, str]:
         """
         Return the binary pos/neg classifier for this session.
 
@@ -1833,7 +1825,7 @@ class IqrService (SmqtkWebApp):
                 LOG.warning("No IQR Session with UID '{}' found.".format(sid))
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -1931,7 +1923,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:
@@ -2005,7 +1997,7 @@ class IqrService (SmqtkWebApp):
             if not self.controller.has_session_uuid(sid):
                 return make_response_json("session id '%s' not found" % sid,
                                           sid=sid), 404
-            iqrs = self.controller.get_session(sid)  # type: smqtk_iqr.iqr.IqrSession
+            iqrs: smqtk_iqr.iqr.IqrSession = self.controller.get_session(sid)
             iqrs.lock.acquire()  # lock BEFORE releasing controller
 
         try:

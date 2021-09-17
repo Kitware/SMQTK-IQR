@@ -1,10 +1,12 @@
 import atexit
 import threading
 import time
+import logging
 from typing import Optional, Callable, Hashable, Tuple, Type, Dict
 from types import TracebackType
+
 from smqtk_iqr.iqr import IqrSession
-import logging
+
 
 LOG = logging.getLogger(__name__)
 
@@ -24,9 +26,10 @@ class IqrController:
     """
 
     def __init__(
-                    self, expire_enabled: bool = False,
-                    expire_check: float = 30,
-                    expire_callback: Optional[Callable] = None) -> None:
+        self, expire_enabled: bool = False,
+        expire_check: float = 30,
+        expire_callback: Optional[Callable] = None
+    ) -> None:
         """
         Initialize the controller.
 
@@ -53,14 +56,12 @@ class IqrController:
 
         """
         # Map of uuid to the search state
-        #: :type: dict[collections.abc.Hashable, IqrSession]
-        self._iqr_sessions = {}  # type: Dict[Hashable, IqrSession]
+        self._iqr_sessions: Dict[Hashable, IqrSession] = {}
         # Map of sessions with timeout's enabled and the time out value in
         # seconds
-        #: :type
-        self._iqr_session_timeout = {}  # type: Dict
+        self._iqr_session_timeout: Dict = {}
         # Map of the UNIX time a session was last accessed
-        self._iqr_session_last_access = {}  # type: Dict
+        self._iqr_session_last_access: Dict = {}
 
         # RLock for iqr_session[*] maps.
         self._map_rlock = threading.RLock()
@@ -83,9 +84,10 @@ class IqrController:
         return self
 
     def __exit__(
-                    self, exc_type: Optional[Type],
-                    exc_val: Optional[BaseException],
-                    exc_tb: Optional[TracebackType]) -> None:
+            self, exc_type: Optional[Type],
+            exc_val: Optional[BaseException],
+            exc_tb: Optional[TracebackType]
+    ) -> None:
         self._map_rlock.release()
 
     def _handle_session_expiration(self) -> None:
@@ -108,6 +110,7 @@ class IqrController:
                                   "now: %s)", sid, la, to, now)
                         if hasattr(self._expire_callback, '__call__'):
                             LOG.debug("   - Executing callback")
+                            # type igore because callable will not be None
                             self._expire_callback(self._iqr_sessions[sid])  # type: ignore
                         self.remove_session(sid)
 

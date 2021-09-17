@@ -8,11 +8,9 @@ import os
 import os.path as osp
 import random
 import shutil
-from typing import Any, Dict, Hashable, Type, TypeVar
+from typing import Any, Dict, Hashable, Type, TypeVar, Optional
 import zipfile
 import logging
-
-import six
 
 import flask
 import PIL.Image
@@ -91,10 +89,8 @@ class IqrSearch (flask.Flask, Configurable):
 
         :param config: JSON compliant dictionary encapsulating
             a configuration.
-        :type config: dict
 
         :param parent_app: Parent containing flask app instance
-        :type parent_app: smqtk_iqr.web.search_app.app.search_app
 
         :return: Constructed instance from the provided config.
 
@@ -109,27 +105,24 @@ class IqrSearch (flask.Flask, Configurable):
         return cls(parent_app, **merged)
 
     def __init__(
-                self, parent_app: IqrSearchDispatcher, iqr_service_url: str,
-                data_set: DataSet, working_directory: str):
+        self, parent_app: IqrSearchDispatcher, iqr_service_url: str,
+        data_set: DataSet, working_directory: str
+    ):
         """
         Initialize a generic IQR Search module with a single descriptor and
         indexer.
 
         :param parent_app: Parent containing flask app instance
-        :type parent_app: smqtk_iqr.web.search_app.IqrSearchDispatcher
 
         :param iqr_service_url: Base URL to the IQR service to use for this
             application interface. Any trailing slashes will be striped.
-        :type iqr_service_url: str
 
         :param data_set: DataSet of the content described by indexed descriptors
             in the linked IQR service.
-        :type data_set: smqtk_dataprovider.DataSet
 
         :param working_directory: Directory in which to place working files.
             These may be considered temporary and may be removed between
             executions of this app.
-        :type working_directory: str
 
         :raises ValueError: Invalid Descriptor or indexer type
 
@@ -167,7 +160,6 @@ class IqrSearch (flask.Flask, Configurable):
         self.register_blueprint(parent_app.module_login)
 
         # Mapping of session IDs to their work directory
-        #: :type: dict[str, str]
         self._iqr_work_dirs: Dict[str, str] = {}
         # Mapping of session ID to a dictionary of the custom example data for
         # a session (uuid -> DataElement)
@@ -258,15 +250,15 @@ class IqrSearch (flask.Flask, Configurable):
             # Data elements are stored as a dictionary mapping UUID to MIMETYPE
             # and data byte string.
             working_data = {}
-            sid_data_elems = self._iqr_example_data.get(sid, {})
-            for uid, workingElem in six.iteritems(sid_data_elems):
+            sid_data_elems: Dict[Hashable, DataElement] = self._iqr_example_data.get(sid, {})
+            for uid in sid_data_elems:
                 # Decoding base64 as ASCII knowing that
                 # `base64.urlsafe_b64decode` is used later, whose doc-string
                 # states that it may expect an ASCII string when not bytes.
                 working_data[uid] = {
-                    'content_type': workingElem.content_type(),
+                    'content_type': sid_data_elems[uid].content_type(),
                     'bytes_base64':
-                        base64.b64encode(workingElem.get_bytes())
+                        base64.b64encode(sid_data_elems[uid].get_bytes())
                               .decode('ascii'),
                 }
 
@@ -309,8 +301,9 @@ class IqrSearch (flask.Flask, Configurable):
 
             LOG.debug("[%s::%s] Getting temporary filepath from "
                       "uploader module", sid, fid)
-            upload_filepath = self.mod_upload.get_path_for_id(fid)  # type: ignore
-            self.mod_upload.clear_completed(fid)  # type: ignore
+            assert fid is not None
+            upload_filepath = self.mod_upload.get_path_for_id(fid)
+            self.mod_upload.clear_completed(fid)
 
             # Load ZIP package back in, then remove the uploaded file.
             try:
@@ -331,8 +324,7 @@ class IqrSearch (flask.Flask, Configurable):
             self.reset_session_local(sid)
             # - Dictionary of data UUID (SHA1) to {'content_type': <str>,
             #   'bytes_base64': <str>} dictionary.
-            #: :type: dict[str, dict]
-            working_data = state_dict['working_data']
+            working_data: Dict[str, Dict] = state_dict['working_data']
             del state_dict['working_data']
             # - Write out base64-decoded files to session-specific work
             #   directory.
@@ -408,13 +400,12 @@ class IqrSearch (flask.Flask, Configurable):
 
             # Try to find a DataElement by the given UUID in our indexed data
             # or in the session's example data.
+            de: Optional[DataElement] = None
             if self._data_set.has_uuid(uid):
-                #: :type: smqtk_dataprovider.DataElement
                 de = self._data_set.get_data(uid)
             else:
                 sid = self.get_current_iqr_session()
-                #: :type: smqtk_dataprovider.DataElement | None
-                de = self._iqr_example_data[sid].get(uid, None)  # type: ignore
+                de = self._iqr_example_data[sid].get(uid, None)
 
             if not de:
                 info["success"] = False
@@ -635,9 +626,9 @@ class IqrSearch (flask.Flask, Configurable):
                 'sid': self.get_current_iqr_session(),
             }
             if i is not None:
-                params['i'] = int(i)  # type: ignore
+                params['i'] = i
             if j is not None:
-                params['j'] = int(j)  # type: ignore
+                params['j'] = j
 
             get_r = self._iqr_service.get('get_results', **params)
             get_r.raise_for_status()
@@ -706,8 +697,6 @@ class IqrSearch (flask.Flask, Configurable):
     def get_current_iqr_session(self) -> str:
         """
         Get the current IQR Session UUID.
-
-
         """
         sid = str(flask.session.sid)  # type: ignore
 
@@ -739,7 +728,6 @@ class IqrSearch (flask.Flask, Configurable):
         This does not affect the linked IQR service.
 
         :param sid: Session ID to reset for.
-        :type sid: str
 
         :raises KeyError: ``sid`` not recognized. Probably not initialized
             first.

@@ -3,7 +3,6 @@ import functools
 import json
 import os.path
 
-import six
 import requests
 
 from smqtk_iqr.utils.url import url_join
@@ -19,14 +18,14 @@ LOG = logging.getLogger(__name__)
 class LoginMod (flask.Blueprint):
 
     def __init__(
-                self, name: str, parent_app: flask.Flask,
-                url_prefix: Optional[str] = None):
+        self, name: str, parent_app: flask.Flask,
+        url_prefix: Optional[str] = None
+    ):
         """
         Initialize the login module
 
         :param parent_app: Parent application that is loading this using this
             module.
-        :type parent_app: flask.Flask
 
         """
         super(LoginMod, self).__init__(
@@ -105,18 +104,16 @@ class LoginMod (flask.Blueprint):
 
     @staticmethod
     def _login_user(
-                    userid: str, user_info: Dict[str, Union[str, List[str]]]
-                ) -> None:
+        userid: str, user_info: Dict[str, Union[str, List[str]]]
+    ) -> None:
         """
         "log-in" the user in the current session. This adds the name and role
         list to the session. Only one user logged in at a time.
 
         :param userid: String ID of the user
-        :type userid: str
 
         :param user_info: The user dictionary as recorded in our users.json
             config file.
-        :type user_info: dict[str, str or list of str]
 
         """
         flask.session['user'] = {
@@ -147,8 +144,8 @@ class LoginMod (flask.Blueprint):
         def deco(*args: int, **kwds: int) -> Callable:
             # Combine to handle both GET arguments and form data
             c = {}
-            c.update(dict(six.iteritems(flask.request.form)))
-            c.update(dict(six.iteritems(flask.request.args)))
+            c.update(dict(flask.request.form))
+            c.update(dict(flask.request.args))
             LOG.debug("Combined arguments: %s", c)
 
             if not {'girder_token', 'girder_origin', 'girder_apiRoot'} \

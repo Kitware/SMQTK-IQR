@@ -4,7 +4,8 @@ import unittest.mock as mock
 import os
 import unittest
 from werkzeug.test import TestResponse
-from typing import Any, Generator
+import flask
+from typing import Any, Generator, Optional, Dict
 
 from smqtk_relevancy import RankRelevancyWithFeedback
 
@@ -58,27 +59,18 @@ class TestIqrService (unittest.TestCase):
         self.app = IqrService(config)
 
     def assertStatusCode(self, r: TestResponse, code: int) -> None:
-        """
-        :type r: :type: flask.wrappers.Response
-        :type code: int
-        """
         self.assertEqual(code, r.status_code)
 
     def assertJsonMessageRegex(self, r: TestResponse, regex: str) -> None:
-        """
-        :type r: flask.wrappers.Response
-        :type regex: str
-        """
         self.assertRegex(json.loads(r.data.decode())['message'], regex)
 
     # Test Methods ############################################################
 
     def test_is_ready(self) -> None:
         # Test that the is_ready endpoint returns the expected values.
-        #: :type: flask.wrappers.Response
-        r = self.app.test_client().get('/is_ready')
-        self.assertStatusCode(r, 200)
-        self.assertJsonMessageRegex(r, "Yes, I'm alive.")
+        r: flask.wrappers.Response = self.app.test_client().get('/is_ready')  # type: ignore
+        self.assertStatusCode(r, 200)  # type: ignore
+        self.assertJsonMessageRegex(r, "Yes, I'm alive.")  # type: ignore
         self.assertIsInstance(self.app.descriptor_set, StubDescriptorSet)
         self.assertIsInstance(self.app.descriptor_generator, StubDescrGenerator)
         self.assertIsInstance(self.app.neighbor_index, StubNearestNeighborIndex)
@@ -636,24 +628,24 @@ class TestIqrService (unittest.TestCase):
         self.app.controller.add_session(iqrs)
 
         with self.app.test_client() as tc:
-            #: :type: flask.wrappers.Response
-            r = tc.get('/session?sid=abc')
-            self.assertStatusCode(r, 200)
-            r_json = r.json
-            assert r_json['sid'] == 'abc'  # type: ignore
+            r: flask.wrappers.Response = tc.get('/session?sid=abc')  # type: ignore
+            self.assertStatusCode(r, 200)  # type: ignore
+            r_json: Optional[Dict] = r.json
+            assert r_json is not None
+            assert r_json['sid'] == 'abc'
             # That everything included in "current" adjudications is included
             # here.
-            assert set(r_json['uuids_pos_ext']) == {'a'}  # type: ignore
-            assert set(r_json['uuids_pos']) == {'c', 'd', 'e'}  # type: ignore
-            assert set(r_json['uuids_neg_ext']) == {'b'}  # type: ignore
-            assert set(r_json['uuids_neg']) == {'f', 'g', 'j'}  # type: ignore
+            assert set(r_json['uuids_pos_ext']) == {'a'}
+            assert set(r_json['uuids_pos']) == {'c', 'd', 'e'}
+            assert set(r_json['uuids_neg_ext']) == {'b'}
+            assert set(r_json['uuids_neg']) == {'f', 'g', 'j'}
             # That those marked as "contributing" are included here
-            assert set(r_json['uuids_pos_in_model']) == {'d', 'h'}  # type: ignore
-            assert set(r_json['uuids_pos_ext_in_model']) == {'a'}  # type: ignore
-            assert set(r_json['uuids_neg_in_model']) == {'f', 'j', 'i'}  # type: ignore
-            assert set(r_json['uuids_neg_ext_in_model']) == set()  # type: ignore
+            assert set(r_json['uuids_pos_in_model']) == {'d', 'h'}
+            assert set(r_json['uuids_pos_ext_in_model']) == {'a'}
+            assert set(r_json['uuids_neg_in_model']) == {'f', 'j', 'i'}
+            assert set(r_json['uuids_neg_ext_in_model']) == set()
             # IQR working set expected size
-            assert r_json['wi_count'] == 8  # type: ignore
+            assert r_json['wi_count'] == 8
 
     def test_refine_no_session_id(self) -> None:
         with self.app.test_client() as tc:
@@ -727,9 +719,10 @@ class TestIqrService (unittest.TestCase):
             r = tc.get('/get_results?sid={}'.format(test_sid))
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "Returning result pairs")
-            r_json = r.json
-            assert r_json['total_results'] == 3  # type: ignore
-            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]  # type: ignore
+            r_json: Optional[Dict] = r.json
+            assert r_json is not None
+            assert r_json['total_results'] == 3
+            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
@@ -767,9 +760,10 @@ class TestIqrService (unittest.TestCase):
             r = tc.get('/get_feedback?sid={}'.format(test_sid))
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "Returning feedback uuids")
-            r_json = r.json
-            assert r_json['total_results'] == 3  # type: ignore
-            assert r_json['results'] == [0, 2, 1]  # type: ignore
+            r_json: Optional[Dict] = r.json
+            assert r_json is not None
+            assert r_json['total_results'] == 3
+            assert r_json['results'] == [0, 2, 1]
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
@@ -811,9 +805,10 @@ class TestIqrService (unittest.TestCase):
                        .format(test_sid))
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "success")
-            r_json = r.json
-            assert r_json['total'] == 3  # type: ignore
-            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]  # type: ignore
+            r_json: Optional[Dict] = r.json
+            assert r_json is not None
+            assert r_json['total'] == 3
+            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
@@ -855,9 +850,10 @@ class TestIqrService (unittest.TestCase):
                        .format(test_sid))
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "success")
-            r_json = r.json
-            assert r_json['total'] == 3  # type: ignore
-            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]  # type: ignore
+            r_json: Optional[Dict] = r.json
+            assert r_json is not None
+            assert r_json['total'] == 3
+            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]
 
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
@@ -899,10 +895,10 @@ class TestIqrService (unittest.TestCase):
                        .format(test_sid))
             self.assertStatusCode(r, 200)
             self.assertJsonMessageRegex(r, "success")
-            r_json = r.json
-            assert r_json['total'] == 3  # type: ignore
-            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]  # type: ignore
-
+            r_json: Optional[Dict] = r.json
+            assert r_json is not None
+            assert r_json['total'] == 3
+            assert r_json['results'] == [[0, 0.3], [2, 0.2], [1, 0.1]]
         self.app.controller.has_session_uuid.assert_called_once_with(test_sid)
 
     @mock.patch('smqtk_iqr.web.iqr_service.iqr_server.ClassifyDescriptorSupervised'
@@ -963,21 +959,17 @@ class TestIqrService (unittest.TestCase):
             iqr_session.negative_descriptors.add(
                 DescriptorMemoryElement('', 3).set_vector([0.9])
             )
-
-            #: :type: flask.Response
-            r = tc.get('/classify',
-                       query_string=dict(
-                           sid=0,
-                           uuids=json.dumps(['a', 'b', 'c'])
-                       ))
-            self.assertStatusCode(r, 200)
+            r: flask.Response = tc.get('/classify',  # type: ignore
+                                       query_string=dict(sid=0, uuids=json.dumps(['a', 'b', 'c'])))
+            self.assertStatusCode(r, 200)  # type: ignore
             # We expect the UIDs returned to be in the same order as input and
             # for the expected classification "positive" probabilities as in
             # the mocked classification results.
-            r_json = r.json
-            assert r_json['sid'] == '0'  # type: ignore
-            assert r_json['uuids'] == ['a', 'b', 'c']  # type: ignore
-            assert r_json['proba'] == [0.6, 0.5, 0.4]  # type: ignore
+            r_json: Optional[Dict] = r.json
+            assert r_json is not None
+            assert r_json['sid'] == '0'
+            assert r_json['uuids'] == ['a', 'b', 'c']
+            assert r_json['proba'] == [0.6, 0.5, 0.4]
 
     def test_get_iqr_state_no_sid(self) -> None:
         # Test that calling GET /state with no SID results in error.
@@ -1130,19 +1122,21 @@ class TestIqrService (unittest.TestCase):
         with self.app.test_client() as tc:
             r = tc.get('/random_uids')
             self.assertStatusCode(r, 200)
-            r_json = r.json
-            assert r_json['total'] == 26  # type: ignore
+            r_json: Optional[Dict] = r.json
+            assert r_json is not None
+            assert r_json['total'] == 26
             # The results should have the expected contents but not be in the
             # same order, cause ya know, random.
-            assert sorted(r_json['results']) == expected  # type: ignore
-            assert r_json['results'] != expected  # type: ignore
-            result1 = r_json['results']  # type: ignore
+            assert sorted(r_json['results']) == expected
+            assert r_json['results'] != expected
+            result1 = r_json['results']
 
             # A second call should return the same list due to caching
             r2 = tc.get('/random_uids')
             self.assertStatusCode(r, 200)
-            r2_json = r2.json
-            assert r2_json['results'] == result1  # type: ignore
+            r2_json: Optional[Dict] = r2.json
+            assert r2_json is not None
+            assert r2_json['results'] == result1
 
             # Calling with refresh should re-query the descriptor set and
             # reorder. Result (should) be different.
@@ -1151,8 +1145,9 @@ class TestIqrService (unittest.TestCase):
             #   but I don't know.
             r3 = tc.get('/random_uids?refresh=true')
             self.assertStatusCode(r, 200)
-            r3_json = r3.json
-            assert r3_json['results'] != result1  # type: ignore
+            r3_json: Optional[Dict] = r3.json
+            assert r3_json is not None
+            assert r3_json['results'] != result1
 
     def test_get_random_uids_paged(self) -> None:
         """ Test pagination of random UIDs """
@@ -1161,22 +1156,29 @@ class TestIqrService (unittest.TestCase):
         )
         with self.app.test_client() as tc:
             # Lets get a baseline to test pagination
-            rbase = tc.get('/random_uids')
+            rbase: TestResponse = tc.get('/random_uids')
             self.assertStatusCode(rbase, 200)
-            result_all = rbase.json['results']  # type: ignore
+            assert rbase.json is not None
+            result_all: Dict = \
+                rbase.json['results']
+            assert result_all is not None
 
-            r = tc.get('/random_uids?i=3')
+            r: TestResponse = tc.get('/random_uids?i=3')
             self.assertStatusCode(r, 200)
-            assert r.json['results'] == result_all[3:]  # type: ignore
+            assert r.json is not None
+            assert r.json['results'] == result_all[3:]
 
             r = tc.get('/random_uids?j=-4')
             self.assertStatusCode(r, 200)
-            assert r.json['results'] == result_all[:-4]  # type: ignore
+            assert r.json is not None
+            assert r.json['results'] == result_all[:-4]
 
             r = tc.get('/random_uids?j=10')
             self.assertStatusCode(r, 200)
-            assert r.json['results'] == result_all[:10]  # type: ignore
+            assert r.json is not None
+            assert r.json['results'] == result_all[:10]
 
             r = tc.get('/random_uids?i=7&j=10')
             self.assertStatusCode(r, 200)
-            assert r.json['results'] == result_all[7:10]  # type: ignore
+            assert r.json is not None
+            assert r.json['results'] == result_all[7:10]
