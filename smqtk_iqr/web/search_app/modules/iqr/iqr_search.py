@@ -400,7 +400,7 @@ class IqrSearch (flask.Flask, Configurable):
 
             # Try to find a DataElement by the given UUID in our indexed data
             # or in the session's example data.
-            de: Optional[DataElement] = None
+            de: Optional[DataElement]
             if self._data_set.has_uuid(uid):
                 de = self._data_set.get_data(uid)
             else:

@@ -116,11 +116,11 @@ def main() -> None:
         log.info("")
         log.info("Available applications:")
         log.info("")
-        for label in web_applications:
+        for label, cls in web_applications.items():
             log.info("\t" + label)
             if debug_smqtk:
                 log.info('\t' + ('^'*len(label)) + '\n' +
-                         cast(str, web_applications[label].__doc__) + '\n' +
+                         cast(str, cls.__doc__) + '\n' +
                          ('*' * 80) + '\n')
         log.info("")
         exit(0)

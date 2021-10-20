@@ -260,7 +260,7 @@ def ffmpeg_extract_frame_map(
         p = multiprocessing.Pool(parallel)
         # Mapping of frame to (result, output_filepath)
         rmap: Dict[int, Tuple[AsyncResult, str]] = {}
-        for f in frames_to_process:
+        for f, ofp in frames_to_process.items():
             f = int(f)
             tfp = os.path.join(tmp_extraction_dir,
                                filename_for_frame(f, output_image_ext))
@@ -274,7 +274,7 @@ def ffmpeg_extract_frame_map(
         p.close()
         # Check for failures
         extracted_frames = []
-        for f in frames_to_process:
+        for f, ofp in frames_to_process.items():
             f = int(f)
             r, tfp = rmap[f]
             r.get()  # wait for finish
@@ -282,7 +282,7 @@ def ffmpeg_extract_frame_map(
                 _log.warn("Failed to generated file for frame %d", f)
             else:
                 extracted_frames.append(f)
-                os.rename(tfp, frames_to_process[f])
+                os.rename(tfp, ofp)
         p.join()
         del p
 

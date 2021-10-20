@@ -91,6 +91,8 @@ class IqrSearchDispatcher (SmqtkWebApp):
         # Use mongo for session storage.
         # -> This allows session modification during Flask methods called from
         #    AJAX routines (default Flask sessions do not)
+        # -> Note that 'type: ignore' is used because the parent class Flask
+        #    does not annotate the session_interface property
         self.session_interface = MongoSessionInterface(  # type: ignore
             self.db_info.host, self.db_info.port, self.db_info.name)
 
@@ -119,7 +121,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
         # IQR modules
         # - for each entry in 'iqr_tabs', initialize a separate IqrSearch
         #   instance.
-        for tab_name, tab_config in self.json_config['iqr_tabs']:
+        for tab_name, tab_config in self.json_config['iqr_tabs'].items():
             if tab_name == "__default__":
                 # skipping default config sample
                 continue

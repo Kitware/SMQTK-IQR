@@ -58,10 +58,10 @@ class TestIqrService (unittest.TestCase):
 
         self.app = IqrService(config)
 
-    def assertStatusCode(self, r: TestResponse, code: int) -> None:
+    def assertStatusCode(self, r: Response, code: int) -> None:
         self.assertEqual(code, r.status_code)
 
-    def assertJsonMessageRegex(self, r: TestResponse, regex: str) -> None:
+    def assertJsonMessageRegex(self, r: Response, regex: str) -> None:
         self.assertRegex(json.loads(r.data.decode())['message'], regex)
 
     # Test Methods ############################################################
