@@ -3,8 +3,7 @@ import json
 import unittest.mock as mock
 import os
 import unittest
-from werkzeug.test import TestResponse
-import flask
+from werkzeug.test import Response
 from typing import Any, Generator, Optional, Dict
 
 from smqtk_relevancy import RankRelevancyWithFeedback
@@ -68,7 +67,7 @@ class TestIqrService (unittest.TestCase):
 
     def test_is_ready(self) -> None:
         # Test that the is_ready endpoint returns the expected values.
-        r: flask.wrappers.Response = self.app.test_client().get('/is_ready')  # type: ignore
+        r: Response = self.app.test_client().get('/is_ready')
         self.assertStatusCode(r, 200)  # type: ignore
         self.assertJsonMessageRegex(r, "Yes, I'm alive.")  # type: ignore
         self.assertIsInstance(self.app.descriptor_set, StubDescriptorSet)
@@ -628,7 +627,7 @@ class TestIqrService (unittest.TestCase):
         self.app.controller.add_session(iqrs)
 
         with self.app.test_client() as tc:
-            r: flask.wrappers.Response = tc.get('/session?sid=abc')  # type: ignore
+            r: Response = tc.get('/session?sid=abc')  # type: ignore
             self.assertStatusCode(r, 200)  # type: ignore
             r_json: Optional[Dict] = r.json
             assert r_json is not None
@@ -959,8 +958,8 @@ class TestIqrService (unittest.TestCase):
             iqr_session.negative_descriptors.add(
                 DescriptorMemoryElement('', 3).set_vector([0.9])
             )
-            r: flask.Response = tc.get('/classify',  # type: ignore
-                                       query_string=dict(sid=0, uuids=json.dumps(['a', 'b', 'c'])))
+            r: Response = tc.get('/classify',  # type: ignore
+                                 query_string=dict(sid=0, uuids=json.dumps(['a', 'b', 'c'])))
             self.assertStatusCode(r, 200)  # type: ignore
             # We expect the UIDs returned to be in the same order as input and
             # for the expected classification "positive" probabilities as in
@@ -1156,14 +1155,14 @@ class TestIqrService (unittest.TestCase):
         )
         with self.app.test_client() as tc:
             # Lets get a baseline to test pagination
-            rbase: TestResponse = tc.get('/random_uids')
+            rbase: Response = tc.get('/random_uids')
             self.assertStatusCode(rbase, 200)
             assert rbase.json is not None
             result_all: Dict = \
                 rbase.json['results']
             assert result_all is not None
 
-            r: TestResponse = tc.get('/random_uids?i=3')
+            r: Response = tc.get('/random_uids?i=3')
             self.assertStatusCode(r, 200)
             assert r.json is not None
             assert r.json['results'] == result_all[3:]
