@@ -6,7 +6,7 @@ MT_CACHE_LOCK = threading.RLock()
 MT_CACHE = None
 
 
-def get_mimetypes():
+def get_mimetypes() -> pymimetypes.MimeTypes:
     """
     Get the singleton SMQTK-adjusted mimetypes instance.
 
@@ -14,7 +14,6 @@ def get_mimetypes():
     conversion, e.g. image/jpeg -> .jfif.
 
     :return: SMQTK singleton MimeTypes instance.
-    :rtype: mimetypes.MimeTypes
 
     """
     global MT_CACHE

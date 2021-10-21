@@ -2,13 +2,14 @@
 Utilities for URLs
 """
 import re
+from typing import Union
 
 
 PROTOCOL_HEADER = re.compile(r'\w+://')
 URL_SEP = '/'
 
 
-def url_join(url, *urls):
+def url_join(url: str, *urls: Union[str, int]) -> str:
     r"""
     Join one or more URL components intelligently.
 
@@ -27,13 +28,10 @@ def url_join(url, *urls):
     that do not start with a protocol component.
 
     :param url: First URL component
-    :type url: str
 
     :param urls: path components to join with slashes.
-    :type urls: string-castable
 
     :return: Joined URL string
-    :rtype: str
 
     """
     # State-builder methods

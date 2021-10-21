@@ -10,10 +10,13 @@ Taken from: http://flask.pocoo.org/snippets/110/
 from datetime import datetime, timedelta
 import logging
 from uuid import uuid4
+from typing import Union, Iterable, Tuple, Mapping, Optional, Any
 
+import flask
 from flask.sessions import SessionInterface, SessionMixin
+from flask.wrappers import Request, Response
 from werkzeug.datastructures import CallbackDict
-from pymongo import MongoClient  # type: ignore
+from pymongo import MongoClient
 
 
 LOG = logging.getLogger(__name__)
@@ -21,24 +24,30 @@ LOG = logging.getLogger(__name__)
 
 class MongoSession(CallbackDict, SessionMixin):
 
-    def __init__(self, initial=None, sid=None):
-        super(MongoSession, self).__init__(initial, MongoSession.on_update)
+    def __init__(
+        self,
+        initial: Union[Mapping, Iterable[Tuple[Any, Any]], None] = None,
+        sid: Optional[str] = None
+    ):
+        def on_update(_: Mapping) -> None:
+            self.modified = True
+
+        super(MongoSession, self).__init__(initial, on_update)
         self.sid = sid
         self.modified = False
-
-    def on_update(self):
-        self.modified = True
 
 
 class MongoSessionInterface(SessionInterface):
 
-    def __init__(self, host='localhost', port=27017,
-                 db='', collection='sessions', delete_on_empty=False):
+    def __init__(
+        self, host: str = 'localhost', port: int = 27017, db: str = '',
+        collection: str = 'sessions', delete_on_empty: bool = False
+    ):
         client = MongoClient(host, port)
         self.store = client[db][collection]
         self._delete_on_empty = delete_on_empty
 
-    def open_session(self, app, request):
+    def open_session(self, app: flask.Flask, request: Request) -> MongoSession:
         sid = request.cookies.get(app.session_cookie_name)
         if sid:
             stored_session = self.store.find_one({'_id': sid})
@@ -53,7 +62,9 @@ class MongoSessionInterface(SessionInterface):
                   .format(sid))
         return MongoSession(sid=sid)
 
-    def save_session(self, app, session, response):
+    def save_session(
+        self, app: flask.Flask, session: SessionMixin, response: Response
+    ) -> None:
         domain = self.get_cookie_domain(app)
         if self._delete_on_empty and not session:
             LOG.debug("Session cookie content was empty, deleting.")
@@ -64,11 +75,13 @@ class MongoSessionInterface(SessionInterface):
         expiration = self.get_expiration_time(app, session)
         if not expiration:
             expiration = datetime.utcnow() + timedelta(hours=1)
-        self.store.update({'_id': session.sid},
+        # Assuming that the SessionMixin has an sid attribute
+        ssid = session.sid  # type: ignore
+        self.store.update({'_id': ssid},
                           {'data': session,
                            'expiration': expiration},
                           upsert=True)
-        LOG.debug("Setting session cookie for SID={}".format(session.sid))
-        response.set_cookie(app.session_cookie_name, session.sid,
+        LOG.debug("Setting session cookie for SID={}".format(ssid))
+        response.set_cookie(app.session_cookie_name, ssid,
                             expires=expiration,
                             httponly=True, domain=domain)

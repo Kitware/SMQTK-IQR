@@ -14,7 +14,7 @@ class StaticDirectoryHost (flask.Blueprint):
 
     """
 
-    def __init__(self, name, static_dir, url_prefix):
+    def __init__(self, name: str, static_dir: str, url_prefix: str) -> None:
         # make sure URL prefix starts with a slash
         if not url_prefix.startswith('/'):
             url_prefix = '/' + url_prefix

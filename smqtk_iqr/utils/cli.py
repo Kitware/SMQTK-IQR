@@ -9,30 +9,27 @@ import os
 import sys
 import threading
 import time
-import warnings
+from typing import Tuple, Dict, Optional, Callable, Iterable, Any
 
 from smqtk_core.dict import merge_dict
 
 
-def initialize_logging(logger, stream_level=logging.WARNING,
-                       output_filepath=None, file_level=None):
+LOG = logging.getLogger(__name__)
+
+
+def initialize_logging(
+    logger: logging.Logger, stream_level: int = logging.WARNING,
+    output_filepath: str = None, file_level: Optional[int] = None
+) -> None:
     """
     Standard logging initialization.
-
     :param logger: Logger instance to initialize
-    :type logger: logging.Logger
-
     :param stream_level: Logging level to set for the stderr stream formatter.
-    :type stream_level: int
-
     :param output_filepath: Output logging from the given logger to the provided
         file path. Currently, we log to that file indefinitely, i.e. no
         rollover. Rollover may be added in the future if the need arises.
-    :type output_filepath: str
-
     :param file_level: Logging level to output to the file. This the same as the
         stream level by default.
-
     """
     log_formatter = logging.Formatter(
         "%(levelname)7s - %(asctime)s - %(name)s.%(funcName)s - %(message)s"
@@ -58,7 +55,9 @@ def initialize_logging(logger, stream_level=logging.WARNING,
     logger.setLevel(min(stream_level, file_level or stream_level))
 
 
-def load_config(config_path, defaults=None):
+def load_config(
+    config_path: str, defaults: Optional[Dict] = None
+) -> Tuple[Dict, bool]:
     """
     Load the JSON configuration dictionary from the specified filepath.
 
@@ -67,15 +66,12 @@ def load_config(config_path, defaults=None):
     as our second return argument.
 
     :param config_path: Path to the (valid) JSON configuration file.
-    :type config_path: str
 
     :param defaults: Optional default configuration dictionary to merge loaded
         configuration into. If provided, it will be modified in place.
-    :type defaults: dict | None
 
     :return: The result configuration dictionary and if we successfully loaded
         a JSON dictionary from the given filepath.
-    :rtype: (dict, bool)
 
     """
     if defaults is None:
@@ -88,8 +84,10 @@ def load_config(config_path, defaults=None):
     return defaults, loaded
 
 
-def output_config(output_path, config_dict, log=None, overwrite=False,
-                  error_rc=1):
+def output_config(
+    output_path: str, config_dict: Dict, overwrite: bool = False,
+    error_rc: int = 1, log: Optional[logging.Logger] = None
+) -> None:
     """
     If a valid output configuration path is provided, we output the given
     configuration dictionary as JSON or error if the file already exists (when
@@ -104,23 +102,17 @@ def output_config(output_path, config_dict, log=None, overwrite=False,
     :raises ValueError: If the given error return code is 0.
 
     :param output_path: Path to write the configuration file to.
-    :type output_path: str
 
     :param config_dict: Configuration dictionary containing JSON-compliant
         values.
-    :type config_dict: dict
 
     :param overwrite: If we should clobber any existing file at the specified
         path. We exit with the error code if this is false and a file exists at
         ``output_path``.
-    :type overwrite: bool
 
     :param error_rc: Custom integer error return code to use instead of 1.
-    :type error_rc: int
 
     :param log: Optionally logging instance. Otherwise we use a local one.
-    :type log: logging.Logger
-
     """
     error_rc = int(error_rc)
     if error_rc == 0:
@@ -151,17 +143,17 @@ class ProgressReporter:
     TODO: Add parameter for an optionally known total number of increments.
     """
 
-    def __init__(self, log_func, interval, what_per_second="Loops"):
+    def __init__(
+        self, log_func: Callable, interval: float, what_per_second: str = "Loops"
+    ):
         """
         Initialize this reporter.
 
         :param log_func: Logging function to use.
-        :type log_func: (str, *args, **kwds) -> None
 
         :param interval: Time interval to perform reporting in seconds.  If no
             reporting during incrementation should occur, infinity should be
             passed.
-        :type interval: float
 
         :param str what_per_second:
             String label about what is happening or being iterated over per
@@ -190,7 +182,7 @@ class ProgressReporter:
 
         self.started = False
 
-    def start(self):
+    def start(self) -> "ProgressReporter":
         """ Start the timing state of this reporter.
 
         Repeated calls to this method resets the state of the reporting for
@@ -199,7 +191,6 @@ class ProgressReporter:
         This method is thread-safe.
 
         :returns: Self
-        :rtype: ProgressReporter
 
         """
         with self.lock:
@@ -209,7 +200,7 @@ class ProgressReporter:
             self.t_delta = 0.0
         return self
 
-    def increment_report(self):
+    def increment_report(self) -> None:
         """
         Increment counter and time since last report, reporting if delta exceeds
         the set reporting interval period.
@@ -227,7 +218,7 @@ class ProgressReporter:
             self.t_last = self.t
             self.c_last = self.c
 
-    def increment_report_threadsafe(self):
+    def increment_report_threadsafe(self) -> None:
         """
         The same as ``increment_report`` but additionally acquires a lock on
         resources first for thread-safety.
@@ -238,7 +229,7 @@ class ProgressReporter:
         with self.lock:
             self.increment_report()
 
-    def report(self):
+    def report(self) -> None:
         """
         Report the current state.
 
@@ -256,7 +247,7 @@ class ProgressReporter:
                              self.c_delta,
                              self.c))
 
-    def report_threadsafe(self):
+    def report_threadsafe(self) -> None:
         """
         The same as ``report`` but additionally acquires a lock on
         resources first for thread-safety.
@@ -268,68 +259,9 @@ class ProgressReporter:
             self.report()
 
 
-def report_progress(log, state, interval):
-    """
-    Loop progress reporting function that logs (when in debug) loops per
-    second, loops in the last reporting period and total loops executed.
-
-    The ``state`` given to this function must be a list of 7 integers, initially
-    all set to 0. This function will update the fields of the state as its is
-    called to control when reporting should happen and what to report.
-
-    A report can be effectively force for a call by setting ``state[3] = 0``
-    or ``interval`` to ``0``.
-
-    :param log: Logger logging function to use to send reporting message to.
-    :type log: (str, *args, **kwargs) -> None
-
-    :param state: Reporting state. This should be initialized to a list of 6
-        zeros (floats), and then should not be modified externally from this
-        function.
-    :type state: list[float]
-
-    :param interval: Frequency in seconds that reporting messages should be
-        made. This should be greater than 0.
-    :type interval: float
-
-    """
-    warnings.warn("``report_progress`` is deprecated. Please use the"
-                  "``ProgressReporter`` class instead.",
-                  DeprecationWarning)
-    # State format (c=count, t=time:
-    #   [last_c, c, delta_c, last_t, t, delta_t, starting_t]
-    #   [  0,    1,    2,       3,   4,    5,         6    ]
-
-    warnings.warn(
-        'report_progress is deprecated, use ProgressReporter instead.',
-        DeprecationWarning)
-
-    # Starting time
-    if not state[6]:
-        state[3] = state[6] = time.time()
-
-    state[1] += 1
-    state[4] = time.time()
-    state[5] = state[4] - state[3]
-    if state[5] >= interval:
-        state[2] = state[1] - state[0]
-        # TODO: Could possibly to something with ncurses
-        #       - to maintain a single line.
-        try:
-            loops_per_second = state[2] / state[5]
-            avg_loops_per_second = state[1] / (state[4] - state[6])
-        except ZeroDivisionError:
-            loops_per_second = 0
-            avg_loops_per_second = 0
-        log("Loops per second %f (avg %f) (%d this interval / %d total)"
-            % (loops_per_second,
-               avg_loops_per_second,
-               state[2], state[1]))
-        state[3] = state[4]
-        state[0] = state[1]
-
-
-def basic_cli_parser(description=None, configuration_group=True):
+def basic_cli_parser(
+    description: str = None, configuration_group: bool = True
+) -> argparse.ArgumentParser:
     """
     Generate an ``argparse.ArgumentParser`` with the given description and the
     basic options for verbosity and configuration/generation paths.
@@ -340,14 +272,11 @@ def basic_cli_parser(description=None, configuration_group=True):
     default).
 
     :param description: Optional description string for the parser.
-    :type description: str
 
     :param configuration_group: Whether or not to include the configuration
         group options.
-    :type configuration_group: bool
 
     :return: Argument parser instance with basic options.
-    :rtype: argparse.ArgumentParser
 
     """
     parser = argparse.ArgumentParser(
@@ -375,8 +304,11 @@ def basic_cli_parser(description=None, configuration_group=True):
     return parser
 
 
-def utility_main_helper(default_config, args, additional_logging_domains=(),
-                        skip_logging_init=False, default_config_valid=False):
+def utility_main_helper(
+    default_config: Dict[str, Any], args: argparse.Namespace,
+    additional_logging_domains: Iterable[str] = (),
+    skip_logging_init: bool = False, default_config_valid: bool = False
+) -> Dict:
     """
     Helper function for utilities standardizing logging initialization, CLI
     parsing and configuration loading/generation.
@@ -392,27 +324,21 @@ def utility_main_helper(default_config, args, additional_logging_domains=(),
 
     :param default_config: Function returning default configuration (JSON)
         dictionary for the utility. This should take no arguments.
-    :type default_config: () -> dict
 
     :param args: Parsed arguments from argparse.ArgumentParser instance as
         returned from ``parser.parse_args()``.
-    :type args: argparse.Namespace
 
     :param additional_logging_domains: We initialize logging on the base
         ``smqtk`` and ``__main__`` namespace. Any additional namespaces under
         which logging should be reported should be added here as an iterable.
-    :type additional_logging_domains: collections.abc.Iterable[str]
 
     :param skip_logging_init: Skip initialize logging in this function because
         it is done elsewhere externally.
-    :type skip_logging_init: bool
 
     :param default_config_valid: Whether the default config returned from the
         generator is a valid config to continue execution with or not.
-    :type default_config_valid: bool
 
     :return: Loaded configuration dictionary.
-    :rtype: dict
 
     """
     # noinspection PyUnresolvedReferences
@@ -426,12 +352,13 @@ def utility_main_helper(default_config, args, additional_logging_domains=(),
         llevel = logging.INFO
         if verbose:
             llevel = logging.DEBUG
-        initialize_logging(logging.getLogger('smqtk'), llevel)
+
+        initialize_logging(logging.getLogger('smqtk_iqr'), llevel)
         initialize_logging(logging.getLogger('__main__'), llevel)
         for d in additional_logging_domains:
             initialize_logging(logging.getLogger(d), llevel)
 
-    config, config_loaded = load_config(config_filepath, default_config())
+    config, config_loaded = load_config(config_filepath, default_config)
     output_config(config_generate, config, overwrite=True)
 
     if not (config_loaded or default_config_valid):

@@ -16,6 +16,8 @@ will be used to train the configured SupervisedClassifier.
 import logging
 import os
 import unittest.mock as mock
+import argparse
+from typing import Dict, Any
 
 from smqtk_relevancy import RankRelevancy
 from smqtk_classifier import ClassifyDescriptorSupervised
@@ -35,22 +37,21 @@ from smqtk_core.configuration import (
 )
 
 
-def get_cli_parser():
+def get_cli_parser() -> argparse.ArgumentParser:
     parser = basic_cli_parser(__doc__)
     parser.add_argument('-i', '--iqr-state',
                         help="Path to the ZIP file saved from an IQR session.")
     return parser
 
 
-def get_default_config():
+def get_default_config() -> Dict[str, Any]:
     return {
         "classifier": make_default_config(ClassifyDescriptorSupervised.get_impls()),
     }
 
 
-def train_classifier_iqr(config, iqr_state_fp):
-    #: :type: smqtk.algorithms.SupervisedClassifier
-    classifier = from_config_dict(
+def train_classifier_iqr(config: Dict[str, Any], iqr_state_fp: str) -> None:
+    classifier: ClassifyDescriptorSupervised = from_config_dict(
         config['classifier'],
         ClassifyDescriptorSupervised.get_impls()
     )
@@ -70,9 +71,9 @@ def train_classifier_iqr(config, iqr_state_fp):
     classifier.train(class_examples={'positive': pos, 'negative': neg})
 
 
-def main():
+def main() -> None:
     args = get_cli_parser().parse_args()
-    config = utility_main_helper(get_default_config, args)
+    config = utility_main_helper(get_default_config(), args)
 
     log = logging.getLogger(__name__)
     log.debug("Showing debug messages.")

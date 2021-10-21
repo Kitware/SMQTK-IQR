@@ -11,16 +11,17 @@ class TestIqrSession (object):
     """
     Unit tests pertaining to the IqrSession class.
     """
+    iqrs = None  # type: IqrSession
 
     @classmethod
-    def setup_method(cls):
+    def setup_method(cls) -> None:
         """
         Setup an iqr session with a mocked rank relevancy
         """
         rank_relevancy_with_feedback = mock.MagicMock(spec=RankRelevancyWithFeedback)
         cls.iqrs = IqrSession(rank_relevancy_with_feedback)
 
-    def test_adjudicate_new_pos_neg(self):
+    def test_adjudicate_new_pos_neg(self) -> None:
         """
         Test that providing iterables to ``new_positives`` and
         ``new_negatives`` parameters result in additions to the positive and
@@ -44,7 +45,7 @@ class TestIqrSession (object):
         assert self.iqrs.positive_descriptors == {p0, p2, p3}
         assert self.iqrs.negative_descriptors == {n1, n4}
 
-    def test_adjudicate_add_duplicates(self):
+    def test_adjudicate_add_duplicates(self) -> None:
         """
         Test that adding duplicate descriptors as positive or negative
         adjudications has no effect as the behavior of sets should be observed.
@@ -73,7 +74,7 @@ class TestIqrSession (object):
         assert self.iqrs.positive_descriptors == {p0, p2, p3}
         assert self.iqrs.negative_descriptors == {n1, n4}
 
-    def test_adjudication_switch(self):
+    def test_adjudication_switch(self) -> None:
         """
         Test providing positives and negatives on top of an existing state such
         that the descriptor adjudications are reversed. (what was once positive
@@ -104,7 +105,7 @@ class TestIqrSession (object):
         assert self.iqrs.positive_descriptors == {n3, n4}
         assert self.iqrs.negative_descriptors == {p0, p1, p2}
 
-    def test_adjudicate_remove_pos_neg(self):
+    def test_adjudicate_remove_pos_neg(self) -> None:
         """
         Test that we can remove positive and negative adjudications using
         "un_*" parameters.
@@ -134,7 +135,7 @@ class TestIqrSession (object):
         assert self.iqrs.positive_descriptors == set()
         assert self.iqrs.negative_descriptors == set()
 
-    def test_adjudicate_combined_remove_unadj(self):
+    def test_adjudicate_combined_remove_unadj(self) -> None:
         """
         Test combining adjudication switching with un-adjudication.
         """
@@ -164,7 +165,7 @@ class TestIqrSession (object):
         assert self.iqrs.positive_descriptors == {p0, p5, n4}
         assert self.iqrs.negative_descriptors == {p1, n6}
 
-    def test_adjudicate_both_labels(self):
+    def test_adjudicate_both_labels(self) -> None:
         """
         Test that providing a descriptor element as both a positive AND
         negative adjudication causes no state change..
@@ -187,7 +188,7 @@ class TestIqrSession (object):
         assert self.iqrs.positive_descriptors == {p0, p1, p2}
         assert self.iqrs.negative_descriptors == {n3, n4}
 
-    def test_adjudicate_unadj_noeffect(self):
+    def test_adjudicate_unadj_noeffect(self) -> None:
         """
         Test that an empty call, or un-adjudicating a descriptor that is not
         currently marked as a positive or negative, causes no state change.
@@ -215,48 +216,49 @@ class TestIqrSession (object):
         assert self.iqrs.positive_descriptors == {p0, p1, p2}
         assert self.iqrs.negative_descriptors == {n3, n4}
 
-    def test_adjudicate_cache_resetting_positive(self):
+    def test_adjudicate_cache_resetting_positive(self) -> None:
         """
         Test results view cache resetting functionality on adjudicating certain
         ways.
         """
         e = DescriptorMemoryElement('', 0).set_vector([0])
-
-        self.iqrs._ordered_pos = True
-        self.iqrs._ordered_neg = True
-        self.iqrs._ordered_non_adj = True
+        a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
+        self.iqrs._ordered_pos = a
+        self.iqrs._ordered_neg = a
+        self.iqrs._ordered_non_adj = a
 
         # Check that adding a positive adjudication resets the positive and
         # non-adjudicated result caches.
         self.iqrs.adjudicate(new_positives=[e])
         assert self.iqrs._ordered_pos is None  # reset
-        assert self.iqrs._ordered_neg is True  # NOT reset
+        assert self.iqrs._ordered_neg is not None  # NOT reset
         assert self.iqrs._ordered_non_adj is None  # reset
 
-    def test_adjudicate_cache_resetting_negative(self):
+    def test_adjudicate_cache_resetting_negative(self) -> None:
         """
         Test results view cache resetting functionality on adjudicating certain
         ways.
         """
         e = DescriptorMemoryElement('', 0).set_vector([0])
-
-        self.iqrs._ordered_pos = True
-        self.iqrs._ordered_neg = True
-        self.iqrs._ordered_non_adj = True
+        a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
+        self.iqrs._ordered_pos = a
+        self.iqrs._ordered_neg = a
+        self.iqrs._ordered_non_adj = a
 
         # Check that adding a positive adjudication resets the positive and
         # non-adjudicated result caches.
         self.iqrs.adjudicate(new_negatives=[e])
-        assert self.iqrs._ordered_pos is True  # NOT reset
+        assert self.iqrs._ordered_pos is not None  # NOT reset
         assert self.iqrs._ordered_neg is None  # reset
         assert self.iqrs._ordered_non_adj is None  # reset
 
-    def test_adjudication_cache_not_reset(self):
+    def test_adjudication_cache_not_reset(self) -> None:
         """
         Test that pos/neg/non-adj result caches are NOT reset when no state
         change occurs under different circumstances
         """
         # setup initial IQR session state.
+        a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
         p0 = DescriptorMemoryElement('', 0).set_vector([0])
         p1 = DescriptorMemoryElement('', 1).set_vector([1])
         p2 = DescriptorMemoryElement('', 2).set_vector([2])
@@ -264,7 +266,7 @@ class TestIqrSession (object):
         n4 = DescriptorMemoryElement('', 4).set_vector([4])
         self.iqrs.positive_descriptors = {p0, p1, p2}
         self.iqrs.negative_descriptors = {n3, n4}
-        self.iqrs._ordered_pos = self.iqrs._ordered_neg = self.iqrs._ordered_non_adj = True
+        self.iqrs._ordered_pos = self.iqrs._ordered_neg = self.iqrs._ordered_non_adj = a
 
         # Empty adjudication
         self.iqrs.adjudicate()
@@ -293,7 +295,7 @@ class TestIqrSession (object):
         assert self.iqrs._ordered_neg is True
         assert self.iqrs._ordered_non_adj is True
 
-    def test_refine_no_pos(self):
+    def test_refine_no_pos(self) -> None:
         """
         Test that refinement cannot occur if there are no positive descriptor
         external/adjudicated elements.
@@ -302,7 +304,7 @@ class TestIqrSession (object):
                                                'positive adjudication'):
             self.iqrs.refine()
 
-    def test_refine_no_prev_results(self):
+    def test_refine_no_prev_results(self) -> None:
         """
         Test that the results of RelevancyIndex ranking are directly reflected
         in a new results dictionary of probability values, even for elements
@@ -326,7 +328,7 @@ class TestIqrSession (object):
         # Mock return dictionary, probabilities don't matter much other than
         # they are not 1.0 or 0.0.
         pool_ids = [de.uuid() for de in desc_list]
-        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (  # type: ignore
           [0.5, 0.5, 0.5],
           pool_ids
         )
@@ -354,7 +356,7 @@ class TestIqrSession (object):
         # - value of ``results`` attribute is what we expect.
         pool_uids, pool_de = zip(*self.iqrs.working_set.items())
         pool = [de.vector() for de in pool_de]
-        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once_with(
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once_with(  # type: ignore
             [test_in_pos_elem.vector(), test_ex_pos_elem.vector()],
             [test_in_neg_elem.vector(), test_ex_neg_elem.vector()],
             pool,
@@ -371,7 +373,7 @@ class TestIqrSession (object):
         assert self.iqrs.results[test_in_neg_elem] == 0.5
         assert self.iqrs.feedback_list == desc_list
 
-    def test_refine_with_prev_results(self):
+    def test_refine_with_prev_results(self) -> None:
         """
         Test that the results of RelevancyIndex ranking are directly reflected
         in an existing results dictionary of probability values.
@@ -389,7 +391,7 @@ class TestIqrSession (object):
         # Mock return dictionary, probabilities don't matter much other than
         # they are not 1.0 or 0.0.
         pool_ids = [*self.iqrs.working_set.iterkeys()]
-        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (  # type: ignore
           [0.5, 0.5, 0.5],
           pool_ids
         )
@@ -402,7 +404,7 @@ class TestIqrSession (object):
             test_other_elem: 0.2,
             # ``refine`` replaces the previous dict, so disjoint keys are
             # NOT retained.
-            'something else': 0.3,
+            'something else': 0.3,  # type: ignore
         }
 
         # Create a "previous state" of the feedback results.
@@ -429,7 +431,7 @@ class TestIqrSession (object):
         # - value of ``results`` attribute is what we expect.
         pool_uids, pool_de = zip(*self.iqrs.working_set.items())
         pool = [de.vector() for de in pool_de]
-        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once_with(
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once_with(  # type: ignore
             [test_in_pos_elem.vector(), test_ex_pos_elem.vector()],
             [test_in_neg_elem.vector(), test_ex_neg_elem.vector()],
             pool,
@@ -447,25 +449,25 @@ class TestIqrSession (object):
         assert self.iqrs.results[test_in_neg_elem] == 0.5
         assert self.iqrs.feedback_list == desc_list
 
-    def test_ordered_results_no_results_no_cache(self):
+    def test_ordered_results_no_results_no_cache(self) -> None:
         """
         Test that an empty list is returned when ``ordered_results`` is called
         before any refinement has occurred.
         """
         assert self.iqrs.ordered_results() == []
 
-    def test_ordered_results_has_cache(self):
+    def test_ordered_results_has_cache(self) -> None:
         """
         Test that a shallow copy of the cached list is returned when there is
         a cache.
         """
         # Simulate there being a cache
-        self.iqrs._ordered_pos = ['simulated', 'cache']
+        self.iqrs._ordered_pos = ['simulated', 'cache']  # type: ignore
         actual = self.iqrs.get_positive_adjudication_relevancy()
         assert actual == self.iqrs._ordered_pos
         assert id(actual) != id(self.iqrs._ordered_pos)
 
-    def test_ordered_results_has_results_no_cache(self):
+    def test_ordered_results_has_results_no_cache(self) -> None:
         """
         Test that an appropriate list is returned by ``ordered_results`` after
         a refinement has occurred.
@@ -505,7 +507,7 @@ class TestIqrSession (object):
         # instances.
         assert id(actual1) != id(actual2)
 
-    def test_ordered_results_has_results_post_reset(self):
+    def test_ordered_results_has_results_post_reset(self) -> None:
         """
         Test that an empty list is returned after a reset where there was a
         cached value before the reset.
@@ -532,25 +534,25 @@ class TestIqrSession (object):
         actual = self.iqrs.ordered_results()
         assert actual == []
 
-    def test_feedback_results_no_results_no_cache(self):
+    def test_feedback_results_no_results_no_cache(self) -> None:
         """
         Test that an empty list is returned when ``feedback_results`` is called
         before any refinement has occurred.
         """
         assert self.iqrs.feedback_results() == []
 
-    def test_feedback_results_has_cache(self):
+    def test_feedback_results_has_cache(self) -> None:
         """
         Test that a shallow copy of the cached list is returned when there is
         a cache.
         """
         # Simulate there being a cache
-        self.iqrs.feedback_list = ['simulated', 'cache']
+        self.iqrs.feedback_list = ['simulated', 'cache']  # type: ignore
         actual = self.iqrs.feedback_results()
         assert actual == self.iqrs.feedback_list
         assert id(actual) != id(self.iqrs.feedback_list)
 
-    def test_feedback_results_has_results_post_reset(self):
+    def test_feedback_results_has_results_post_reset(self) -> None:
         """
         Test that an empty list is returned after a reset where there was a
         cached value before the reset.
@@ -561,12 +563,12 @@ class TestIqrSession (object):
         d1 = DescriptorMemoryElement('', 1).set_vector([1])
         d2 = DescriptorMemoryElement('', 2).set_vector([2])
         d3 = DescriptorMemoryElement('', 3).set_vector([3])
-        self.iqrs.feedback_list = {
+        self.iqrs.feedback_list = [
             d0,
             d1,
             d2,
             d3,
-        }
+        ]
 
         # Initial call to ``ordered_results`` should have a non-None return.
         assert self.iqrs.feedback_results() is not None
@@ -577,25 +579,25 @@ class TestIqrSession (object):
         actual = self.iqrs.feedback_results()
         assert actual == []
 
-    def test_get_positive_adjudication_relevancy_has_cache(self):
+    def test_get_positive_adjudication_relevancy_has_cache(self) -> None:
         """
         Test that a shallow copy of the cached list is returned if there is a
         cache.
         """
 
-        self.iqrs._ordered_pos = ['simulation', 'cache']
+        self.iqrs._ordered_pos = ['simulation', 'cache']  # type: ignore
         actual = self.iqrs.get_positive_adjudication_relevancy()
         assert actual == ['simulation', 'cache']
         assert id(actual) != id(self.iqrs._ordered_pos)
 
-    def test_get_positive_adjudication_relevancy_no_cache_no_results(self):
+    def test_get_positive_adjudication_relevancy_no_cache_no_results(self) -> None:
         """
         Test that ``get_positive_adjudication_relevancy`` returns None when in a
         pre-refine state when there are no positive adjudications.
         """
         assert self.iqrs.get_positive_adjudication_relevancy() == []
 
-    def test_get_positive_adjudication_relevancy_no_cache_has_results(self):
+    def test_get_positive_adjudication_relevancy_no_cache_has_results(self) -> None:
         """
         Test that we can get positive adjudication relevancy scores correctly
         from a not-cached state.
@@ -642,24 +644,24 @@ class TestIqrSession (object):
         # instances.
         assert id(actual1) != id(actual2)
 
-    def test_get_negative_adjudication_relevancy_has_cache(self):
+    def test_get_negative_adjudication_relevancy_has_cache(self) -> None:
         """
         Test that a shallow copy of the cached list is returned if there is a
         cache.
         """
-        self.iqrs._ordered_neg = ['simulation', 'cache']
+        self.iqrs._ordered_neg = ['simulation', 'cache']  # type: ignore
         actual = self.iqrs.get_negative_adjudication_relevancy()
         assert actual == ['simulation', 'cache']
         assert id(actual) != id(self.iqrs._ordered_neg)
 
-    def test_get_negative_adjudication_relevancy_no_cache_no_results(self):
+    def test_get_negative_adjudication_relevancy_no_cache_no_results(self) -> None:
         """
         Test that ``get_negative_adjudication_relevancy`` returns None when in a
         pre-refine state when there are no negative adjudications.
         """
         assert self.iqrs.get_negative_adjudication_relevancy() == []
 
-    def test_get_negative_adjudication_relevancy_no_cache_has_results(self):
+    def test_get_negative_adjudication_relevancy_no_cache_has_results(self) -> None:
         """
         Test that we can get negative adjudication relevancy scores correctly
         from a not-cached state.
@@ -706,24 +708,24 @@ class TestIqrSession (object):
         # instances.
         assert id(actual1) != id(actual2)
 
-    def test_get_unadjudicated_relevancy_has_cache(self):
+    def test_get_unadjudicated_relevancy_has_cache(self) -> None:
         """
         Test that a shallow copy of the cached list is returned if there is a
         cache.
         """
-        self.iqrs._ordered_non_adj = ['simulation', 'cache']
+        self.iqrs._ordered_non_adj = ['simulation', 'cache']  # type: ignore
         actual = self.iqrs.get_unadjudicated_relevancy()
         assert actual == ['simulation', 'cache']
         assert id(actual) != id(self.iqrs._ordered_non_adj)
 
-    def test_get_unadjudicated_relevancy_no_cache_no_results(self):
+    def test_get_unadjudicated_relevancy_no_cache_no_results(self) -> None:
         """
         Test that ``get_unadjudicated_relevancy`` returns None when in a
         pre-refine state when there is results state.
         """
         assert self.iqrs.get_unadjudicated_relevancy() == []
 
-    def test_get_unadjudicated_relevancy_no_cache_has_results(self):
+    def test_get_unadjudicated_relevancy_no_cache_has_results(self) -> None:
         """
         Test that we get the non-adjudicated DescriptorElements and their
         scores correctly from a non-cached state with known results.
@@ -770,13 +772,11 @@ class TestIqrSession (object):
         # instances.
         assert id(actual1) != id(actual2)
 
-    def test_reset_result_cache_invalidation(self):
+    def test_reset_result_cache_invalidation(self) -> None:
         """
         Test that calling the reset method resets the result view caches to
         None.
         """
-        # Setup initial IQR session state
-        self.iqrs._ordered_pos = self.iqrs._ordered_neg = self.iqrs._ordered_non_adj = True
 
         self.iqrs.reset()
         assert self.iqrs._ordered_pos is None

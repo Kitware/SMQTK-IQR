@@ -8,10 +8,9 @@ import os
 import os.path as osp
 import random
 import shutil
-from typing import Any, Dict, Hashable
+from typing import Any, Dict, Hashable, Type, TypeVar, Optional
 import zipfile
-
-import six
+import logging
 
 import flask
 import PIL.Image
@@ -25,18 +24,18 @@ from smqtk_core.configuration import (
     make_default_config,
     to_config_dict
 )
-
+from smqtk_iqr.utils.web import ServiceProxy
+from smqtk_iqr.web.search_app import IqrSearchDispatcher
 from smqtk_iqr.iqr import IqrSession
 from smqtk_iqr.utils.mimetype import get_mimetypes
 from smqtk_iqr.utils.preview_cache import PreviewCache
-from smqtk_iqr.utils.web import ServiceProxy
-from smqtk_iqr.web.search_app.modules.file_upload import FileUploadMod
+from smqtk_iqr.web.search_app.modules.file_upload.FileUploadMod import FileUploadMod
 from smqtk_iqr.web.search_app.modules.static_host import StaticDirectoryHost
 
 
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-
-
+LOG = logging.getLogger(__name__)
+T = TypeVar("T", bound="IqrSearch")
 MT = get_mimetypes()
 
 
@@ -65,7 +64,7 @@ class IqrSearch (flask.Flask, Configurable):
     # TODO: User access white/black-list? See ``search_app/__init__.py``:L135
 
     @classmethod
-    def get_default_config(cls):
+    def get_default_config(cls) -> Dict[str, Any]:
         d = super(IqrSearch, cls).get_default_config()
 
         # Remove parent_app slot for later explicit specification.
@@ -80,20 +79,20 @@ class IqrSearch (flask.Flask, Configurable):
 
     # noinspection PyMethodOverriding
     @classmethod
-    def from_config(cls, config, parent_app):
+    def from_config(  # type: ignore
+        cls: Type[T], config: Dict[str, Any],
+        parent_app: IqrSearchDispatcher
+    ) -> T:
         """
         Instantiate a new instance of this class given the configuration
         JSON-compliant dictionary encapsulating initialization arguments.
 
         :param config: JSON compliant dictionary encapsulating
             a configuration.
-        :type config: dict
 
         :param parent_app: Parent containing flask app instance
-        :type parent_app: smqtk_iqr.web.search_app.app.search_app
 
         :return: Constructed instance from the provided config.
-        :rtype: IqrSearch
 
         """
         merged = cls.get_default_config()
@@ -105,27 +104,25 @@ class IqrSearch (flask.Flask, Configurable):
 
         return cls(parent_app, **merged)
 
-    def __init__(self, parent_app, iqr_service_url, data_set,
-                 working_directory):
+    def __init__(
+        self, parent_app: IqrSearchDispatcher, iqr_service_url: str,
+        data_set: DataSet, working_directory: str
+    ):
         """
         Initialize a generic IQR Search module with a single descriptor and
         indexer.
 
         :param parent_app: Parent containing flask app instance
-        :type parent_app: smqtk_iqr.web.search_app.IqrSearchDispatcher
 
         :param iqr_service_url: Base URL to the IQR service to use for this
             application interface. Any trailing slashes will be striped.
-        :type iqr_service_url: str
 
         :param data_set: DataSet of the content described by indexed descriptors
             in the linked IQR service.
-        :type data_set: smqtk_dataprovider.DataSet
 
         :param working_directory: Directory in which to place working files.
             These may be considered temporary and may be removed between
             executions of this app.
-        :type working_directory: str
 
         :raises ValueError: Invalid Descriptor or indexer type
 
@@ -163,7 +160,6 @@ class IqrSearch (flask.Flask, Configurable):
         self.register_blueprint(parent_app.module_login)
 
         # Mapping of session IDs to their work directory
-        #: :type: dict[str, str]
         self._iqr_work_dirs: Dict[str, str] = {}
         # Mapping of session ID to a dictionary of the custom example data for
         # a session (uuid -> DataElement)
@@ -186,7 +182,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/")
         @self._parent_app.module_login.login_required
-        def index():
+        def index() -> str:
             # Stripping left '/' from blueprint modules in order to make sure
             # the paths are relative to our base.
             assert self.mod_upload.url_prefix is not None, (
@@ -199,13 +195,13 @@ class IqrSearch (flask.Flask, Configurable):
                 "uploader_post_url":
                     self.mod_upload.upload_post_url().lstrip('/'),
             }
-            self._log.debug("Uploader URL: %s", r['uploader_url'])
+            LOG.debug("Uploader URL: %s", r['uploader_url'])
             # noinspection PyUnresolvedReferences
             return flask.render_template("iqr_search_index.html", **r)
 
         @self.route('/iqr_session_info', methods=["GET"])
         @self._parent_app.module_login.login_required
-        def iqr_session_info():
+        def iqr_session_info() -> flask.Response:
             """
             Get information about the current IRQ session
             """
@@ -216,7 +212,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route('/get_iqr_state')
         @self._parent_app.module_login.login_required
-        def iqr_session_state():
+        def iqr_session_state() -> flask.Response:
             """
             Get IQR session state information composed of positive and negative
             descriptor vectors.
@@ -254,15 +250,15 @@ class IqrSearch (flask.Flask, Configurable):
             # Data elements are stored as a dictionary mapping UUID to MIMETYPE
             # and data byte string.
             working_data = {}
-            sid_data_elems = self._iqr_example_data.get(sid, {})
-            for uid, workingElem in six.iteritems(sid_data_elems):
+            sid_data_elems: Dict[Hashable, DataElement] = self._iqr_example_data.get(sid, {})
+            for uid in sid_data_elems:
                 # Decoding base64 as ASCII knowing that
                 # `base64.urlsafe_b64decode` is used later, whose doc-string
                 # states that it may expect an ASCII string when not bytes.
                 working_data[uid] = {
-                    'content_type': workingElem.content_type(),
+                    'content_type': sid_data_elems[uid].content_type(),
                     'bytes_base64':
-                        base64.b64encode(workingElem.get_bytes())
+                        base64.b64encode(sid_data_elems[uid].get_bytes())
                               .decode('ascii'),
                 }
 
@@ -285,7 +281,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route('/set_iqr_state', methods=['PUT'])
         @self._parent_app.module_login.login_required
-        def set_iqr_session_state():
+        def set_iqr_session_state() -> flask.Response:
             """
             Set the current state based on the given state file.
             """
@@ -303,8 +299,9 @@ class IqrSearch (flask.Flask, Configurable):
             if fid is None:
                 return_obj['message'] = 'No file ID provided.'
 
-            self._log.debug("[%s::%s] Getting temporary filepath from "
-                            "uploader module", sid, fid)
+            LOG.debug("[%s::%s] Getting temporary filepath from "
+                      "uploader module", sid, fid)
+            assert fid is not None
             upload_filepath = self.mod_upload.get_path_for_id(fid)
             self.mod_upload.clear_completed(fid)
 
@@ -327,8 +324,7 @@ class IqrSearch (flask.Flask, Configurable):
             self.reset_session_local(sid)
             # - Dictionary of data UUID (SHA1) to {'content_type': <str>,
             #   'bytes_base64': <str>} dictionary.
-            #: :type: dict[str, dict]
-            working_data = state_dict['working_data']
+            working_data: Dict[str, Dict] = state_dict['working_data']
             del state_dict['working_data']
             # - Write out base64-decoded files to session-specific work
             #   directory.
@@ -369,7 +365,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/check_current_iqr_session")
         @self._parent_app.module_login.login_required
-        def check_current_iqr_session():
+        def check_current_iqr_session() -> flask.Response:
             """
             Check that the current IQR session exists and is initialized.
 
@@ -387,7 +383,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/get_data_preview_image", methods=["GET"])
         @self._parent_app.module_login.login_required
-        def get_ingest_item_image_rep():
+        def get_ingest_item_image_rep() -> flask.Response:
             """
             Return the base64 preview image data link for the data file
             associated with the give UID (plus some other metadata).
@@ -404,12 +400,11 @@ class IqrSearch (flask.Flask, Configurable):
 
             # Try to find a DataElement by the given UUID in our indexed data
             # or in the session's example data.
+            de: Optional[DataElement]
             if self._data_set.has_uuid(uid):
-                #: :type: smqtk_dataprovider.DataElement
                 de = self._data_set.get_data(uid)
             else:
                 sid = self.get_current_iqr_session()
-                #: :type: smqtk_dataprovider.DataElement | None
                 de = self._iqr_example_data[sid].get(uid, None)
 
             if not de:
@@ -444,13 +439,12 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route('/iqr_ingest_file', methods=['POST'])
         @self._parent_app.module_login.login_required
-        def iqr_ingest_file():
+        def iqr_ingest_file() -> str:
             """
             Ingest the file with the given UID, getting the path from the
             uploader.
 
             :return: string of data/descriptor element's UUID
-            :rtype: str
 
             """
             # TODO: Add status dict with a "GET" method branch for getting that
@@ -460,13 +454,12 @@ class IqrSearch (flask.Flask, Configurable):
 
             sid = self.get_current_iqr_session()
 
-            self._log.debug("[%s::%s] Getting temporary filepath from "
-                            "uploader module", sid, fid)
+            LOG.debug("[%s::%s] Getting temporary filepath from "
+                      "uploader module", sid, fid)
             upload_filepath = self.mod_upload.get_path_for_id(fid)
             self.mod_upload.clear_completed(fid)
 
-            self._log.debug("[%s::%s] Moving uploaded file",
-                            sid, fid)
+            LOG.debug("[%s::%s] Moving uploaded file", sid, fid)
             sess_upload = osp.join(self._iqr_work_dirs[sid],
                                    osp.basename(upload_filepath))
             os.rename(upload_filepath, sess_upload)
@@ -477,8 +470,8 @@ class IqrSearch (flask.Flask, Configurable):
             self._iqr_example_data[sid][uuid] = upload_data
 
             # Extend session ingest -- modifying
-            self._log.debug("[%s::%s] Adding new data to session "
-                            "external positives", sid, fid)
+            LOG.debug("[%s::%s] Adding new data to session "
+                      "external positives", sid, fid)
             data_b64 = base64.b64encode(upload_data.get_bytes())
             data_ct = upload_data.content_type()
             r = self._iqr_service.post('add_external_pos', sid=sid,
@@ -489,7 +482,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/iqr_initialize", methods=["POST"])
         @self._parent_app.module_login.login_required
-        def iqr_initialize():
+        def iqr_initialize() -> flask.Response:
             """
             Initialize IQR session working index based on current positive
             examples and adjudications.
@@ -504,7 +497,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/get_example_adjudication", methods=["GET"])
         @self._parent_app.module_login.login_required
-        def get_example_adjudication():
+        def get_example_adjudication() -> flask.Response:
             """
             Get positive/negative status for a data/descriptor in our example
             set.
@@ -528,7 +521,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/get_index_adjudication", methods=["GET"])
         @self._parent_app.module_login.login_required
-        def get_index_adjudication():
+        def get_index_adjudication() -> flask.Response:
             """
             Get the adjudication status of a particular data/descriptor element
             by UUID.
@@ -554,7 +547,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/adjudicate", methods=["POST"])
         @self._parent_app.module_login.login_required
-        def adjudicate():
+        def adjudicate() -> flask.Response:
             """
             Update adjudication for this session. This should specify UUIDs of
             data/descriptor elements in our working index.
@@ -575,7 +568,7 @@ class IqrSearch (flask.Flask, Configurable):
                   "Negative{+%s, -%s} " \
                   % (pos_to_add, pos_to_remove,
                      neg_to_add, neg_to_remove)
-            self._log.debug(msg)
+            LOG.debug(msg)
 
             sid = self.get_current_iqr_session()
 
@@ -595,7 +588,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/iqr_refine", methods=["POST"])
         @self._parent_app.module_login.login_required
-        def iqr_refine():
+        def iqr_refine() -> flask.Response:
             """
             Classify current IQR session indexer, updating ranking for
             display.
@@ -613,7 +606,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/iqr_ordered_results", methods=['GET'])
         @self._parent_app.module_login.login_required
-        def get_ordered_results():
+        def get_ordered_results() -> flask.Response:
             """
             Get ordered (UID, probability) pairs in between the given indices,
             [i, j). If j Is beyond the end of available results, only available
@@ -633,9 +626,9 @@ class IqrSearch (flask.Flask, Configurable):
                 'sid': self.get_current_iqr_session(),
             }
             if i is not None:
-                params['i'] = int(i)
+                params['i'] = i
             if j is not None:
-                params['j'] = int(j)
+                params['j'] = j
 
             get_r = self._iqr_service.get('get_results', **params)
             get_r.raise_for_status()
@@ -643,7 +636,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/reset_iqr_session", methods=["POST"])
         @self._parent_app.module_login.login_required
-        def reset_iqr_session():
+        def reset_iqr_session() -> flask.Response:
             """
             Reset the current IQR session
             """
@@ -657,7 +650,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         @self.route("/get_random_uids")
         @self._parent_app.module_login.login_required
-        def get_random_uids():
+        def get_random_uids() -> flask.Response:
             """
             Return to the client a list of data/descriptor IDs available in the
             configured data set (NOT descriptor/NNI set).
@@ -676,18 +669,18 @@ class IqrSearch (flask.Flask, Configurable):
             })
 
         @self.route('/is_ready')
-        def is_ready():
+        def is_ready() -> flask.Response:
             """ Simple 'I'm alive' endpoint """
             return flask.jsonify({
                 "alive": True,
             })
 
-    def __del__(self):
+    def __del__(self) -> None:
         for wdir in self._iqr_work_dirs.values():
             if os.path.isdir(wdir):
                 shutil.rmtree(wdir)
 
-    def get_config(self):
+    def get_config(self) -> Dict[str, Any]:
         return {
             'iqr_service_url': self._iqr_service.url,
             'working_directory': self._working_dir,
@@ -695,21 +688,17 @@ class IqrSearch (flask.Flask, Configurable):
         }
 
     @property
-    def work_dir(self):
+    def work_dir(self) -> str:
         """
         :return: Common work directory for this instance.
-        :rtype: str
         """
         return osp.expanduser(osp.abspath(self._working_dir))
 
-    def get_current_iqr_session(self):
+    def get_current_iqr_session(self) -> str:
         """
         Get the current IQR Session UUID.
-
-        :rtype: str
-
         """
-        sid = str(flask.session.sid)
+        sid = str(flask.session.sid)  # type: ignore
 
         # Ensure there is an initialized session on the configured service.
         created_session = False
@@ -729,7 +718,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         return sid
 
-    def reset_session_local(self, sid):
+    def reset_session_local(self, sid: str) -> None:
         """
         Reset elements of this server for a given session ID.
 
@@ -739,7 +728,6 @@ class IqrSearch (flask.Flask, Configurable):
         This does not affect the linked IQR service.
 
         :param sid: Session ID to reset for.
-        :type sid: str
 
         :raises KeyError: ``sid`` not recognized. Probably not initialized
             first.

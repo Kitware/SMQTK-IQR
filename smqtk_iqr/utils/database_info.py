@@ -14,7 +14,7 @@ class DatabaseInfo (object):
     may or may not have collection information (None if it doesn't).
     """
 
-    def __init__(self, host, port, name):
+    def __init__(self, host: str, port: int, name: str) -> None:
         """
         Create a database info encapsulation object
 
@@ -27,19 +27,15 @@ class DatabaseInfo (object):
         'foobar'
 
         :param host:
-        :type host:
         :param port:
-        :type port:
         :param name:
-        :type name:
         :return:
-        :rtype:
         """
         self.host = str(host)
         self.port = int(port)
         self.name = str(name)
 
-    def copy(self):
+    def copy(self) -> "DatabaseInfo":
         """
         Create an exact duplicate of this object. This is a deep copy.
 
@@ -54,12 +50,11 @@ class DatabaseInfo (object):
 
         :return: a completely new DatabaseInfo instance with the same data as
             this one.
-        :rtype: DatabaseInfo
 
         """
         return DatabaseInfo(self.host, self.port, self.name)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         """
         >>> dbi = DatabaseInfo('localhost', 12345, 'foobar')
         >>> print(dbi)

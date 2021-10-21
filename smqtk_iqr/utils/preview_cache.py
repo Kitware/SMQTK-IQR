@@ -4,13 +4,13 @@ import os
 import shutil
 from typing import Callable, Dict, Hashable
 
-import six
-
 from smqtk_iqr.utils import video
+import smqtk_dataprovider
 from smqtk_dataprovider.utils.file import safe_create_dir
 from smqtk_iqr.utils.mimetype import get_mimetypes
 
 
+LOG = logging.getLogger(__name__)
 MIMETYPES = get_mimetypes()
 
 
@@ -29,30 +29,23 @@ class PreviewCache (object):
     #   path to the generated preview image.
     PREVIEW_GEN_METHOD: Dict[Hashable, Callable] = {}
 
-    @property
-    def _log(self):
-        return logging.getLogger('.'.join([self.__module__,
-                                           self.__class__.__name__]))
-
-    def __init__(self, cache_dir):
+    def __init__(self, cache_dir: str):
         """
         :param cache_dir: Directory to cache preview image elements into.
-        :type cache_dir: str
         """
         self._cache_dir = os.path.abspath(os.path.expanduser(cache_dir))
         # Cache of preview images for data elements encountered.
-        #: :type: dict[collections.abc.Hashable, str]
-        self._preview_cache = {}
+        self._preview_cache: Dict[Hashable, str] = {}
         self._video_work_dir = os.path.join(cache_dir, 'tmp_video_work')
 
-    def __del__(self):
+    def __del__(self) -> None:
         """
         Cleanup after ourselves.
         """
-        for fp in six.itervalues(self._preview_cache):
+        for fp in self._preview_cache.values():
             os.remove(fp)
 
-    def get_preview_image(self, elem):
+    def get_preview_image(self, elem: smqtk_dataprovider.DataElement) -> str:
         """
         Get the filepath to the preview image for the given data element.
 
@@ -60,10 +53,8 @@ class PreviewCache (object):
             given element's content type.
 
         :param elem: Data element to generate a preview image for.
-        :type elem: smqtk_dataprovider.DataElement
 
         :return: Path to the preview image for the given data element.
-        :rtype: str
 
         """
         if elem.uuid() in self._preview_cache:
@@ -71,16 +62,16 @@ class PreviewCache (object):
 
         # else, generate preview image based on content type / content class
         if elem.content_type() in self.PREVIEW_GEN_METHOD:
-            self._log.debug("Generating preview image based on content type: "
-                            "%s", elem.content_type)
+            LOG.debug("Generating preview image based on content type: "
+                      "%s", elem.content_type)
             safe_create_dir(self._cache_dir)
             fp = self.PREVIEW_GEN_METHOD[elem.content_type()](self, elem,
                                                               self._cache_dir)
         else:
-            content_class = elem.content_type().split('/', 1)[0]
+            content_class = elem.content_type().split('/', 1)[0]  # type: ignore
             if content_class in self.PREVIEW_GEN_METHOD:
-                self._log.debug("Generating preview image based on content "
-                                "class: %s", content_class)
+                LOG.debug("Generating preview image based on content "
+                          "class: %s", content_class)
                 safe_create_dir(self._cache_dir)
                 fp = self.PREVIEW_GEN_METHOD[content_class](self, elem,
                                                             self._cache_dir)
@@ -92,21 +83,21 @@ class PreviewCache (object):
         return fp
 
     # noinspection PyMethodMayBeStatic
-    def gen_image_preview(self, elem, output_dir):
+    def gen_image_preview(
+        self, elem: smqtk_dataprovider.DataElement, output_dir: str
+    ) -> str:
         """
         Copy temporary image to specified output filepath.
 
         :param elem: Data element to get the preview image for.
-        :type elem: smqtk_dataprovider.DataElement
 
         :param output_dir: Directory to save generated image to.
-        :type output_dir: str
 
         """
         output_fp = os.path.join(
             output_dir,
             "%s%s" % (str(elem.uuid()),
-                      MIMETYPES.guess_extension(elem.content_type()))
+                      MIMETYPES.guess_extension(elem.content_type()))  # type: ignore
         )
         if not os.path.isfile(output_fp):
             tmp_img_fp = elem.write_temp()
@@ -114,15 +105,15 @@ class PreviewCache (object):
             elem.clean_temp()
         return output_fp
 
-    def gen_video_preview(self, elem, output_dir):
+    def gen_video_preview(
+        self, elem: smqtk_dataprovider.DataElement, output_dir: str
+    ) -> str:
         """
         Copy temporary image to specified output filepath.
 
         :param elem: Data element to get the preview image for.
-        :type elem: smqtk_dataprovider.DataElement
 
         :param output_dir: Directory to save generated image to.
-        :type output_dir: str
 
         """
         output_fp = os.path.join(output_dir,

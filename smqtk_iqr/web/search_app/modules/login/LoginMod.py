@@ -3,25 +3,29 @@ import functools
 import json
 import os.path
 
-import six
 import requests
 
 from smqtk_iqr.utils.url import url_join
-
+from typing import Optional, Dict, Union, List, Callable
+import logging
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-
+LOG = logging.getLogger(__name__)
 
 # noinspection PyUnusedLocal
+
+
 class LoginMod (flask.Blueprint):
 
-    def __init__(self, name, parent_app, url_prefix=None):
+    def __init__(
+        self, name: str, parent_app: flask.Flask,
+        url_prefix: Optional[str] = None
+    ):
         """
         Initialize the login module
 
         :param parent_app: Parent application that is loading this using this
             module.
-        :type parent_app: flask.Flask
 
         """
         super(LoginMod, self).__init__(
@@ -42,7 +46,7 @@ class LoginMod (flask.Blueprint):
         # Routing
         #
         @self.route('/login', methods=['get'])
-        def login():
+        def login() -> str:
             # Render the login page, then continue on to a previously requested
             # page, or the home page.
             # noinspection PyUnresolvedReferences
@@ -53,7 +57,7 @@ class LoginMod (flask.Blueprint):
             )
 
         @self.route('/login.passwd', methods=['post'])
-        def login_password():
+        def login_password() -> Callable:
             """
             Log-in processing method called when submitting form displayed by
             the login() method above.
@@ -68,7 +72,7 @@ class LoginMod (flask.Blueprint):
             if userid in self.__users:
                 # Load user
                 user = self.__users[userid]
-                self._log.debug("User info selected: %s", user)
+                LOG.debug("User info selected: %s", user)
 
                 if flask.request.form['passwd'] != user['passwd']:
                     flask.flash("Authentication error for user id: %s" % userid,
@@ -84,7 +88,7 @@ class LoginMod (flask.Blueprint):
                 return flask.redirect("/login?next=%s" % next_page)
 
         @self.route('/logout')
-        def logout():
+        def logout() -> Callable:
             """
             Logout the current user
             """
@@ -99,17 +103,17 @@ class LoginMod (flask.Blueprint):
     #
 
     @staticmethod
-    def _login_user(userid, user_info):
+    def _login_user(
+        userid: str, user_info: Dict[str, Union[str, List[str]]]
+    ) -> None:
         """
         "log-in" the user in the current session. This adds the name and role
         list to the session. Only one user logged in at a time.
 
         :param userid: String ID of the user
-        :type userid: str
 
         :param user_info: The user dictionary as recorded in our users.json
             config file.
-        :type user_info: dict[str, str or list of str]
 
         """
         flask.session['user'] = {
@@ -119,7 +123,7 @@ class LoginMod (flask.Blueprint):
         }
 
     @staticmethod
-    def login_required(f):
+    def login_required(f: Callable) -> Callable:
         """
         Decorator for URLs that require login.
 
@@ -135,24 +139,23 @@ class LoginMod (flask.Blueprint):
         :param f: Function to be wrapped.
 
         """
-        log = LoginMod.get_logger()
 
         @functools.wraps(f)
-        def deco(*args, **kwds):
+        def deco(*args: int, **kwds: int) -> Callable:
             # Combine to handle both GET arguments and form data
             c = {}
-            c.update(dict(six.iteritems(flask.request.form)))
-            c.update(dict(six.iteritems(flask.request.args)))
-            log.debug("Combined arguments: %s", c)
+            c.update(dict(flask.request.form))
+            c.update(dict(flask.request.args))
+            LOG.debug("Combined arguments: %s", c)
 
             if not {'girder_token', 'girder_origin', 'girder_apiRoot'} \
                     .difference(c.keys()):
                 g_token = c['girder_token']
-                log.debug("G-token: %s", g_token)
+                LOG.debug("G-token: %s", g_token)
                 g_origin = c['girder_origin']
-                log.debug("G-origin: %s", g_origin)
+                LOG.debug("G-origin: %s", g_origin)
                 g_apiRoot = c['girder_apiRoot']
-                log.debug("G-apiRoot: %s", g_apiRoot)
+                LOG.debug("G-apiRoot: %s", g_apiRoot)
 
                 g_api_header = {'Girder-Token': g_token}
 
@@ -160,7 +163,7 @@ class LoginMod (flask.Blueprint):
                 # succeeds and matches the given user, log them in here.
 
                 # Get user ID from token
-                log.debug('Getting Girder current token info')
+                LOG.debug('Getting Girder current token info')
                 r = requests.get(url_join(g_origin, g_apiRoot, 'token/current'),
                                  headers=g_api_header)
                 if r.json() is None:
@@ -172,7 +175,7 @@ class LoginMod (flask.Blueprint):
                     g_userId = r.json()['userId']
 
                     # Get user label and name from ID
-                    log.debug("Getting user info from ID")
+                    LOG.debug("Getting user info from ID")
                     r = requests.get(url_join(g_origin, g_apiRoot, 'user',
                                               g_userId),
                                      headers=g_api_header)
@@ -180,7 +183,7 @@ class LoginMod (flask.Blueprint):
                     user_fullname = ' '.join([r.json()['firstName'],
                                               r.json()['lastName']])
 
-                    log.debug("Logging user '%s' in", user_fullname)
+                    LOG.debug("Logging user '%s' in", user_fullname)
                     # Arbitrarily log the user in as a guest
                     LoginMod._login_user(user_label, {
                         'fullname': user_fullname,

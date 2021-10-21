@@ -26,7 +26,7 @@ from smqtk_core.configuration import (
 __author__ = 'paul.tunison@kitware.com'
 
 
-def cli_parser():
+def cli_parser() -> argparse.ArgumentParser:
     # Forgoing the ``cli.basic_cli_parser`` due to our use of dual
     # configuration files for this utility.
     parser = argparse.ArgumentParser(
@@ -59,7 +59,7 @@ def cli_parser():
     return parser
 
 
-def main():
+def main() -> None:
     args = cli_parser().parse_args()
 
     ui_config_filepath, iqr_config_filepath = args.config
@@ -69,7 +69,7 @@ def main():
 
     # Not using `cli.utility_main_helper`` due to deviating from single-
     # config-with-default usage.
-    cli.initialize_logging(logging.getLogger('smqtk'), llevel)
+    cli.initialize_logging(logging.getLogger('smqtk_iqr'), llevel)
     cli.initialize_logging(logging.getLogger('__main__'), llevel)
     log = logging.getLogger(__name__)
 
@@ -120,18 +120,15 @@ def main():
     # IQR demo application, in preparation for model training.
     #
     log.info("Instantiating plugins")
-    #: :type: representation.DataSet
-    data_set = \
+    data_set: DataSet = \
         from_config_dict(data_set_config, DataSet.get_impls())
     descriptor_elem_factory = DescriptorElementFactory \
         .from_config(descriptor_elem_factory_config)
-    #: :type: algorithms.DescriptorGenerator
-    descriptor_generator = \
+    descriptor_generator: DescriptorGenerator = \
         from_config_dict(descriptor_generator_config,
                          DescriptorGenerator.get_impls())
 
-    #: :type: algorithms.NearestNeighborsIndex
-    nn_index = \
+    nn_index: NearestNeighborsIndex = \
         from_config_dict(nn_index_config,
                          NearestNeighborsIndex.get_impls())
 

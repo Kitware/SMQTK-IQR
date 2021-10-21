@@ -1,6 +1,14 @@
 import atexit
 import threading
 import time
+import logging
+from typing import Optional, Callable, Hashable, Tuple, Type, Dict
+from types import TracebackType
+
+from smqtk_iqr.iqr import IqrSession
+
+
+LOG = logging.getLogger(__name__)
 
 
 class IqrController:
@@ -17,8 +25,11 @@ class IqrController:
 
     """
 
-    def __init__(self, expire_enabled=False, expire_check=30,
-                 expire_callback=None):
+    def __init__(
+        self, expire_enabled: bool = False,
+        expire_check: float = 30,
+        expire_callback: Optional[Callable] = None
+    ) -> None:
         """
         Initialize the controller.
 
@@ -28,11 +39,9 @@ class IqrController:
 
         :param expire_enabled: Enable/Disable session expiry. If enabled, a
             thread is started for monitoring and removal.
-        :type expire_enabled:
 
         :param expire_check: Interval, in seconds, that we check for session
             expiration.
-        :type expire_check: float
 
         :param expire_callback: Optional callable that should take one
             positional parameter, the session that is expiring, and is called
@@ -44,18 +53,15 @@ class IqrController:
 
             If expiration is NOT enabled, or if a session is not given a
             timeout, this callback function is not used.
-        :type expire_callback: (smqtk_iqr.iqr.IqrSession) -> None
 
         """
         # Map of uuid to the search state
-        #: :type: dict[collections.abc.Hashable, IqrSession]
-        self._iqr_sessions = {}
+        self._iqr_sessions: Dict[Hashable, IqrSession] = {}
         # Map of sessions with timeout's enabled and the time out value in
         # seconds
-        #: :type
-        self._iqr_session_timeout = {}
+        self._iqr_session_timeout: Dict = {}
         # Map of the UNIX time a session was last accessed
-        self._iqr_session_last_access = {}
+        self._iqr_session_last_access: Dict = {}
 
         # RLock for iqr_session[*] maps.
         self._map_rlock = threading.RLock()
@@ -65,22 +71,26 @@ class IqrController:
         self._expire_thread_stop_event = threading.Event()
         # prevents calling _handle_session_expiration when not enabled
         self._expire_thread_stop_event.set()
-        self._expire_thread = None
-        self._expire_callback = expire_callback
+        self._expire_thread = None  # type: Optional[threading.Thread]
+        self._expire_callback = expire_callback  # type: Optional[Callable]
 
         # If enabled, start expiration monitor thread
         if self._expire_enabled:
             atexit.register(self.stop_expiration_monitor)
             self.start_expiration_monitor()
 
-    def __enter__(self):
+    def __enter__(self) -> "IqrController":
         self._map_rlock.acquire()
         return self
 
-    def __exit__(self, exc_type, exc_val, exc_tb):
+    def __exit__(
+            self, exc_type: Optional[Type],
+            exc_val: Optional[BaseException],
+            exc_tb: Optional[TracebackType]
+    ) -> None:
         self._map_rlock.release()
 
-    def _handle_session_expiration(self):
+    def _handle_session_expiration(self) -> None:
         """
         Run on a separate thread periodic checks and removals of sessions that
         have expired.
@@ -89,23 +99,24 @@ class IqrController:
             # scan timeout-set sessions, removing those that have timed out
             now = time.time()
             with self._map_rlock:
-                self._log.debug("Checking session expiration timeouts")
+                LOG.debug("Checking session expiration timeouts")
                 for sid in self._iqr_session_timeout.keys():
                     to = self._iqr_session_timeout[sid]
                     la = self._iqr_session_last_access[sid]
                     t = now - la
                     if t > to:
-                        self._log.debug("-> Expiring session '%s' "
-                                        "(last-access: %s, timeout: %s, "
-                                        "now: %s)", sid, la, to, now)
+                        LOG.debug("-> Expiring session '%s' "
+                                  "(last-access: %s, timeout: %s, "
+                                  "now: %s)", sid, la, to, now)
                         if hasattr(self._expire_callback, '__call__'):
-                            self._log.debug("   - Executing callback")
-                            self._expire_callback(self._iqr_sessions[sid])
+                            LOG.debug("   - Executing callback")
+                            # type igore because callable will not be None
+                            self._expire_callback(self._iqr_sessions[sid])  # type: ignore
                         self.remove_session(sid)
 
-        self._log.debug("End of expiration handle function")
+        LOG.debug("End of expiration handle function")
 
-    def start_expiration_monitor(self):
+    def start_expiration_monitor(self) -> None:
         """
         Initialize unique thread to check for session expiration if the feature
         is enabled. This does nothing if the feature is not enabled.
@@ -117,7 +128,7 @@ class IqrController:
             self.stop_expiration_monitor()
 
             if self._expire_enabled:
-                self._log.debug("Starting session expiration monitor thread")
+                LOG.debug("Starting session expiration monitor thread")
                 self._expire_thread = threading.Thread(
                     target=self._handle_session_expiration
                 )
@@ -125,21 +136,20 @@ class IqrController:
                 self._expire_thread_stop_event.clear()
                 self._expire_thread.start()
 
-    def stop_expiration_monitor(self):
+    def stop_expiration_monitor(self) -> None:
         """
         Stop the session expiration monitoring thread if one has been started.
         Otherwise this method does nothing.
         """
         with self._map_rlock:
             if self._expire_thread:
-                self._log.debug("Stopping session expiration monitor thread")
+                LOG.debug("Stopping session expiration monitor thread")
                 self._expire_thread_stop_event.set()
                 self._expire_thread.join()
                 self._expire_thread = None
-                self._log.debug("Stopping session expiration monitor thread "
-                                "-- Done")
+                LOG.debug("Stopping session expiration monitor thread -- Done")
 
-    def session_uuids(self):
+    def session_uuids(self) -> Tuple:
         """
         Return a tuple of all currently registered IqrSessions.
 
@@ -147,13 +157,12 @@ class IqrController:
         expiration.
 
         :return: a tuple of all currently registered IqrSessions.
-        :rtype: tuple of collections.abc.Hashable
 
         """
         with self._map_rlock:
             return tuple(self._iqr_sessions)
 
-    def has_session_uuid(self, session_uuid):
+    def has_session_uuid(self, session_uuid: Hashable) -> bool:
         """ Check if this controller contains a session referenced by the given
         ID.
 
@@ -164,29 +173,24 @@ class IqrController:
         expiration.
 
         :param session_uuid: Possible UUID of a session
-        :type session_uuid: collections.abc.Hashable
 
         :return: True of the given UUID references a session in this controller
             and false if not.
-        :rtype: bool
 
         """
         with self._map_rlock:
             return session_uuid in self._iqr_sessions
 
-    def add_session(self, iqr_session, timeout=0):
+    def add_session(self, iqr_session: IqrSession, timeout: float = 0) -> Hashable:
         """ Initialize a new IQR Session, returning the uuid of that session
 
         This controller indexes the given session by its UUID.
 
         :param iqr_session: The IqrSession instance to add
-        :type iqr_session: smqtk_iqr.iqr_session.IqrSession
 
         :param timeout: The optional timeout, in seconds.
-        :type timeout: float
 
         :return: UUID of new IQR Session
-        :rtype: collections.abc.Hashable
 
         """
         timeout = float(timeout)
@@ -203,17 +207,15 @@ class IqrController:
                 self._iqr_session_last_access[sid] = time.time()
             return sid
 
-    def get_session(self, session_uuid):
+    def get_session(self, session_uuid: Hashable) -> IqrSession:
         """
         Return the session instance for the given UUID
 
         :raises KeyError: The given UUID doesn't exist in this controller.
 
         :param session_uuid: UUID if the session to get
-        :type session_uuid: collections.abc.Hashable
 
         :return: IqrSession instance for the given UUID
-        :rtype: smqtk_iqr.iqr_session.IqrSession
 
         """
         with self._map_rlock:
@@ -221,14 +223,13 @@ class IqrController:
                 self._iqr_session_last_access[session_uuid] = time.time()
             return self._iqr_sessions[session_uuid]
 
-    def remove_session(self, session_uuid):
+    def remove_session(self, session_uuid: Hashable) -> None:
         """
         Remove an IQR Session by session UUID.
 
         :raises KeyError: The given UUID doesn't exist in this controller.
 
         :param session_uuid: Session UUID
-        :type session_uuid: collections.abc.Hashable
 
         """
         with self._map_rlock:
