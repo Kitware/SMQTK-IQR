@@ -4,7 +4,6 @@ import multiprocessing
 import os
 import tempfile
 from typing import Dict, Optional, Callable
-from smqtk_iqr.web.search_app import IqrSearchDispatcher
 from smqtk_dataprovider.utils.file import safe_create_dir
 import logging
 from werkzeug.datastructures import FileStorage
@@ -20,7 +19,7 @@ class FileUploadMod (flask.Blueprint):
     """
 
     def __init__(
-        self, name: str, parent_app: IqrSearchDispatcher,
+        self, name: str, parent_app: 'IqrSearchDispatcher',
         working_directory: str, url_prefix: Optional[str] = None
     ):
         """

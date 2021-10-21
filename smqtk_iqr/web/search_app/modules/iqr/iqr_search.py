@@ -25,7 +25,6 @@ from smqtk_core.configuration import (
     to_config_dict
 )
 from smqtk_iqr.utils.web import ServiceProxy
-from smqtk_iqr.web.search_app import IqrSearchDispatcher
 from smqtk_iqr.iqr import IqrSession
 from smqtk_iqr.utils.mimetype import get_mimetypes
 from smqtk_iqr.utils.preview_cache import PreviewCache
@@ -81,7 +80,7 @@ class IqrSearch (flask.Flask, Configurable):
     @classmethod
     def from_config(  # type: ignore
         cls: Type[T], config: Dict[str, Any],
-        parent_app: IqrSearchDispatcher
+        parent_app: 'IqrSearchDispatcher'
     ) -> T:
         """
         Instantiate a new instance of this class given the configuration
@@ -105,7 +104,7 @@ class IqrSearch (flask.Flask, Configurable):
         return cls(parent_app, **merged)
 
     def __init__(
-        self, parent_app: IqrSearchDispatcher, iqr_service_url: str,
+        self, parent_app: 'IqrSearchDispatcher', iqr_service_url: str,
         data_set: DataSet, working_directory: str
     ):
         """
