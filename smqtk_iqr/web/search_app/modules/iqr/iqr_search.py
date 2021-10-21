@@ -8,7 +8,7 @@ import os
 import os.path as osp
 import random
 import shutil
-from typing import Any, Dict, Hashable, Type, TypeVar, Optional
+from typing import Any, Dict, Hashable, Type, TypeVar, Optional, TYPE_CHECKING
 import zipfile
 import logging
 
@@ -25,6 +25,12 @@ from smqtk_core.configuration import (
     to_config_dict
 )
 from smqtk_iqr.utils.web import ServiceProxy
+
+# Without this if statement there is an import cycle and a runtime error,
+# but we only need this import during type checking so this checks for that.
+if TYPE_CHECKING:
+    from smqtk_iqr.web.search_app import IqrSearchDispatcher
+
 from smqtk_iqr.iqr import IqrSession
 from smqtk_iqr.utils.mimetype import get_mimetypes
 from smqtk_iqr.utils.preview_cache import PreviewCache
