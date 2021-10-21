@@ -43,7 +43,7 @@ class PreviewCache (object):
         Cleanup after ourselves.
         """
         for fp in self._preview_cache.values():
-            os.remove(fp)  # type: ignore
+            os.remove(fp)
 
     def get_preview_image(self, elem: smqtk_dataprovider.DataElement) -> str:
         """
