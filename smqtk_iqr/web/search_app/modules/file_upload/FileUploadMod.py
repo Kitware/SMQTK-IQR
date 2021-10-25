@@ -5,14 +5,14 @@ import os
 import tempfile
 from typing import Dict, Optional, Callable, TYPE_CHECKING
 
-# Without this if statement there is an import cycle and a runtime error,
-# but we only need this import during type checking so this checks for that.
-if TYPE_CHECKING:
-    from smqtk_iqr.web.search_app import IqrSearchDispatcher
-
 from smqtk_dataprovider.utils.file import safe_create_dir
 import logging
 from werkzeug.datastructures import FileStorage
+
+# Without this if-statement there is an import cycle and a runtime error,
+# but we only need this import during type checking so this checks for that.
+if TYPE_CHECKING:
+    from smqtk_iqr.web.search_app import IqrSearchDispatcher
 
 
 LOG = logging.getLogger(__name__)
