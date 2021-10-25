@@ -248,7 +248,7 @@ class TestIqrService (unittest.TestCase):
             raise KeyError(expected_error_key)
             # make a generator
             # noinspection PyUnreachableCode
-            yield
+            yield # pragma: no cover
 
         self.app.descriptor_set.get_many_descriptors = mock.MagicMock(  # type: ignore
             side_effect=generator_key_error
