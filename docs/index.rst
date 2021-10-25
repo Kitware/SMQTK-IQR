@@ -8,7 +8,8 @@ Social Media Query ToolKit -- IQR
 
 `GitHub <https://github.com/Kitware/SMQTK-IQR>`_
 
-Python toolkit for pluggable algorithms and data structures for multimedia-based machine learning.
+This package provides the tools and web interface for using SMQTK's
+Interactive Query Refinement (IQR) platform.
 
 .. toctree::
    :maxdepth: 2

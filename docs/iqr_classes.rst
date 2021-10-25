@@ -7,16 +7,12 @@ Some implementations will require additional dependencies that cannot be package
 
 IqrController
 +++++++++++++
-This interface represents algorithms that classify ``IqrController`` instances into discrete labels or label confidences.
-
 .. autoclass:: smqtk_iqr.iqr.iqr_controller.IqrController
    :members:
    :private-members:
 
 IqrSession
 ++++++++++
-This interface represents algorithms that classify ``IqrSession`` instances into discrete labels or label confidences.
-
 .. autoclass:: smqtk_iqr.iqr.iqr_session.IqrSession
    :members:
    :private-members:
