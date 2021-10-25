@@ -270,30 +270,30 @@ class TestIqrSession (object):
 
         # Empty adjudication
         self.iqrs.adjudicate()
-        assert self.iqrs._ordered_pos is True
-        assert self.iqrs._ordered_neg is True
-        assert self.iqrs._ordered_non_adj is True
+        assert self.iqrs._ordered_pos is not None  # NOT reset
+        assert self.iqrs._ordered_neg is not None  # NOT reset
+        assert self.iqrs._ordered_non_adj is not None  # NOT reset
 
         # Repeat positive/negative adjudication
         self.iqrs.adjudicate(new_positives=[p0])
-        assert self.iqrs._ordered_pos is True
-        assert self.iqrs._ordered_neg is True
-        assert self.iqrs._ordered_non_adj is True
+        assert self.iqrs._ordered_pos is not None  # NOT reset
+        assert self.iqrs._ordered_neg is not None  # NOT reset
+        assert self.iqrs._ordered_non_adj is not None  # NOT reset
         self.iqrs.adjudicate(new_negatives=[n3])
-        assert self.iqrs._ordered_pos is True
-        assert self.iqrs._ordered_neg is True
-        assert self.iqrs._ordered_non_adj is True
+        assert self.iqrs._ordered_pos is not None  # NOT reset
+        assert self.iqrs._ordered_neg is not None  # NOT reset
+        assert self.iqrs._ordered_non_adj is not None  # NOT reset
         self.iqrs.adjudicate(new_positives=[p1], new_negatives=[n4])
-        assert self.iqrs._ordered_pos is True
-        assert self.iqrs._ordered_neg is True
-        assert self.iqrs._ordered_non_adj is True
+        assert self.iqrs._ordered_pos is not None  # NOT reset
+        assert self.iqrs._ordered_neg is not None  # NOT reset
+        assert self.iqrs._ordered_non_adj is not None  # NOT reset
 
         # No-op un-adjudication
         e = DescriptorMemoryElement('', 5).set_vector([5])
         self.iqrs.adjudicate(un_positives=[e], un_negatives=[e])
-        assert self.iqrs._ordered_pos is True
-        assert self.iqrs._ordered_neg is True
-        assert self.iqrs._ordered_non_adj is True
+        assert self.iqrs._ordered_pos is not None  # NOT reset
+        assert self.iqrs._ordered_neg is not None  # NOT reset
+        assert self.iqrs._ordered_non_adj is not None  # NOT reset
 
     def test_refine_no_pos(self) -> None:
         """

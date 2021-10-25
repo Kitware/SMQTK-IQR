@@ -23,4 +23,6 @@ Fixes
 
 * Fixed MyPy and flake8 issues
 
+* Fixed pytest issues
+
 .. _Poetry: https://python-poetry.org/
