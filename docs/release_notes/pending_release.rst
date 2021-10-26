@@ -9,6 +9,8 @@ CI
 
 * Add Github actions workflow for CI.
 
+* Setup Read the Docs project
+
 Misc.
 
 * Now standardize to using `Poetry`_ for environment/build/publish management.
