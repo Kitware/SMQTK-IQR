@@ -16,6 +16,7 @@ Interactive Query Refinement (IQR) platform.
 
    installation
    iqr_classes
+   webservices
    releasing
 
 Indices and tables
