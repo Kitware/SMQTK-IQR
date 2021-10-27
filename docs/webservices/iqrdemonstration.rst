@@ -49,7 +49,7 @@ These provide the configuration blocks for each of the SMQTK algorithms (:class:
 For convenience, the same configuration files will be provided to the web applications when they are run later.
 
 The SMQTK source repository contains sample configuration files for both the :class:`.IqrSearchDispatcher` and :class:`.IqrService` services.
-They can be found at :download:`/../smqtk_iqr/web/search_app/sample_configs/config.IqrSearchApp.json </../smqtk_iqr/web/search_app/sample_configs/config.IqrSearchApp.json>` and :download:`/../smqtk_iqr/web/search_app/sample_configs/config.IqrRestService.json </../smqtk_iqr/web/search_app/sample_configs/config.IqrRestService.json>` respectively.
+They can be found at :download:`smqtk_iqr/web/search_app/sample_configs/config.IqrSearchApp.json </../smqtk_iqr/web/search_app/sample_configs/config.IqrSearchApp.json>` and :download:`smqtk_iqr/web/search_app/sample_configs/config.IqrRestService.json </../smqtk_iqr/web/search_app/sample_configs/config.IqrRestService.json>` respectively.
 The :py:mod:`.iqr_app_model_generation` script is designed to run from an empty directory and will create the sub-directories specified in the above configurations requires when run.
 
 Since these configuration files drive both the generation of the models and the web applications themselves, a closer examination is in order.

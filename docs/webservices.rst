@@ -3,7 +3,8 @@
 Web Service and Demonstration Applications
 ==========================================
 
-Included in SMQTK are a few web-based service and demonstration applications, providing a view into the functionality provided by SMQTK algorithms and utilities.
+Included in this package are a few web-based service and demonstration applications,
+providing a view into the functionality provided by the included algorithms and utilities.
 
 
 .. _run_application:
