@@ -16,3 +16,5 @@ Tests
 
 * Fixed unit tests that were broken due to API changed in the updated
   ``smqtk-*`` packages.
+
+* Added more unit tests for IQRSession

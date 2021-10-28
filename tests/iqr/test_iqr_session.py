@@ -1,6 +1,8 @@
 import pytest
 import unittest.mock as mock
 
+from smqtk_descriptors import DescriptorElementFactory
+from smqtk_indexing import NearestNeighborsIndex
 from smqtk_relevancy.interfaces.rank_relevancy import RankRelevancyWithFeedback
 from smqtk_iqr.iqr.iqr_session import IqrSession
 from smqtk_descriptors.impls.descriptor_element.memory import \
@@ -20,6 +22,14 @@ class TestIqrSession (object):
         """
         rank_relevancy_with_feedback = mock.MagicMock(spec=RankRelevancyWithFeedback)
         cls.iqrs = IqrSession(rank_relevancy_with_feedback)
+
+    def test_context_manager_passthrough(self) -> None:
+        """
+        Test that using an instance as a context manager works and passes along
+        the instance correctly.
+        """
+        with self.iqrs as iqrs:
+            assert self.iqrs is iqrs
 
     def test_adjudicate_new_pos_neg(self) -> None:
         """
@@ -295,6 +305,45 @@ class TestIqrSession (object):
         assert self.iqrs._ordered_neg is not None  # NOT reset
         assert self.iqrs._ordered_non_adj is not None  # NOT reset
 
+    def test_update_working_set_no_pos(self) -> None:
+        """
+        Working set updating should fail when there are no positive examples
+        in the current state.
+        """
+        nn_index = mock.MagicMock(spec=NearestNeighborsIndex)
+        # initially constructed session has no pos/neg adjudications
+        assert len(self.iqrs.positive_descriptors) == 0
+        assert len(self.iqrs.external_positive_descriptors) == 0
+        with pytest.raises(
+            RuntimeError,
+            match=r"No positive descriptors to query the neighbor index with"
+        ):
+            self.iqrs.update_working_set(nn_index)
+
+    def test_update_working_set(self) -> None:
+        """
+        Test "updating" with some positives across both positives containers.
+        """
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
+
+        # Mock index. Make it so that the neighbors of inputs is just the input
+        # itself.
+        nn_index: NearestNeighborsIndex = mock.Mock(spec=NearestNeighborsIndex)
+        nn_index.nn = mock.Mock(side_effect=lambda d, n: ([d], [0.]))  # type: ignore
+
+        # See positive descriptors
+        self.iqrs.positive_descriptors.update({d0, d1})
+        self.iqrs.external_positive_descriptors.update({d2})
+
+        assert len(self.iqrs.working_set) == 0
+
+        self.iqrs.update_working_set(nn_index)
+
+        assert len(self.iqrs.working_set) == 3
+        assert set(self.iqrs.working_set.descriptors()) == {d0, d1, d2}
+
     def test_refine_no_pos(self) -> None:
         """
         Test that refinement cannot occur if there are no positive descriptor
@@ -533,6 +582,23 @@ class TestIqrSession (object):
         # Post-reset, there should be no results nor cache.
         actual = self.iqrs.ordered_results()
         assert actual == []
+
+    def test_feedback_results_weird_state(self) -> None:
+        """
+        Test that there is a fallback case when assumptions are violated.
+
+        This method assumes the value of `feedback_list` will either be
+        iterable or will be None. If this is violated there should be a hard
+        stop.
+        """
+        # not iterable, not None
+        self.iqrs.feedback_list = 666  # type: ignore
+
+        with pytest.raises(
+            RuntimeError,
+            match=r"Feedback results in an invalid state"
+        ):
+            self.iqrs.feedback_results()
 
     def test_feedback_results_no_results_no_cache(self) -> None:
         """
@@ -782,6 +848,35 @@ class TestIqrSession (object):
         assert self.iqrs._ordered_pos is None
         assert self.iqrs._ordered_neg is None
         assert self.iqrs._ordered_non_adj is None
+
+    def test_get_set_state(self) -> None:
+        """
+        Simple test of get-state functionality
+        """
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
+        d3 = DescriptorMemoryElement(3).set_vector([3])
+
+        # Set up the session to have some state.
+        self.iqrs.positive_descriptors.update({d0})
+        self.iqrs.negative_descriptors.update({d1})
+        self.iqrs.external_positive_descriptors.update({d2})
+        self.iqrs.external_negative_descriptors.update({d3})
+
+        b = self.iqrs.get_state_bytes()
+        assert b is not None
+        assert len(b) > 0
+
+        rank_relevancy_with_feedback = mock.MagicMock(spec=RankRelevancyWithFeedback)
+        descr_fact = DescriptorElementFactory(DescriptorMemoryElement, {})
+        new_iqrs = IqrSession(rank_relevancy_with_feedback)
+        new_iqrs.set_state_bytes(b, descr_fact)
+
+        assert self.iqrs.positive_descriptors == new_iqrs.positive_descriptors
+        assert self.iqrs.negative_descriptors == new_iqrs.negative_descriptors
+        assert self.iqrs.external_positive_descriptors == new_iqrs.external_positive_descriptors
+        assert self.iqrs.external_negative_descriptors == new_iqrs.external_negative_descriptors
 
 
 class TestIqrSessionBehavior (object):
