@@ -28,19 +28,19 @@ class TestIqrSession (object):
         negative sets respectively.
         """
 
-        p0 = DescriptorMemoryElement('', 0).set_vector([0])
+        p0 = DescriptorMemoryElement(0).set_vector([0])
         self.iqrs.adjudicate(new_positives=[p0])
         assert self.iqrs.positive_descriptors == {p0}
         assert self.iqrs.negative_descriptors == set()
 
-        n1 = DescriptorMemoryElement('', 1).set_vector([1])
+        n1 = DescriptorMemoryElement(1).set_vector([1])
         self.iqrs.adjudicate(new_negatives=[n1])
         assert self.iqrs.positive_descriptors == {p0}
         assert self.iqrs.negative_descriptors == {n1}
 
-        p2 = DescriptorMemoryElement('', 2).set_vector([2])
-        p3 = DescriptorMemoryElement('', 3).set_vector([3])
-        n4 = DescriptorMemoryElement('', 4).set_vector([4])
+        p2 = DescriptorMemoryElement(2).set_vector([2])
+        p3 = DescriptorMemoryElement(3).set_vector([3])
+        n4 = DescriptorMemoryElement(4).set_vector([4])
         self.iqrs.adjudicate(new_positives=[p2, p3], new_negatives=[n4])
         assert self.iqrs.positive_descriptors == {p0, p2, p3}
         assert self.iqrs.negative_descriptors == {n1, n4}
@@ -51,11 +51,11 @@ class TestIqrSession (object):
         adjudications has no effect as the behavior of sets should be observed.
         """
 
-        p0 = DescriptorMemoryElement('', 0).set_vector([0])
-        p2 = DescriptorMemoryElement('', 2).set_vector([2])
-        n1 = DescriptorMemoryElement('', 1).set_vector([1])
-        p3 = DescriptorMemoryElement('', 3).set_vector([3])
-        n4 = DescriptorMemoryElement('', 4).set_vector([4])
+        p0 = DescriptorMemoryElement(0).set_vector([0])
+        p2 = DescriptorMemoryElement(2).set_vector([2])
+        n1 = DescriptorMemoryElement(1).set_vector([1])
+        p3 = DescriptorMemoryElement(3).set_vector([3])
+        n4 = DescriptorMemoryElement(4).set_vector([4])
 
         # Partially add the above descriptors
         self.iqrs.adjudicate(new_positives=[p0], new_negatives=[n1])
@@ -81,11 +81,11 @@ class TestIqrSession (object):
         is now negative, etc.)
         """
 
-        p0 = DescriptorMemoryElement('', 0).set_vector([0])
-        p1 = DescriptorMemoryElement('', 1).set_vector([1])
-        p2 = DescriptorMemoryElement('', 2).set_vector([2])
-        n3 = DescriptorMemoryElement('', 3).set_vector([3])
-        n4 = DescriptorMemoryElement('', 4).set_vector([4])
+        p0 = DescriptorMemoryElement(0).set_vector([0])
+        p1 = DescriptorMemoryElement(1).set_vector([1])
+        p2 = DescriptorMemoryElement(2).set_vector([2])
+        n3 = DescriptorMemoryElement(3).set_vector([3])
+        n4 = DescriptorMemoryElement(4).set_vector([4])
 
         # Set initial state
         self.iqrs.positive_descriptors = {p0, p1, p2}
@@ -112,11 +112,11 @@ class TestIqrSession (object):
         """
 
         # Set initial state
-        p0 = DescriptorMemoryElement('', 0).set_vector([0])
-        p1 = DescriptorMemoryElement('', 1).set_vector([1])
-        p2 = DescriptorMemoryElement('', 2).set_vector([2])
-        n3 = DescriptorMemoryElement('', 3).set_vector([3])
-        n4 = DescriptorMemoryElement('', 4).set_vector([4])
+        p0 = DescriptorMemoryElement(0).set_vector([0])
+        p1 = DescriptorMemoryElement(1).set_vector([1])
+        p2 = DescriptorMemoryElement(2).set_vector([2])
+        n3 = DescriptorMemoryElement(3).set_vector([3])
+        n4 = DescriptorMemoryElement(4).set_vector([4])
 
         # Set initial state
         self.iqrs.positive_descriptors = {p0, p1, p2}
@@ -141,25 +141,25 @@ class TestIqrSession (object):
         """
 
         # Set initial state
-        p0 = DescriptorMemoryElement('', 0).set_vector([0])
-        p1 = DescriptorMemoryElement('', 1).set_vector([1])
-        p2 = DescriptorMemoryElement('', 2).set_vector([2])
-        n3 = DescriptorMemoryElement('', 3).set_vector([3])
-        n4 = DescriptorMemoryElement('', 4).set_vector([4])
+        p0 = DescriptorMemoryElement(0).set_vector([0])
+        p1 = DescriptorMemoryElement(1).set_vector([1])
+        p2 = DescriptorMemoryElement(2).set_vector([2])
+        n3 = DescriptorMemoryElement(3).set_vector([3])
+        n4 = DescriptorMemoryElement(4).set_vector([4])
 
         # Set initial state
         self.iqrs.positive_descriptors = {p0, p1, p2}
         self.iqrs.negative_descriptors = {n3, n4}
 
         # Add p5, switch p1 to negative, unadj p2
-        p5 = DescriptorMemoryElement('', 5).set_vector([5])
+        p5 = DescriptorMemoryElement(5).set_vector([5])
         self.iqrs.adjudicate(new_positives=[p5], new_negatives=[p1],
                              un_positives=[p2])
         assert self.iqrs.positive_descriptors == {p0, p5}
         assert self.iqrs.negative_descriptors == {n3, n4, p1}
 
         # Add n6, switch n4 to positive, unadj n3
-        n6 = DescriptorMemoryElement('', 6).set_vector([6])
+        n6 = DescriptorMemoryElement(6).set_vector([6])
         self.iqrs.adjudicate(new_positives=[n4], new_negatives=[n6],
                              un_negatives=[n3])
         assert self.iqrs.positive_descriptors == {p0, p5, n4}
@@ -172,18 +172,18 @@ class TestIqrSession (object):
         """
 
         # Set initial state
-        p0 = DescriptorMemoryElement('', 0).set_vector([0])
-        p1 = DescriptorMemoryElement('', 1).set_vector([1])
-        p2 = DescriptorMemoryElement('', 2).set_vector([2])
-        n3 = DescriptorMemoryElement('', 3).set_vector([3])
-        n4 = DescriptorMemoryElement('', 4).set_vector([4])
+        p0 = DescriptorMemoryElement(0).set_vector([0])
+        p1 = DescriptorMemoryElement(1).set_vector([1])
+        p2 = DescriptorMemoryElement(2).set_vector([2])
+        n3 = DescriptorMemoryElement(3).set_vector([3])
+        n4 = DescriptorMemoryElement(4).set_vector([4])
 
         # Set initial state
         self.iqrs.positive_descriptors = {p0, p1, p2}
         self.iqrs.negative_descriptors = {n3, n4}
 
         # Attempt adjudicating a new element as both postive AND negative
-        e = DescriptorMemoryElement('', 5).set_vector([5])
+        e = DescriptorMemoryElement(5).set_vector([5])
         self.iqrs.adjudicate(new_positives=[e], new_negatives=[e])
         assert self.iqrs.positive_descriptors == {p0, p1, p2}
         assert self.iqrs.negative_descriptors == {n3, n4}
@@ -195,11 +195,11 @@ class TestIqrSession (object):
         """
 
         # Set initial state
-        p0 = DescriptorMemoryElement('', 0).set_vector([0])
-        p1 = DescriptorMemoryElement('', 1).set_vector([1])
-        p2 = DescriptorMemoryElement('', 2).set_vector([2])
-        n3 = DescriptorMemoryElement('', 3).set_vector([3])
-        n4 = DescriptorMemoryElement('', 4).set_vector([4])
+        p0 = DescriptorMemoryElement(0).set_vector([0])
+        p1 = DescriptorMemoryElement(1).set_vector([1])
+        p2 = DescriptorMemoryElement(2).set_vector([2])
+        n3 = DescriptorMemoryElement(3).set_vector([3])
+        n4 = DescriptorMemoryElement(4).set_vector([4])
 
         # Set initial state
         self.iqrs.positive_descriptors = {p0, p1, p2}
@@ -211,7 +211,7 @@ class TestIqrSession (object):
         assert self.iqrs.negative_descriptors == {n3, n4}
 
         # Attempt un-adjudication of a non-adjudicated element.
-        e = DescriptorMemoryElement('', 5).set_vector([5])
+        e = DescriptorMemoryElement(5).set_vector([5])
         self.iqrs.adjudicate(un_positives=[e], un_negatives=[e])
         assert self.iqrs.positive_descriptors == {p0, p1, p2}
         assert self.iqrs.negative_descriptors == {n3, n4}
@@ -221,8 +221,8 @@ class TestIqrSession (object):
         Test results view cache resetting functionality on adjudicating certain
         ways.
         """
-        e = DescriptorMemoryElement('', 0).set_vector([0])
-        a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
+        e = DescriptorMemoryElement(0).set_vector([0])
+        a = [(DescriptorMemoryElement(0), 1.0), (DescriptorMemoryElement(0), 2.0)]
         self.iqrs._ordered_pos = a
         self.iqrs._ordered_neg = a
         self.iqrs._ordered_non_adj = a
@@ -239,8 +239,8 @@ class TestIqrSession (object):
         Test results view cache resetting functionality on adjudicating certain
         ways.
         """
-        e = DescriptorMemoryElement('', 0).set_vector([0])
-        a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
+        e = DescriptorMemoryElement(0).set_vector([0])
+        a = [(DescriptorMemoryElement(0), 1.0), (DescriptorMemoryElement(0), 2.0)]
         self.iqrs._ordered_pos = a
         self.iqrs._ordered_neg = a
         self.iqrs._ordered_non_adj = a
@@ -258,12 +258,12 @@ class TestIqrSession (object):
         change occurs under different circumstances
         """
         # setup initial IQR session state.
-        a = [(DescriptorMemoryElement('', 0), 1.0), (DescriptorMemoryElement('', 0), 2.0)]
-        p0 = DescriptorMemoryElement('', 0).set_vector([0])
-        p1 = DescriptorMemoryElement('', 1).set_vector([1])
-        p2 = DescriptorMemoryElement('', 2).set_vector([2])
-        n3 = DescriptorMemoryElement('', 3).set_vector([3])
-        n4 = DescriptorMemoryElement('', 4).set_vector([4])
+        a = [(DescriptorMemoryElement(0), 1.0), (DescriptorMemoryElement(0), 2.0)]
+        p0 = DescriptorMemoryElement(0).set_vector([0])
+        p1 = DescriptorMemoryElement(1).set_vector([1])
+        p2 = DescriptorMemoryElement(2).set_vector([2])
+        n3 = DescriptorMemoryElement(3).set_vector([3])
+        n4 = DescriptorMemoryElement(4).set_vector([4])
         self.iqrs.positive_descriptors = {p0, p1, p2}
         self.iqrs.negative_descriptors = {n3, n4}
         self.iqrs._ordered_pos = self.iqrs._ordered_neg = self.iqrs._ordered_non_adj = a
@@ -289,7 +289,7 @@ class TestIqrSession (object):
         assert self.iqrs._ordered_non_adj is not None  # NOT reset
 
         # No-op un-adjudication
-        e = DescriptorMemoryElement('', 5).set_vector([5])
+        e = DescriptorMemoryElement(5).set_vector([5])
         self.iqrs.adjudicate(un_positives=[e], un_negatives=[e])
         assert self.iqrs._ordered_pos is not None  # NOT reset
         assert self.iqrs._ordered_neg is not None  # NOT reset
@@ -315,11 +315,11 @@ class TestIqrSession (object):
         to certain values if they were also present in the positive or negative
         adjudicate (internal or external) sets.
         """
-        test_in_pos_elem = DescriptorMemoryElement('t', 0).set_vector([0])
-        test_in_neg_elem = DescriptorMemoryElement('t', 1).set_vector([1])
-        test_ex_pos_elem = DescriptorMemoryElement('t', 2).set_vector([2])
-        test_ex_neg_elem = DescriptorMemoryElement('t', 3).set_vector([3])
-        test_other_elem = DescriptorMemoryElement('t', 4).set_vector([4])
+        test_in_pos_elem = DescriptorMemoryElement(0).set_vector([0])
+        test_in_neg_elem = DescriptorMemoryElement(1).set_vector([1])
+        test_ex_pos_elem = DescriptorMemoryElement(2).set_vector([2])
+        test_ex_neg_elem = DescriptorMemoryElement(3).set_vector([3])
+        test_other_elem = DescriptorMemoryElement(4).set_vector([4])
 
         # Mock the working set so it has the correct size and elements
         desc_list = [test_in_pos_elem, test_in_neg_elem, test_other_elem]
@@ -378,11 +378,11 @@ class TestIqrSession (object):
         Test that the results of RelevancyIndex ranking are directly reflected
         in an existing results dictionary of probability values.
         """
-        test_in_pos_elem = DescriptorMemoryElement('t', 0).set_vector([0])
-        test_in_neg_elem = DescriptorMemoryElement('t', 1).set_vector([1])
-        test_ex_pos_elem = DescriptorMemoryElement('t', 2).set_vector([2])
-        test_ex_neg_elem = DescriptorMemoryElement('t', 3).set_vector([3])
-        test_other_elem = DescriptorMemoryElement('t', 4).set_vector([4])
+        test_in_pos_elem = DescriptorMemoryElement(0).set_vector([0])
+        test_in_neg_elem = DescriptorMemoryElement(1).set_vector([1])
+        test_ex_pos_elem = DescriptorMemoryElement(2).set_vector([2])
+        test_ex_neg_elem = DescriptorMemoryElement(3).set_vector([3])
+        test_other_elem = DescriptorMemoryElement(4).set_vector([4])
 
         # Mock the working set so it has the correct size and elements
         desc_list = [test_in_pos_elem, test_in_neg_elem, test_other_elem]
@@ -474,10 +474,10 @@ class TestIqrSession (object):
         """
 
         # Mocking results map existing for return.
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
-        d3 = DescriptorMemoryElement('', 3).set_vector([3])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
+        d3 = DescriptorMemoryElement(3).set_vector([3])
         self.iqrs.results = {
             d0: 0.0,
             d1: 0.8,
@@ -514,10 +514,10 @@ class TestIqrSession (object):
         """
 
         # Mocking results map existing for return.
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
-        d3 = DescriptorMemoryElement('', 3).set_vector([3])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
+        d3 = DescriptorMemoryElement(3).set_vector([3])
         self.iqrs.results = {
             d0: 0.0,
             d1: 0.8,
@@ -559,10 +559,10 @@ class TestIqrSession (object):
         """
 
         # Mocking results map existing for return.
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
-        d3 = DescriptorMemoryElement('', 3).set_vector([3])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
+        d3 = DescriptorMemoryElement(3).set_vector([3])
         self.iqrs.feedback_list = [
             d0,
             d1,
@@ -602,10 +602,10 @@ class TestIqrSession (object):
         Test that we can get positive adjudication relevancy scores correctly
         from a not-cached state.
         """
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
-        d3 = DescriptorMemoryElement('', 3).set_vector([3])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
+        d3 = DescriptorMemoryElement(3).set_vector([3])
 
         # Simulate a populated contributing adjudication state (there must be
         # some positives for a simulated post-refine state to be valid).
@@ -666,10 +666,10 @@ class TestIqrSession (object):
         Test that we can get negative adjudication relevancy scores correctly
         from a not-cached state.
         """
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
-        d3 = DescriptorMemoryElement('', 3).set_vector([3])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
+        d3 = DescriptorMemoryElement(3).set_vector([3])
 
         # Simulate a populated contributing adjudication state (there must be
         # some positives for a simulated post-refine state to be valid).
@@ -730,10 +730,10 @@ class TestIqrSession (object):
         Test that we get the non-adjudicated DescriptorElements and their
         scores correctly from a non-cached state with known results.
         """
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
-        d3 = DescriptorMemoryElement('', 3).set_vector([3])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
+        d3 = DescriptorMemoryElement(3).set_vector([3])
 
         # Simulate a populated contributing adjudication state (there must be
         # some positives for a simulated post-refine state to be valid).

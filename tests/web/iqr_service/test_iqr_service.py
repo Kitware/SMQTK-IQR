@@ -603,7 +603,7 @@ class TestIqrService (unittest.TestCase):
         iqrs = IqrSession(rank_relevancy_with_feedback, session_uid='abc')
 
         ep, en, p1, p2, p3, n1, n2, d1, d2, n3 = [
-            DescriptorMemoryElement('test', uid) for uid in
+            DescriptorMemoryElement(uid) for uid in
             ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j']
             # ep   en   p1   p2   p3   n1   n2   d1   d2   n3
         ]   # C              C         C    C    C    C
@@ -706,9 +706,9 @@ class TestIqrService (unittest.TestCase):
         self.app.controller.get_session = mock.MagicMock()  # type: ignore
         # Mock IQR session instance to have
         # Mock results return to be something valid.
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
         self.app.controller.get_session().ordered_results.return_value = [
             [d0, 0.3], [d2, 0.2], [d1, 0.1],
         ]
@@ -747,9 +747,9 @@ class TestIqrService (unittest.TestCase):
         self.app.controller.get_session = mock.MagicMock()  # type: ignore
         # Mock IQR session instance to have
         # Mock feedback_results return to be something valid.
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
         self.app.controller.get_session().feedback_results.return_value = [
             d0, d2, d1
         ]
@@ -790,9 +790,9 @@ class TestIqrService (unittest.TestCase):
         self.app.controller.get_session = mock.MagicMock()  # type: ignore
         # Mock IQR session instance to have
         # Mock results return to be something valid.
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
         self.app.controller.get_session().get_positive_adjudication_relevancy \
             .return_value = [
                 [d0, 0.3], [d2, 0.2], [d1, 0.1],
@@ -835,9 +835,9 @@ class TestIqrService (unittest.TestCase):
         self.app.controller.get_session = mock.MagicMock()  # type: ignore
         # Mock IQR session instance to have
         # Mock results return to be something valid.
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
         self.app.controller.get_session().get_negative_adjudication_relevancy \
             .return_value = [
                 [d0, 0.3], [d2, 0.2], [d1, 0.1],
@@ -880,9 +880,9 @@ class TestIqrService (unittest.TestCase):
         self.app.controller.get_session = mock.MagicMock()  # type: ignore
         # Mock IQR session instance to have
         # Mock results return to be something valid.
-        d0 = DescriptorMemoryElement('', 0).set_vector([0])
-        d1 = DescriptorMemoryElement('', 1).set_vector([1])
-        d2 = DescriptorMemoryElement('', 2).set_vector([2])
+        d0 = DescriptorMemoryElement(0).set_vector([0])
+        d1 = DescriptorMemoryElement(1).set_vector([1])
+        d2 = DescriptorMemoryElement(2).set_vector([2])
         self.app.controller.get_session().get_unadjudicated_relevancy \
             .return_value = [
                 [d0, 0.3], [d2, 0.2], [d1, 0.1],
@@ -912,9 +912,9 @@ class TestIqrService (unittest.TestCase):
 
         # Setup descriptor set to have descriptors we test query for
         mock_descriptors = [
-            DescriptorMemoryElement('', 'a').set_vector([0.4]),
-            DescriptorMemoryElement('', 'b').set_vector([0.5]),
-            DescriptorMemoryElement('', 'c').set_vector([0.6]),
+            DescriptorMemoryElement('a').set_vector([0.4]),
+            DescriptorMemoryElement('b').set_vector([0.5]),
+            DescriptorMemoryElement('c').set_vector([0.6]),
         ]
         self.app.descriptor_set.get_many_descriptors = mock.MagicMock(  # type: ignore
             return_value=mock_descriptors
@@ -947,16 +947,16 @@ class TestIqrService (unittest.TestCase):
             iqr_session = self.app.controller.get_session("0")
             # Mock descriptors on IQR session
             iqr_session.external_positive_descriptors.add(
-                DescriptorMemoryElement('', 0).set_vector([0.0])
+                DescriptorMemoryElement(0).set_vector([0.0])
             )
             iqr_session.positive_descriptors.add(
-                DescriptorMemoryElement('', 1).set_vector([0.1])
+                DescriptorMemoryElement(1).set_vector([0.1])
             )
             iqr_session.external_negative_descriptors.add(
-                DescriptorMemoryElement('', 2).set_vector([1.0])
+                DescriptorMemoryElement(2).set_vector([1.0])
             )
             iqr_session.negative_descriptors.add(
-                DescriptorMemoryElement('', 3).set_vector([0.9])
+                DescriptorMemoryElement(3).set_vector([0.9])
             )
             r: Response = tc.get('/classify',  # type: ignore
                                  query_string=dict(sid=0, uuids=json.dumps(['a', 'b', 'c'])))
@@ -1115,7 +1115,7 @@ class TestIqrService (unittest.TestCase):
         Test getting random descriptor UIDs from the
         """
         expected = list(map(chr, range(97, 97+26)))
-        self.app.descriptor_set.iterkeys = mock.MagicMock(  # type: ignore
+        self.app.descriptor_set.keys = mock.MagicMock(  # type: ignore
             return_value=list(map(chr, range(97, 97+26)))
         )
         with self.app.test_client() as tc:
@@ -1150,7 +1150,7 @@ class TestIqrService (unittest.TestCase):
 
     def test_get_random_uids_paged(self) -> None:
         """ Test pagination of random UIDs """
-        self.app.descriptor_set.iterkeys = mock.MagicMock(  # type: ignore
+        self.app.descriptor_set.keys = mock.MagicMock(  # type: ignore
             return_value=list(map(chr, range(97, 97+26)))
         )
         with self.app.test_client() as tc:

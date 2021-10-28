@@ -11,3 +11,8 @@ Build
 
 Fixes
 -----
+
+Tests
+
+* Fixed unit tests that were broken due to API changed in the updated
+  ``smqtk-*`` packages.
