@@ -291,6 +291,7 @@ class IqrSession ():
 
     def refine(self) -> None:
         """ Refine current model results based on current adjudication state
+
         :raises RuntimeError: No working set has been initialized.
             :meth:`update_working_set` should have been called after
             adjudicating some positive examples.
