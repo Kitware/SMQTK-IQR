@@ -49,54 +49,52 @@ These provide the configuration blocks for each of the SMQTK algorithms (:class:
 For convenience, the same configuration files will be provided to the web applications when they are run later.
 
 The SMQTK source repository contains sample configuration files for both the :class:`.IqrSearchDispatcher` and :class:`.IqrService` services.
-They can be found at :download:`smqtk_iqr/web/search_app/sample_configs/config.IqrSearchApp.json </../smqtk_iqr/web/search_app/sample_configs/config.IqrSearchApp.json>` and :download:`smqtk_iqr/web/search_app/sample_configs/config.IqrRestService.json </../smqtk_iqr/web/search_app/sample_configs/config.IqrRestService.json>` respectively.
+They can be found at :download:`smqtk_iqr/web/search_app/sample_configs/runApp.IqrSearchDispatcher.json </../smqtk_iqr/web/search_app/sample_configs/runApp.IqrSearchDispatcher.json>` and :download:`smqtk_iqr/web/search_app/sample_configs/runApp.IqrService.json </../smqtk_iqr/web/search_app/sample_configs/runApp.IqrService.json>` respectively.
 The :py:mod:`.iqr_app_model_generation` script is designed to run from an empty directory and will create the sub-directories specified in the above configurations requires when run.
 
 Since these configuration files drive both the generation of the models and the web applications themselves, a closer examination is in order.
 
 Present in both configuration files are the ``flask_app`` and ``server`` sections which control Flask web server application parameters.
-The :file:`config.IqrSearchApp.json` contains the additional section ``mongo`` that configures the MongoDB_ server the UI service uses for storing user session information.
+The :file:`runApp.IqrSearchDispatcher.json` contains the additional section ``mongo`` that configures the MongoDB_ server the UI service uses for storing user session information.
 
 .. _MongoDB: http://www.mongodb.org
 
-.. literalinclude:: /../smqtk_iqr/web/search_app/sample_configs/config.IqrSearchApp.json
+.. literalinclude:: /../smqtk_iqr/web/search_app/sample_configs/runApp.IqrSearchDispatcher.json
    :language: json
    :linenos:
-   :emphasize-lines: 15,18,32
+   :emphasize-lines: 7,8,23
 
-The :file:`config.IqrSerchApp.json` configuration has an additional block "iqr_tabs" (line 15).
+The :file:`runApp.IqrSearchDispatcher.json` configuration has an additional block "iqr_tabs" (line 7).
 This defines the different archives, and matching IQR REST service describing that archive, the UI is to provide an interface for.
-In our case there will be only one entry, "LEEDS Butterflies" (line 16), representing the archive that we are currently building.
-This section describes the data-set container that contains the archive imagery to show in the UI (line 18) as well as the URL to the RESTful service providing the IQR functions for the archive (line 32).
+In our case there will be only one entry, "LEEDS Butterflies" (line 8), representing the archive that we are currently building.
+This section describes the data-set container that contains the archive imagery to show in the UI (line 10) as well as the URL to the RESTful service providing the IQR functions for the archive (line 23).
 
-In the :file:`config.IqrRestService.json` configuration file (shown below) we see the specification of the algorithm and representation plugins the RESTful IQR service app will use under ``iqr_service -> plugins``.
+In the :file:`runApp.IqrService.json` configuration file (shown below) we see the specification of the algorithm and representation plugins the RESTful IQR service app will use under ``iqr_service -> plugins``.
 Each of these of these blocks is passed to the SMQTK plugin system to create the appropriate instances of the algorithm or data representation in question.
-The blocks located at lines 35, 66, and 147 configure the three main algorithms used by the application:  the descriptor generator, the nearest neighbors index, and the relevancy index.
-For example the ``nn_index`` block that starts at line 66 specifies two different implementations: :py:class:`.FlannNearestNeighborsIndex`, which uses the Flann_ library, and :py:class:`.LSHNearestNeighborIndex`, configured to use the Iterative Quantization hash function (`paper`_).
-The ``type`` element on line 135 selects the :py:class:`.LSHNearestNeighborIndex` to be used for this configuration.
+The blocks located at lines 41, 96, and 174 configure the three main algorithms used by the application:  the descriptor generator, the nearest neighbors index, and the relevancy index.
+For example the ``nn_index`` block that starts at line 97 specifies two different implementations: :py:class:`.FlannNearestNeighborsIndex`, which uses the Flann_ library.
 
-.. _paper: http://www.cs.unc.edu/~lazebnik/publications/cvpr11_small_code.pdf
 .. _Flann: http://www.cs.ubc.ca/research/flann/
 
 :ref:`(jump past configuration display) <post_iqr_rest_conf>`
 
-.. literalinclude:: /../smqtk_iqr/web/search_app/sample_configs/config.IqrRestService.json
+.. literalinclude:: /../smqtk_iqr/web/search_app/sample_configs/runApp.IqrService.json
    :language: json
    :linenos:
-   :emphasize-lines: 35,66,135,147
+   :emphasize-lines: 41, 96, 174
 
 .. _post_iqr_rest_conf:
 
 Once you have the configuration file set up the way that you like it, you can generate all of the models and indexes required by the application by running the following command::
 
     iqr_app_model_generation \
-        -c config.IqrSearchApp.json config.IqrRestService.json \
+        -c runApp.IqrSearchDispatcher.json runApp.IqrService.json \
         -t "LEEDS Butterflies" /path/to/butterfly/images/*.jpg
 
 This will generate descriptors for all of the images in the data set and use them to compute the models and indices we configured, outputting to the files under the ``workdir`` directory in your current directory.
 
 Once it completes, you can run the ``IqrSearchApp`` and ``IqrService`` web-apps.
-You'll need an instance of MongoDB running on the port and host address specified by the ``mongo`` element on line 13 in your ``config.IqrSearchApp.json`` configuration file.
+You'll need an instance of MongoDB running on the port and host address specified by the ``mongo`` element on line 27 in your ``runApp.IqrSearchDispatcher.json`` configuration file.
 You can start a Mongo instance (presuming you have it installed) with::
 
     mongod --dbpath /path/to/mongo/data/dir
@@ -104,10 +102,10 @@ You can start a Mongo instance (presuming you have it installed) with::
 Once Mongo has been started you can start the ``IqrSearchApp`` and ``IqrService`` services with the following commands in separate terminals::
 
    # Terminal 1
-   runApplication -a IqrService -c config.IqrRestService.json
+   runApplication -a IqrService -c runApp.IqrService.json
 
    # Terminal 2
-   runApplication -a IqrSearchDispatcher -c config.IqrSearchApp.json
+   runApplication -a IqrSearchDispatcher -c runApp.IqrSearchDispatcher.json
 
 After the services have been started, open a web browser and navigate to ``http://localhost:5000``.
 Click lick on the ``login`` button in the upper-right and then enter the credentials specified in the default login settings file :file:`source/python/smqtk/web/search_app/modules/login/users.json`.
@@ -123,7 +121,7 @@ Click lick on the ``login`` button in the upper-right and then enter the credent
    *Enter demo credentials*
 
 Once you've logged in you will be able to select the ``LEEDS Butterfly`` link.
-This link was named by line 16 in the :file:`config.IqrSearchApp.json` configuration file.
+This link was named by line 8 in the :file:`runApp.IqrSearchDispatcher.json` configuration file.
 The ``iqr_tabs`` mapping allows you to configure interfacing with different IQR REST services providing different combinations of the required algorithms -- useful for example, if you want to compare the performance of different descriptors or nearest-neighbor index algorithms.
 
 .. figure:: figures/iqr-butterflies-link.png
@@ -186,31 +184,3 @@ Let us assume the IQR session state was downloaded as ``monarch.IqrState``.
 The following command will train a classifier leveraging the descriptors labeled by the IQR session that was saved::
 
     iqrTrainClassifier.py -c config.iqrTrainClassifier.json -i monarch.IqrState
-
-Once you have trained the classifier, you can use the ``classifyFiles`` command to actually classify a set of files.
-
-.. argparse::
-   :ref: smqtk_iqr.utils.classifyFiles.get_cli_parser
-   :prog: smqtk-classify-files
-   :nodescription:
-   :noepilog:
-
-Again, we need to provide a JSON configuration file for the command.
-As with ``iqrTrainClassifier``, there is a sample configuration file in the repository:
-
-.. literalinclude:: /../smqtk_iqr/web/search_app/sample_configs/config.classifyFiles.json
-   :language: json
-   :linenos:
-   :emphasize-lines: 7-18,25-39
-
-Note that the ``classifier`` block on lines 7-18 is the same as the ``classifier`` block in the ``iqrTrainClassfier`` configuration file.
-Further, the ``descriptor_generator`` block on lines 25-39 matches the descriptor generator used for the IQR application itself (thus matching the type of descriptor used to train the classifier).
-
-Once you've set up the configuration file to your liking, you can classify a set of labels with the following command::
-
-    smqtk-classify-files -c config.classifyFiles.json -l positive /path/to/butterfly/images/*.jpg
-
-If you leave the ``-l`` argument, the command will tell you the labels available with the classifier (in this case *positive* and *negative*).
-
-SMQTK's ``smqtk-classify-files`` tool can use this saved
-IQR state to classify a set of files (not necessarily the files in your IQR Applicaiton ingest).  The command has the following form:
