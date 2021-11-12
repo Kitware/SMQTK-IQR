@@ -1,0 +1,6 @@
+{
+    "classifier": {
+        "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression": {},
+        "type": "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression"
+    }
+}

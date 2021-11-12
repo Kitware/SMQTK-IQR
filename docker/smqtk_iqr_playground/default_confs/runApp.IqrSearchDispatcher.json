@@ -5,20 +5,20 @@
         "SECRET_KEY": "MySuperUltraSecret"
     },
     "iqr_tabs": {
-        "Data-set Iqr": {
+        "LEEDS Butterflies": {
             "data_set": {
-                "smqtk.representation.data_set.memory_set.DataMemorySet": {
+                "smqtk_dataprovider.impls.data_set.memory.DataMemorySet": {
                     "cache_element": {
-                        "smqtk.representation.data_element.file_element.DataFileElement": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
                             "explicit_mimetype": null,
                             "filepath": "models/image_elements.dms_cache",
                             "readonly": true
                         },
-                        "type": "smqtk.representation.data_element.file_element.DataFileElement"
+                        "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
                     },
                     "pickle_protocol": -1
                 },
-                "type": "smqtk.representation.data_set.memory_set.DataMemorySet"
+                "type": "smqtk_dataprovider.impls.data_set.memory.DataMemorySet"
             },
             "iqr_service_url": "localhost:5001",
             "working_directory": "data/iqr_app_work"
