@@ -3,16 +3,17 @@ TODO: Adapt this into SMQTK if/when generalized, click usage in SMQTK.
 """
 import click
 import logging
+from typing import Dict
 
-from smqtk.algorithms import NearestNeighborsIndex
-from smqtk.representation import DescriptorSet
-from smqtk.utils.cli import initialize_logging, load_config, output_config
-from smqtk.utils.configuration import from_config_dict, make_default_config
+from smqtk_indexing import NearestNeighborsIndex
+from smqtk_descriptors import DescriptorSet
+from smqtk_iqr.utils.cli import initialize_logging, load_config, output_config
+from smqtk_core.configuration import from_config_dict, make_default_config
 
 LOG = logging.getLogger(__name__)
 
 
-def build_default_config():
+def build_default_config() -> Dict:
     return {
         'descriptor_set': make_default_config(DescriptorSet.get_impls()),
         'neighbor_index': make_default_config(NearestNeighborsIndex.get_impls()),
@@ -25,7 +26,7 @@ def build_default_config():
               help="This option must be provided before any command. "
                    "Provide once for additional informational logging. "
                    "Provide a second time for additional debug logging.")
-def cli_group(verbose):
+def cli_group(verbose: int) -> None:
     """
     Tool for building a nearest neighbors index from an input descriptor set.
 
@@ -51,7 +52,7 @@ def cli_group(verbose):
               default=False, is_flag=True,
               help='If the given filepath should be overwritten if it '
                    'already exists.')
-def cli_config(output_filepath, input_config, overwrite):
+def cli_config(output_filepath: str, input_config: str, overwrite: bool) -> None:
     """
     Generate a default or template JSON configuration file for this tool.
     """
@@ -69,7 +70,7 @@ def cli_config(output_filepath, input_config, overwrite):
 @click.command('build')
 @click.argument('config_filepath',
                 type=click.Path(exists=True, dir_okay=False))
-def cli_build(config_filepath):
+def cli_build(config_filepath: str) -> None:
     """
     Build a new nearest-neighbors index from the configured descriptor set's
     contents.

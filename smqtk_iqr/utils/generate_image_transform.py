@@ -52,25 +52,30 @@ Configuration details:
 
 import logging
 import os
+import argparse
+from typing import Dict, List, Optional, Tuple
 
 import PIL.Image
 
-import smqtk.utils.cli
-import smqtk.utils.file
-import smqtk.utils.parallel
-from smqtk.utils.image import (
+import smqtk_iqr.utils.cli
+import smqtk_dataprovider.utils.file
+import smqtk_descriptors.utils.parallel
+
+from smqtk_image_io.utils.image import (
     image_crop_center_levels, image_crop_quadrant_pyramid, image_crop_tiles,
     image_brightness_intervals, image_contrast_intervals
 )
 
 
-def generate_image_transformations(image_path,
-                                   crop_center_n, crop_quadrant_levels,
-                                   crop_tile_shape, crop_tile_stride,
-                                   brightness_intervals,
-                                   contrast_intervals,
-                                   output_dir=None,
-                                   output_ext='.png'):
+def generate_image_transformations(image_path: str,
+                                   crop_center_n: Optional[int],
+                                   crop_quadrant_levels: Optional[int],
+                                   crop_tile_shape: Optional[Tuple[int, int]],
+                                   crop_tile_stride: Optional[Tuple[int, int]],
+                                   brightness_intervals: Optional[int],
+                                   contrast_intervals: Optional[int],
+                                   output_dir: str = None,
+                                   output_ext: str = '.png') -> None:
     """
     Transform an input image into different crops or other transforms,
     outputting results to the given output directory without overwriting or
@@ -86,13 +91,13 @@ def generate_image_transformations(image_path,
 
     abs_path = os.path.abspath(image_path)
     output_dir = output_dir or os.path.dirname(abs_path)
-    smqtk.utils.file.safe_create_dir(output_dir)
+    smqtk_dataprovider.utils.file.safe_create_dir(output_dir)
     p_base = os.path.splitext(os.path.basename(abs_path))[0]
     p_ext = output_ext
     p_base = os.path.join(output_dir, p_base)
     image = PIL.Image.open(image_path).convert('RGB')
 
-    def save_image(img, suffixes):
+    def save_image(img: PIL.Image.Image, suffixes: List[str]) -> None:
         """
         Save an image based on source image basename and an iterable of suffix
         parts that will be separated by periods.
@@ -120,7 +125,7 @@ def generate_image_transformations(image_path,
         log.info("Cropping %dx%d pixel tiles from images with stride %s"
                  % (t_width, t_height, crop_tile_stride))
         # List needed to iterate generator.
-        list(smqtk.utils.parallel.parallel_map(
+        list(smqtk_descriptors.utils.parallel.parallel_map(
             lambda x, y, ii:
                 save_image(ii, [tag,
                                 '%dx%d+%d+%d' % (t_width, t_height, x, y)]),
@@ -138,7 +143,7 @@ def generate_image_transformations(image_path,
             save_image(i, ['contrast', str(c)])
 
 
-def default_config():
+def default_config() -> Dict:
     return {
         "crop": {
             # 0 means disabled
@@ -156,8 +161,8 @@ def default_config():
     }
 
 
-def cli_parser():
-    parser = smqtk.utils.cli.basic_cli_parser(__doc__)
+def cli_parser() -> argparse.ArgumentParser:
+    parser = smqtk_iqr.utils.cli.basic_cli_parser(__doc__)
 
     g_io = parser.add_argument_group("Input/Output")
     g_io.add_argument("-i", "--image",
@@ -174,9 +179,9 @@ def cli_parser():
     return parser
 
 
-def main():
+def main() -> None:
     args = cli_parser().parse_args()
-    config = smqtk.utils.cli.utility_main_helper(default_config, args)
+    config = smqtk_iqr.utils.cli.utility_main_helper(default_config(), args)
     input_image_path = args.image
     output_dir = args.output
 

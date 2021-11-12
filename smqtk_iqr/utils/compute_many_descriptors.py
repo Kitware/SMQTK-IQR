@@ -8,30 +8,31 @@ import collections
 import csv
 import logging
 import os
-from typing import cast, Deque, Optional
+import argparse
+from typing import cast, Deque, Optional, Dict, Union, Generator
 
-from smqtk.algorithms import DescriptorGenerator
-from smqtk.compute_functions import compute_many_descriptors
-from smqtk.representation import (
-    DescriptorElementFactory,
-    DataSet,
-    DescriptorSet,
-)
-from smqtk.representation.data_element.file_element import DataFileElement
-from smqtk.utils import parallel
-from smqtk.utils.cli import (
+from smqtk_descriptors import DescriptorGenerator, DescriptorSet
+from smqtk_descriptors.descriptor_element_factory import DescriptorElementFactory
+from smqtk_descriptors.utils import parallel
+from smqtk_iqr.utils.compute_functions import compute_many_descriptors
+
+from smqtk_dataprovider import DataSet
+from smqtk_dataprovider.impls.data_element.file import DataFileElement
+
+from smqtk_iqr.utils.cli import (
     utility_main_helper,
     ProgressReporter,
     basic_cli_parser,
 )
-from smqtk.utils.configuration import (
+from smqtk_core.configuration import (
     from_config_dict,
     make_default_config,
 )
-from smqtk.utils.image import is_valid_element
+
+from smqtk_image_io.utils.image import is_valid_element
 
 
-def default_config():
+def default_config() -> Dict:
     return {
         "descriptor_generator":
             make_default_config(DescriptorGenerator.get_impls()),
@@ -43,8 +44,8 @@ def default_config():
     }
 
 
-def run_file_list(c, filelist_filepath, checkpoint_filepath, batch_size=None,
-                  check_image=False):
+def run_file_list(c: dict, filelist_filepath: str, checkpoint_filepath: str,
+                  batch_size: Optional[int] = None, check_image: bool = False) -> None:
     """
     Top level function handling configuration and inputs/outputs.
 
@@ -104,8 +105,8 @@ def run_file_list(c, filelist_filepath, checkpoint_filepath, batch_size=None,
                          DescriptorGenerator.get_impls())
     )
 
-    def iter_valid_elements():
-        def is_valid(file_path):
+    def iter_valid_elements() -> Generator:
+        def is_valid(file_path: str) -> Union[DataFileElement, bool]:
             e = DataFileElement(file_path)
 
             if is_valid_element(
@@ -122,6 +123,7 @@ def run_file_list(c, filelist_filepath, checkpoint_filepath, batch_size=None,
                                                    use_multiprocessing=True)
         for dfe in valid_files_filter:
             if dfe:
+                assert isinstance(dfe, DataFileElement)
                 yield dfe
                 if data_set is not None:
                     data_elements.append(dfe)
@@ -155,7 +157,7 @@ def run_file_list(c, filelist_filepath, checkpoint_filepath, batch_size=None,
             # compute_many_descriptors, so we can assume that's what comes out
             # of it as well.
             # noinspection PyProtectedMember
-            cf_writer.writerow([de._filepath, descr.uuid()])
+            cf_writer.writerow([de._filepath, descr.uuid()])  # type: ignore
             pr.increment_report()
         pr.report()
     finally:
@@ -165,7 +167,7 @@ def run_file_list(c, filelist_filepath, checkpoint_filepath, batch_size=None,
     log.info("Done")
 
 
-def cli_parser():
+def cli_parser() -> argparse.ArgumentParser:
     parser = basic_cli_parser(__doc__)
 
     parser.add_argument('-b', '--batch-size',
@@ -205,9 +207,9 @@ def cli_parser():
     return parser
 
 
-def main():
+def main() -> None:
     args = cli_parser().parse_args()
-    config = utility_main_helper(default_config, args)
+    config = utility_main_helper(default_config(), args)
     log = logging.getLogger(__name__)
 
     completed_files_fp = args.completed_files
