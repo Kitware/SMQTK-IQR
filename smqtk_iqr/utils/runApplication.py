@@ -139,14 +139,14 @@ def main() -> None:
     # If the application class's logger does not already report as having INFO/
     # DEBUG level logging (due to being a child of an above handled namespace)
     # then set the app namespace's logger level appropriately
-    app_class_logger_level = logging.getLogger(app_class.name).getEffectiveLevel()
+    app_class_logger_level = logging.getLogger(app_class.__name__).getEffectiveLevel()
     app_class_target_level = logging.INFO - (10 * debug_app)
     if app_class_logger_level > app_class_target_level:
         level_name = \
             "DEBUG" if app_class_target_level == logging.DEBUG else "INFO"
         log.info("Enabling '{}' logging for '{}' logger namespace."
-                 .format(level_name, logging.getLogger(app_class.name).name))
-        logging.getLogger(app_class.name).setLevel(logging.INFO - (10 * debug_app))
+                 .format(level_name, logging.getLogger(app_class.__name__).name))
+        logging.getLogger(app_class.__name__).setLevel(logging.INFO - (10 * debug_app))
 
     config = cli.utility_main_helper(app_class.get_default_config(), args,
                                      skip_logging_init=True)

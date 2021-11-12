@@ -1,6 +1,6 @@
 {
     "descriptor_factory": {
-        "smqtk.representation.descriptor_element.postgres.PostgresDescriptorElement": {
+        "smqtk_descriptors.impls.descriptor_element.postgres.PostgresDescriptorElement": {
             "binary_col": "vector",
             "create_table": false,
             "db_host": "/dev/shm",
@@ -9,51 +9,50 @@
             "db_port": 5432,
             "db_user": "smqtk",
             "table_name": "descriptors_resnet50_pool5",
-            "type_col": "type_str",
             "uuid_col": "uid"
         },
-        "type": "smqtk.representation.descriptor_element.postgres.PostgresDescriptorElement"
+        "type": "smqtk_descriptors.impls.descriptor_element.postgres.PostgresDescriptorElement"
     },
     "descriptor_generator": {
-        "smqtk.algorithms.descriptor_generator.caffe_descriptor.CaffeDescriptorGenerator": {
-            "batch_size": 20,
+        "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator": {
+            "batch_size": 10,
             "data_layer": "data",
             "gpu_device_id": 0,
             "image_mean": {
-                "smqtk.representation.data_element.file_element.DataFileElement": {
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
                     "explicit_mimetype": null,
                     "filepath": "/home/smqtk/caffe/msra_resnet/ResNet_mean.binaryproto",
                     "readonly": true
                 },
-                "type": "smqtk.representation.data_element.file_element.DataFileElement"
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
             },
             "input_scale": null,
             "load_truncated_images": true,
             "network_is_bgr": true,
             "network_model": {
-                "smqtk.representation.data_element.file_element.DataFileElement": {
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
                     "explicit_mimetype": null,
                     "filepath": "/home/smqtk/caffe/msra_resnet/ResNet-50-model.caffemodel",
                     "readonly": true
                 },
-                "type": "smqtk.representation.data_element.file_element.DataFileElement"
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
             },
             "network_prototxt": {
-                "smqtk.representation.data_element.file_element.DataFileElement": {
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
                     "explicit_mimetype": null,
                     "filepath": "/home/smqtk/caffe/msra_resnet/ResNet-50-deploy.prototxt",
                     "readonly": true
                 },
-                "type": "smqtk.representation.data_element.file_element.DataFileElement"
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
             },
             "pixel_rescale": null,
             "return_layer": "pool5",
             "use_gpu": false
         },
-        "type": "smqtk.algorithms.descriptor_generator.caffe_descriptor.CaffeDescriptorGenerator"
+        "type": "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator"
     },
     "descriptor_set": {
-        "smqtk.representation.descriptor_set.postgres.PostgresDescriptorSet": {
+        "smqtk_descriptors.impls.descriptor_set.postgres.PostgresDescriptorSet": {
             "create_table": false,
             "db_host": "/dev/shm",
             "db_name": "postgres",
@@ -67,20 +66,20 @@
             "table_name": "descriptor_set_resnet50_pool5",
             "uuid_col": "uid"
         },
-        "type": "smqtk.representation.descriptor_set.postgres.PostgresDescriptorSet"
+        "type": "smqtk_descriptors.impls.descriptor_set.postgres.PostgresDescriptorSet"
     },
     "optional_data_set": {
-        "smqtk.representation.data_set.memory_set.DataMemorySet": {
+        "smqtk_dataprovider.impls.data_set.memory.DataMemorySet": {
             "cache_element": {
-                "smqtk.representation.data_element.file_element.DataFileElement": {
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
                     "explicit_mimetype": null,
                     "filepath": "models/image_elements.dms_cache",
                     "readonly": false
                 },
-                "type": "smqtk.representation.data_element.file_element.DataFileElement"
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
             },
             "pickle_protocol": -1
         },
-        "type": "smqtk.representation.data_set.memory_set.DataMemorySet"
+        "type": "smqtk_dataprovider.impls.data_set.memory.DataMemorySet"
     }
 }

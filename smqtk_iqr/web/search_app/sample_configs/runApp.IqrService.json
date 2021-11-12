@@ -44,7 +44,7 @@
                     "data_layer": "data",
                     "gpu_device_id": 0,
                     "image_mean": {
-                        "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement" : {
                             "explicit_mimetype": null,
                             "filepath": "/home/smqtk/caffe/msra_resnet/ResNet_mean.binaryproto",
                             "readonly": true
@@ -55,7 +55,7 @@
                     "load_truncated_images": true,
                     "network_is_bgr": true,
                     "network_model": {
-                        "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement" : {
                             "explicit_mimetype": null,
                             "filepath": "/home/smqtk/caffe/msra_resnet/ResNet-50-model.caffemodel",
                             "readonly": true
@@ -63,7 +63,7 @@
                         "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
                     },
                     "network_prototxt": {
-                        "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement" : {
                             "explicit_mimetype": null,
                             "filepath": "/home/smqtk/caffe/msra_resnet/ResNet-50-deploy.prototxt",
                             "readonly": true
@@ -72,7 +72,7 @@
                     },
                     "pixel_rescale": null,
                     "return_layer": "pool5",
-                    "use_gpu": true
+                    "use_gpu": false
                 },
                 "type": "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator"
             },
@@ -150,14 +150,14 @@
                         "type": "smqtk_dataprovider.impls.key_value_store.postgres.PostgresKeyValueStore"
                     },
                     "index_element": {
-                        "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement" : {
                             "filepath": "models/faiss_index",
                             "readonly": false
                         },
                         "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
                     },
                     "index_param_element": {
-                        "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement" : {
                             "filepath": "models/faiss_index_params.json",
                             "readonly": false
                         },

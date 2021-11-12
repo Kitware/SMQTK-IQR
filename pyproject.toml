@@ -19,8 +19,8 @@ documentation = "https://smqtk-iqr.readthedocs.io/"
 [tool.poetry.dependencies]
 python = "^3.6"
 smqtk-indexing = ">=0.17.0"
-smqtk-relevancy = ">=0.16.0"
-smqtk-descriptors = ">=0.18"
+smqtk-relevancy = ">=0.16.1"
+smqtk-descriptors = ">=0.18.1"
 smqtk-core = ">=0.18"
 smqtk-dataprovider = ">=0.16.0"
 Flask = "^2.0.1"
@@ -62,6 +62,9 @@ jedi = "^0.17"
 runApplication = "smqtk_iqr.utils.runApplication:main"
 iqrTrainClassifier = "smqtk_iqr.utils.iqrTrainClassifier:main"
 iqr_app_model_generation = "smqtk_iqr.utils.iqr_app_model_generation:main"
+compute_many_descriptors = "smqtk_iqr.utils.compute_many_descriptors:main"
+generate_image_transform = "smqtk_iqr.utils.generate_image_transform:main"
+smqtk-nn-index-tool = "smqtk_iqr.utils.nn_index_tool:cli_group"
 
 
 ###############################################################################
