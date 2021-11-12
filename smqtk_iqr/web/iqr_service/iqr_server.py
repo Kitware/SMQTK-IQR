@@ -11,6 +11,7 @@ import traceback
 from typing import cast, Dict, Hashable, List, Optional, Callable, Any, Tuple, Union, Sequence
 import uuid
 import logging
+import numpy as np
 
 import flask
 
@@ -31,6 +32,11 @@ from smqtk_classifier import (
     ClassificationElementFactory
 )
 from smqtk_indexing import NearestNeighborsIndex
+from smqtk_indexing.utils.metrics import (
+        histogram_intersection_distance,
+        euclidean_distance,
+        cosine_distance
+)
 from smqtk_relevancy import RankRelevancyWithFeedback
 from smqtk_dataprovider.impls.data_element.memory import DataMemoryElement
 
@@ -118,7 +124,9 @@ class IqrService (SmqtkWebApp):
                         "enabled": False,
                         "check_interval_seconds": 30,
                         "session_timeout": 3600,
-                    }
+                    },
+                    "distance_metric": "euclidean",
+                    "autoneg_select_ratio": 1
                 },
 
                 "plugin_notes": {
@@ -188,6 +196,15 @@ class IqrService (SmqtkWebApp):
 
         # Initialize from config
         self.positive_seed_neighbors = sc_config['positive_seed_neighbors']
+        self.autoneg_select_ratio = sc_config['autoneg_select_ratio']
+        if sc_config['distance_metric'] == 'euclidean':
+            self.distance_metric: Union[Callable[[np.ndarray, np.ndarray], np.ndarray],
+                                        Callable[[np.ndarray, np.ndarray], float]] = euclidean_distance
+        elif sc_config['distance_metric'] == 'cosine':
+            self.distance_metric = cosine_distance
+        elif sc_config['distance_metric'] == 'histogram_intersection':
+            self.distance_metric = histogram_intersection_distance
+
         self.classifier_config = \
             json_config['iqr_service']['plugins']['classifier_config']
         self.classification_factory = \
@@ -801,7 +818,9 @@ class IqrService (SmqtkWebApp):
 
         iqrs = iqr_session.IqrSession(self.rank_relevancy_with_feedback,
                                       self.positive_seed_neighbors,
-                                      sid)
+                                      sid,
+                                      self.distance_metric,
+                                      self.autoneg_select_ratio)
         with self.controller:
             with iqrs:  # because classifier maps locked by session
                 self.controller.add_session(iqrs, self.session_timeout)

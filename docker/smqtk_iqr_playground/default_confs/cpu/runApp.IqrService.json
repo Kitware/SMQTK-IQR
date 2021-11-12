@@ -195,7 +195,9 @@
                 "check_interval_seconds": 30,
                 "enabled": true,
                 "session_timeout": 86400
-            }
+            },
+            "distance_metric": "euclidean",
+            "autoneg_select_ratio": 1
         }
     },
     "server": {
