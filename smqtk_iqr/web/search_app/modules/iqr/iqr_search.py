@@ -132,7 +132,7 @@ class IqrSearch (flask.Flask, Configurable):
 
         """
         super(IqrSearch, self).__init__(
-            import_name=__name__,
+            import_name=__name__.replace('.', '-'),
             static_folder=os.path.join(SCRIPT_DIR, "static"),
             template_folder=os.path.join(SCRIPT_DIR, "templates"),
         )
@@ -157,7 +157,8 @@ class IqrSearch (flask.Flask, Configurable):
 
         # Uploader Sub-Module
         self.upload_work_dir = os.path.join(self.work_dir, "uploads")
-        self.mod_upload = FileUploadMod('%s_uploader' % self.name, parent_app,
+        self.mod_upload = FileUploadMod('%s_uploader' % self.name,
+                                        parent_app,
                                         self.upload_work_dir,
                                         url_prefix='/uploader')
         self.register_blueprint(self.mod_upload)

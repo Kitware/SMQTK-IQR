@@ -1,0 +1,205 @@
+{
+    "flask_app": {
+        "BASIC_AUTH_PASSWORD": "demo",
+        "BASIC_AUTH_USERNAME": "demo",
+        "SECRET_KEY": "MySuperUltraSecret"
+    },
+    "iqr_service": {
+        "plugin_notes": {
+            "classification_factory": "Selection of the backend in which classifications are stored. The in-memory version is recommended because normal caching mechanisms will not account for the variety of classifiers that can potentially be created via this utility.",
+            "classifier_config": "The configuration to use for training and using classifiers for the /classifier endpoint. When configuring a classifier for use, don't fill out model persistence values as many classifiers may be created and thrown away during this service's operation.",
+            "descriptor_factory": "What descriptor element factory to use when asked to compute a descriptor on data.",
+            "descriptor_generator": "Descriptor generation algorithm to use when requested to describe data.",
+            "descriptor_set": "This is the index from which given positive and negative example descriptors are retrieved from. Not used for nearest neighbor querying. This index must contain all descriptors that could possibly be used as positive/negative examples and updated accordingly.",
+            "neighbor_index": "This is the neighbor index to pull initial near-positive descriptors from.",
+            "relevancy_index_config": "The relevancy index config provided should not have persistent storage configured as it will be used in such a way that instances are created, built and destroyed often."
+        },
+        "plugins": {
+            "classification_factory": {
+                "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement": {},
+                "type": "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement"
+            },
+            "classifier_config": {
+                "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression": {
+                },
+                "type": "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression"
+            },
+            "descriptor_factory": {
+                "smqtk_descriptors.impls.descriptor_element.postgres.PostgresDescriptorElement": {
+                    "binary_col": "vector",
+                    "create_table": false,
+                    "db_host": "/dev/shm",
+                    "db_name": "postgres",
+                    "db_pass": null,
+                    "db_port": 5432,
+                    "db_user": "smqtk",
+                    "table_name": "descriptors_resnet50_pool5",
+                    "uuid_col": "uid"
+                },
+                "type": "smqtk_descriptors.impls.descriptor_element.postgres.PostgresDescriptorElement"
+            },
+            "descriptor_generator": {
+                "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator": {
+                    "batch_size": 10,
+                    "data_layer": "data",
+                    "gpu_device_id": 0,
+                    "image_mean": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement" : {
+                            "explicit_mimetype": null,
+                            "filepath": "/home/smqtk/caffe/msra_resnet/ResNet_mean.binaryproto",
+                            "readonly": true
+                        },
+                        "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                    },
+                    "input_scale": null,
+                    "load_truncated_images": true,
+                    "network_is_bgr": true,
+                    "network_model": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement" : {
+                            "explicit_mimetype": null,
+                            "filepath": "/home/smqtk/caffe/msra_resnet/ResNet-50-model.caffemodel",
+                            "readonly": true
+                        },
+                        "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                    },
+                    "network_prototxt": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement" : {
+                            "explicit_mimetype": null,
+                            "filepath": "/home/smqtk/caffe/msra_resnet/ResNet-50-deploy.prototxt",
+                            "readonly": true
+                        },
+                        "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                    },
+                    "pixel_rescale": null,
+                    "return_layer": "pool5",
+                    "use_gpu": false
+                },
+                "type": "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator"
+            },
+            "descriptor_set": {
+                "smqtk_descriptors.impls.descriptor_set.postgres.PostgresDescriptorSet": {
+                    "create_table": false,
+                    "db_host": "/dev/shm",
+                    "db_name": "postgres",
+                    "db_pass": null,
+                    "db_port": 5432,
+                    "db_user": "smqtk",
+                    "element_col": "element",
+                    "multiquery_batch_size": 1000,
+                    "pickle_protocol": -1,
+                    "read_only": false,
+                    "table_name": "descriptor_set_resnet50_pool5",
+                    "uuid_col": "uid"
+                },
+                "type": "smqtk_descriptors.impls.descriptor_set.postgres.PostgresDescriptorSet"
+            },
+            "neighbor_index": {
+                "smqtk_indexing.impls.nn_index.faiss.FaissNearestNeighborsIndex": {
+                    "descriptor_set": {
+                        "__note__": "Using real descriptor index this time",
+                        "smqtk_descriptors.impls.descriptor_set.postgres.PostgresDescriptorSet": {
+                            "create_table": false,
+                            "db_host": "/dev/shm",
+                            "db_name": "postgres",
+                            "db_pass": null,
+                            "db_port": 5432,
+                            "db_user": "smqtk",
+                            "element_col": "element",
+                            "multiquery_batch_size": 1000,
+                            "pickle_protocol": -1,
+                            "read_only": false,
+                            "table_name": "descriptor_set_resnet50_pool5",
+                            "uuid_col": "uid"
+                        },
+                        "type": "smqtk_descriptors.impls.descriptor_set.postgres.PostgresDescriptorSet"
+                    },
+                    "factory_string": "IDMap,Flat",
+                    "gpu_id": 0,
+                    "idx2uid_kvs": {
+                        "smqtk_dataprovider.impls.key_value_store.postgres.PostgresKeyValueStore": {
+                            "batch_size": 1000,
+                            "create_table": true,
+                            "db_host": "/dev/shm",
+                            "db_name": "postgres",
+                            "db_pass": null,
+                            "db_port": 5432,
+                            "db_user": "smqtk",
+                            "key_col": "key",
+                            "pickle_protocol": -1,
+                            "read_only": false,
+                            "table_name": "faiss_idx2uid_kvs",
+                            "value_col": "value"
+                        },
+                        "type": "smqtk_dataprovider.impls.key_value_store.postgres.PostgresKeyValueStore"
+                    },
+                    "uid2idx_kvs": {
+                        "smqtk_dataprovider.impls.key_value_store.postgres.PostgresKeyValueStore": {
+                            "batch_size": 1000,
+                            "create_table": true,
+                            "db_host": "/dev/shm",
+                            "db_name": "postgres",
+                            "db_pass": null,
+                            "db_port": 5432,
+                            "db_user": "smqtk",
+                            "key_col": "key",
+                            "pickle_protocol": -1,
+                            "read_only": false,
+                            "table_name": "faiss_uid2idx_kvs",
+                            "value_col": "value"
+                        },
+                        "type": "smqtk_dataprovider.impls.key_value_store.postgres.PostgresKeyValueStore"
+                    },
+                    "index_element": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement" : {
+                            "filepath": "models/faiss_index",
+                            "readonly": false
+                        },
+                        "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                    },
+                    "index_param_element": {
+                        "smqtk_dataprovider.impls.data_element.file.DataFileElement" : {
+                            "filepath": "models/faiss_index_params.json",
+                            "readonly": false
+                        },
+                        "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+                    },
+                    "ivf_nprobe": 64,
+                    "metric_type": "l2",
+                    "random_seed": 0,
+                    "read_only": false,
+                    "use_gpu": false
+                },
+                "type": "smqtk_indexing.impls.nn_index.faiss.FaissNearestNeighborsIndex"
+            },
+            "rank_relevancy_with_feedback": {
+                "smqtk_relevancy.impls.rank_relevancy.margin_sampling.RankRelevancyWithMarginSampledFeedback": {
+                    "rank_relevancy": {
+                        "smqtk_relevancy.impls.rank_relevancy.wrap_classifier.RankRelevancyWithSupervisedClassifier": {
+                            "classifier_inst": {
+                                "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression": {
+                                },
+                                "type": "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression"
+                            }
+                        },
+                        "type": "smqtk_relevancy.impls.rank_relevancy.wrap_classifier.RankRelevancyWithSupervisedClassifier"
+                    },
+                    "n": 10,
+                    "center": 0.5
+                },
+                "type": "smqtk_relevancy.impls.rank_relevancy.margin_sampling.RankRelevancyWithMarginSampledFeedback"
+            }
+        },
+        "session_control": {
+            "positive_seed_neighbors": 500,
+            "session_expiration": {
+                "check_interval_seconds": 30,
+                "enabled": true,
+                "session_timeout": 86400
+            }
+        }
+    },
+    "server": {
+        "host": "0.0.0.0",
+        "port": 5001
+    }
+}

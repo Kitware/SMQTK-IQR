@@ -522,7 +522,7 @@ class IqrSession ():
             d_set: Set[DescriptorElement]
         ) -> List[Tuple[Hashable, str, List[float]]]:
             # Convert set of descriptors to list of tuples:
-            #   [..., (uuid, type, vector), ...]
+            #   [..., (uuid, vector), ...]
             return [(d.uuid(), d.vector().tolist()) for d in d_set]  # type: ignore
 
         with self:
