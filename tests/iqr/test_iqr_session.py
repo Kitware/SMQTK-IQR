@@ -878,6 +878,61 @@ class TestIqrSession (object):
         assert self.iqrs.external_positive_descriptors == new_iqrs.external_positive_descriptors
         assert self.iqrs.external_negative_descriptors == new_iqrs.external_negative_descriptors
 
+    def test_refine_no_neg(self) -> None:
+        """
+        Test refinement without any negative adjudications and ensure that the farthest
+        descriptor from the positive example is automatically chosen as the negative example.
+        """
+        test_in_pos_elem = DescriptorMemoryElement(0).set_vector([0])
+        test_ex_pos_elem = DescriptorMemoryElement(2).set_vector([2])
+        test_other_elem = DescriptorMemoryElement(4).set_vector([4])
+        test_other_elem_far = DescriptorMemoryElement(5).set_vector([5])
+
+        # Mock the working set so it has the correct size and elements
+        desc_list = [test_in_pos_elem, test_other_elem, test_other_elem_far]
+        self.iqrs.working_set.add_many_descriptors(desc_list)
+
+        # Mock return dictionary, probabilities don't matter much other than
+        # they are not 1.0 or 0.0.
+        pool_ids = [de.uuid() for de in desc_list]
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (  # type: ignore
+          [0.7, 0.3, 0.1],
+          pool_ids
+        )
+
+        # Prepare IQR state for refinement
+        # - set dummy internal/external positive negatives w/ no negative examples
+        self.iqrs.external_descriptors(
+            positive=[test_ex_pos_elem], negative=[]
+        )
+        self.iqrs.adjudicate(
+            new_positives=[test_in_pos_elem], new_negatives=[]
+        )
+
+        # Test calling refine method
+        self.iqrs.refine()
+
+        # Test that the negative result is filled in with with the farthest descriptor
+        # from the new positives list
+        pool_uids, pool_de = zip(*self.iqrs.working_set.items())
+        pool = [de.vector() for de in pool_de]
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once_with(  # type: ignore
+            [test_in_pos_elem.vector(), test_ex_pos_elem.vector()],
+            [test_other_elem_far.vector()],
+            pool,
+            pool_uids
+        )
+        assert self.iqrs.results is not None
+        assert len(self.iqrs.results) == 3
+        assert test_other_elem in self.iqrs.results
+        assert test_in_pos_elem in self.iqrs.results
+        assert test_other_elem_far in self.iqrs.results
+
+        assert self.iqrs.results[test_other_elem] == 0.3
+        assert self.iqrs.results[test_other_elem_far] == 0.1
+        assert self.iqrs.results[test_in_pos_elem] == 0.7
+        assert self.iqrs.feedback_list == desc_list
+
 
 class TestIqrSessionBehavior (object):
     """
