@@ -912,26 +912,13 @@ class TestIqrSession (object):
         # Test calling refine method
         self.iqrs.refine()
 
-        # Test that the negative result is filled in with with the farthest descriptor
-        # from the new positives list
-        pool_uids, pool_de = zip(*self.iqrs.working_set.items())
-        pool = [de.vector() for de in pool_de]
-        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once_with(  # type: ignore
-            [test_in_pos_elem.vector(), test_ex_pos_elem.vector()],
-            [test_other_elem_far.vector()],
-            pool,
-            pool_uids
-        )
-        assert self.iqrs.results is not None
-        assert len(self.iqrs.results) == 3
-        assert test_other_elem in self.iqrs.results
-        assert test_in_pos_elem in self.iqrs.results
-        assert test_other_elem_far in self.iqrs.results
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once()  # type: ignore
 
-        assert self.iqrs.results[test_other_elem] == 0.3
-        assert self.iqrs.results[test_other_elem_far] == 0.1
-        assert self.iqrs.results[test_in_pos_elem] == 0.7
-        assert self.iqrs.feedback_list == desc_list
+        # Get the most recent call arguments,
+        # extracting what was passed as the negative descriptor input,
+        # which should be populated by the auto-negative selection logic.
+        neg_list_arg = self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.call_args[0][1]  # type: ignore
+        assert neg_list_arg == [test_other_elem_far.vector()]
 
 
 class TestIqrSessionBehavior (object):
