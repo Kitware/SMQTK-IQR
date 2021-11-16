@@ -43,8 +43,7 @@ class IqrSession ():
         self, rank_relevancy_with_feedback: RankRelevancyWithFeedback,
         pos_seed_neighbors: int = 500,
         session_uid: Optional[Union[str, uuid.UUID]] = None,
-        distance_metric: Union[Callable[[np.ndarray, np.ndarray], np.ndarray],
-                               Callable[[np.ndarray, np.ndarray], float]] = euclidean_distance,
+        distance_metric: Callable[[np.ndarray, np.ndarray], np.ndarray] = euclidean_distance,
         autoneg_select_ratio: int = 1
     ) -> None:
         """
@@ -78,14 +77,16 @@ class IqrSession ():
             ``uuid.uuid1()``.
 
         :param distance_metric: Optional manual specification of distance metric
-            function to use for auto-negative descriptor selection.
-            By default this will be the euclidean_distance function.
-        :type distance_metric: (ndarray, ndarray) -> ndarray[float] | float
+            function to use for auto-negative descriptor selection. It is
+            expected that the inputs are a 1D vector, a, of shape ``[n_feats]``
+            and a 2D matrix, b, of shape ``[n_vecs, n_feats]``, and that the
+            output is a 1D vector of shape ``[n_vecs]`` whose values are the
+            floating point metric distances between input a and the elements of
+            b.  By default this will be the euclidean_distance function.
 
         :param autoneg_select_ratio: Optional manual specification of ratio of
             negative to positive adjudications to use during auto-negative
             adjudication selection. By default this will 1.
-        :type autoneg_select_ratio: int
         """
         self.uuid = session_uid or str(uuid.uuid1()).replace('-', '')
         self.lock = threading.RLock()
@@ -329,47 +330,42 @@ class IqrSession ():
             # Get working set descriptors
             pool_uids, pool_de = zip(*self.working_set.items())
             pool = [de.vector() for de in pool_de]
+            pool_mat = np.asarray(pool)
+            pool_de_mat = np.asarray(pool_de)
 
             # Auto-select negative examples if none are given
             if not neg:
                 neg_autoselect = set()
-                self._log.info(f"Auto-selecting negative examples. \
-                              ({self.autoneg_select_ratio} per positive)")
+                self._log.info(f"Auto-selecting negative examples. "
+                               f"({self.autoneg_select_ratio} per positive)")
+
                 # For each positive example, find the farthest descriptor
                 # from it to use as a negative example
                 for p in pos:
                     # Compute distance between current positive example and
                     # each of the working set descriptors
-                    distances = []
-                    for desc_v in pool:
-                        distances.append(self.distance_metric(p, np.array(desc_v)))
+                    np_distances = self.distance_metric(p, pool_mat)
 
-                    np_distances: np.array = np.array(distances)
+                    # get array of the indices of the K maximally distant elements where
+                    # `K = autoneg_select_ratio` and `K >= 1.`
+                    part_size: int = self.autoneg_select_ratio
+                    max_indices: Sequence[int] = np.argpartition(np_distances, -part_size)[-part_size:]
 
-                    # Scan vector for max distance index
-                    # - Allow variable number of maximally distance descriptors to
-                    #   be picked per positive.
-                    # track most distance neighbors
-                    m_set = {}
-                    # track smallest distance of most distant neighbors
-                    m_val = -float('inf')
-                    for i in range(np_distances.size):
-                        if np_distances[i] > m_val:
-                            m_set[np_distances[i]] = i
+                    neg_autoselect.update(pool_de_mat[max_indices])
 
-                            if len(m_set) > self.autoneg_select_ratio:
-                                if m_val in m_set:
-                                    del m_set[m_val]
-                            m_val = min(m_set)
-
-                    for i in m_set.values():
-                        neg_autoselect.add(pool_de[i])
+                self._log.debug(f"Auto-selected negative descriptors (before difference update) "
+                                f"[{len(neg_autoselect)}]: {neg_autoselect}")
 
                 # Remove any positive examples from auto-selected results
                 neg_autoselect.difference_update((self.positive_descriptors |
                                                   self.external_positive_descriptors))
-                self._log.debug(f"Auto-selected negative descriptors \
-                               [{len(neg_autoselect)}]: {neg_autoselect}")
+
+                self._log.debug(f"Auto-selected negative descriptors (after difference update) "
+                                f"[{len(neg_autoselect)}]: {neg_autoselect}")
+
+                if not neg_autoselect:
+                    raise RuntimeError("Negative auto-selection failed. "
+                                       "Did not select any negative examples.")
 
                 for n in neg_autoselect:
                     neg.append(n.vector())
