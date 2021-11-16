@@ -197,13 +197,18 @@ class IqrService (SmqtkWebApp):
         # Initialize from config
         self.positive_seed_neighbors = sc_config['positive_seed_neighbors']
         self.autoneg_select_ratio = sc_config['autoneg_select_ratio']
-        if sc_config['distance_metric'] == 'euclidean':
-            self.distance_metric: Union[Callable[[np.ndarray, np.ndarray], np.ndarray],
-                                        Callable[[np.ndarray, np.ndarray], float]] = euclidean_distance
-        elif sc_config['distance_metric'] == 'cosine':
-            self.distance_metric = cosine_distance
-        elif sc_config['distance_metric'] == 'histogram_intersection':
-            self.distance_metric = histogram_intersection_distance
+
+        metric_map: Dict[str, Callable[[np.ndarray, np.ndarray], np.ndarray]] = {
+            "euclidean": euclidean_distance,
+            "cosine": cosine_distance,
+            "histogram_intersection": histogram_intersection_distance,
+        }
+        try:
+            self.distance_metric = metric_map[sc_config['distance_metric']]
+        except KeyError:
+            LOG.warning("Invalid distance metric '{}'. "
+                        "Options: '{}'.".format(sc_config['distance_metric'], metric_map.keys()))
+            raise
 
         self.classifier_config = \
             json_config['iqr_service']['plugins']['classifier_config']
