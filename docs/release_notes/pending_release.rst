@@ -9,5 +9,7 @@ Updates / New Features
  * Add auto-negative selection in IqrSession for negative adjudications
    in case where none are provided
 
+ * Add a Github action to build the SMQTK-IQR web demo Docker image
+
 Fixes
 -----
