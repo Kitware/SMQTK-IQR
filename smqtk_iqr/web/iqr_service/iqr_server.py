@@ -206,8 +206,8 @@ class IqrService (SmqtkWebApp):
         try:
             self.distance_metric = metric_map[sc_config['distance_metric']]
         except KeyError:
-            LOG.warning("Invalid distance metric '{}'. "
-                        "Options: '{}'.".format(sc_config['distance_metric'], metric_map.keys()))
+            LOG.error("Invalid distance metric '{}'. "
+                      "Options: '{}'.".format(sc_config['distance_metric'], metric_map.keys()))
             raise
 
         self.classifier_config = \
