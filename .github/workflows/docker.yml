@@ -53,7 +53,7 @@ jobs:
 
       - name: Docker pull
         run: |
-          docker-compose -f docker-compose.build.yml pull
+          docker-compose -f docker/docker-compose.build.yml pull
 
       - name: Build docker image
         run: |
@@ -61,4 +61,4 @@ jobs:
 
       - name: Push images
         run: |
-          docker-compose -f docker-compose.build.yml push
+          docker-compose -f docker/docker-compose.build.yml push
