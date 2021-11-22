@@ -52,6 +52,7 @@ jobs:
       # Create .env file since it is not created initially
       - name: Create env file
         run: |
+          ls
           touch .env
           echo SMQTK_REGISTRY=${{ env.DOCKER_REGISTRY }} >> .env
           echo CUDA_DEVEL_IMAGE_TAG=${{ env.CUDA_DEVEL_IMAGE_TAG }} >> .env
