@@ -1,0 +1,87 @@
+# This is a basic workflow to help you get started with Actions
+
+name: Docker
+
+# Controls when the action will run.
+on:
+  # Triggers the workflow on push events for the master branch and scheduled nightly runs
+  push:
+    branches:
+      - master
+  schedule:
+      # Nightly run unit tests to check for implicit dependency issues between pull requests.
+      - cron: '0 0 * * *'
+
+  # Allows you to run this workflow manually from the Actions tab
+  workflow_dispatch:
+
+defaults:
+  run:
+    shell: bash
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+# NOTE: Github actions does not support anchors apparently. Forgive duplication of job
+#       steps.
+jobs:
+  docker:
+    runs-on: ubuntu-latest
+    env:
+      DOCKER_REGISTRY: gitlab.kitware.com:4567/smqtk/smqtk-iqr
+      CUDA_DEVEL_IMAGE_TAG: 9.2-cudnn7-devel-ubuntu18.04
+      CUDA_RUNTIME_IMAGE_TAG: 9.2-cudnn7-runtime-ubuntu18.04
+      FAISS_VERSION: 1.6.2
+      SMQTK_TAG: latest
+    steps:
+      # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
+      - uses: actions/checkout@v2
+        with:
+          fetch-depth: 0
+      # Cache local python environment artifacts for the current python version
+      # and poetry lockfile hash.
+      - uses: actions/cache@v2
+        id: env-cache
+        with:
+          # Confirmed that the `.local` directory doesn't exist until the
+          # `pip install --user` is invoked below, so we can be confident that
+          # only our python stuff is being captured in this cache (intentional).
+          path: |
+            ~/.cache/pypoetry/virtualenvs/
+            ~/.local
+          key: python-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+
+      # Create .env file since it is not created initially
+      - name: Create env file
+        run: |
+          touch .env
+          echo SMQTK_REGISTRY=${{ env.DOCKER_REGISTRY }} >> .env
+          echo CUDA_DEVEL_IMAGE_TAG=${{ env.CUDA_DEVEL_IMAGE_TAG }} >> .env
+          echo CUDA_RUNTIME_IMAGE_TAG=${{ env.CUDA_RUNTIME_IMAGE_TAG }} >> .env
+          echo FAISS_VERSION=${{ env.FAISS_VERSION }} >> .env
+          echo SMQTK_TAG=${{ env.SMQTK_TAG }} >> .env
+          cat .env
+
+      - name: Docker login
+        run: |
+          docker login gitlab.kitware.com:4567 -u gl-container-ci -p ${{ secrets.GITLAB_CONTAINER_TOKEN  }}
+
+      - name: Pull images
+        run: |
+          docker pull ${{ env.DOCKER_REGISTRY }}/tpl-caffe:1.0-base
+          docker pull ${{ env.DOCKER_REGISTRY }}/tpl-caffe:1.0-cpu
+          docker pull ${{ env.DOCKER_REGISTRY }}/tpl-caffe:1.0-cuda${{ env.CUDA_DEVEL_IMAGE_TAG }}
+          docker pull ${{ env.DOCKER_REGISTRY }}/tpl-faiss:${{ env.FAISS_VERSION }}-cuda${{ env.CUDA_DEVEL_IMAGE_TAG }}
+          docker pull ${{ env.DOCKER_REGISTRY }}/iqr_playground:latest-cpu
+          docker pull ${{ env.DOCKER_REGISTRY }}/iqr_playground:latest-cuda${{ env.CUDA_RUNTIME_IMAGE_TAG }}
+
+      - name: Build docker image
+        run: |
+          docker-compose --env-file ".env" -f "docker/docker-compose.build.yml" build
+
+      - name: Push images
+        run: |
+          docker push ${{ env.DOCKER_REGISTRY }}/tpl-caffe:1.0-base
+          docker push ${{ env.DOCKER_REGISTRY }}/tpl-caffe:1.0-cpu
+          docker push ${{ env.DOCKER_REGISTRY }}/tpl-caffe:1.0-cuda${{ env.CUDA_DEVEL_IMAGE_TAG }}
+          docker push ${{ env.DOCKER_REGISTRY }}/tpl-faiss:${{ env.FAISS_VERSION }}-cuda${{ env.CUDA_DEVEL_IMAGE_TAG }}
+          docker push ${{ env.DOCKER_REGISTRY }}/iqr_playground:latest-cpu
+          docker push ${{ env.DOCKER_REGISTRY }}/iqr_playground:latest-cuda${{ env.CUDA_RUNTIME_IMAGE_TAG }}
