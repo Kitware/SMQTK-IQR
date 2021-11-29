@@ -878,6 +878,85 @@ class TestIqrSession (object):
         assert self.iqrs.external_positive_descriptors == new_iqrs.external_positive_descriptors
         assert self.iqrs.external_negative_descriptors == new_iqrs.external_negative_descriptors
 
+    def test_refine_no_neg(self) -> None:
+        """
+        Test refinement without any negative adjudications and ensure that the farthest
+        descriptor from the positive example is automatically chosen as the negative example.
+        """
+        test_in_pos_elem = DescriptorMemoryElement(0).set_vector([0])
+        test_ex_pos_elem = DescriptorMemoryElement(2).set_vector([2])
+        test_other_elem = DescriptorMemoryElement(4).set_vector([4])
+        test_other_elem_far = DescriptorMemoryElement(5).set_vector([5])
+
+        # Mock the working set so it has the correct size and elements
+        desc_list = [test_in_pos_elem, test_other_elem, test_other_elem_far]
+        self.iqrs.working_set.add_many_descriptors(desc_list)
+
+        # Mock return dictionary, probabilities don't matter much other than
+        # they are not 1.0 or 0.0.
+        pool_ids = [de.uuid() for de in desc_list]
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (  # type: ignore
+          [0.7, 0.3, 0.1],
+          pool_ids
+        )
+
+        # Prepare IQR state for refinement
+        # - set dummy internal/external positive negatives w/ no negative examples
+        self.iqrs.external_descriptors(
+            positive=[test_ex_pos_elem], negative=[]
+        )
+        self.iqrs.adjudicate(
+            new_positives=[test_in_pos_elem], new_negatives=[]
+        )
+
+        # Test calling refine method
+        self.iqrs.refine()
+
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.assert_called_once()  # type: ignore
+
+        # Get the most recent call arguments,
+        # extracting what was passed as the negative descriptor input,
+        # which should be populated by the auto-negative selection logic.
+        neg_list_arg = self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.call_args[0][1]  # type: ignore
+        assert neg_list_arg == [test_other_elem_far.vector()]
+
+    def test_refine_neg_autoselect_fail(self) -> None:
+        """
+        Test refinement without any negative adjudications and when all of the other
+        possible adjudications are already marked as positive.
+        """
+        test_in_pos_elem = DescriptorMemoryElement(0).set_vector([0])
+        test_ex_pos_elem = DescriptorMemoryElement(2).set_vector([2])
+        test_other_elem = DescriptorMemoryElement(4).set_vector([4])
+        test_other_elem_far = DescriptorMemoryElement(5).set_vector([5])
+
+        # Mock the working set so it has the correct size and elements
+        desc_list = [test_in_pos_elem, test_other_elem, test_other_elem_far]
+        self.iqrs.working_set.add_many_descriptors(desc_list)
+
+        # Mock return dictionary, probabilities don't matter much other than
+        # they are not 1.0 or 0.0.
+        pool_ids = [de.uuid() for de in desc_list]
+        self.iqrs.rank_relevancy_with_feedback.rank_with_feedback.return_value = (  # type: ignore
+          [0.7, 0.3, 0.1],
+          pool_ids
+        )
+
+        # Prepare IQR state for refinement
+        # - all external descriptors marked as positive examples and no negatives
+        self.iqrs.external_descriptors(
+            positive=[test_ex_pos_elem, test_other_elem, test_other_elem_far], negative=[]
+        )
+        self.iqrs.adjudicate(
+            new_positives=[test_in_pos_elem], new_negatives=[]
+        )
+
+        with pytest.raises(
+            RuntimeError,
+            match=r"Negative auto-selection failed. Did not select any negative examples."
+        ):
+            self.iqrs.refine()
+
 
 class TestIqrSessionBehavior (object):
     """
