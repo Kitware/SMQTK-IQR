@@ -43,10 +43,6 @@ jobs:
             ~/.local
           key: python-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
 
-      - name: Source .env file
-        run: |
-          source docker/.env
-
       - name: Docker login
         run: |
           docker login gitlab.kitware.com:4567 -u gl-container-ci -p ${{ secrets.GITLAB_CONTAINER_TOKEN  }}

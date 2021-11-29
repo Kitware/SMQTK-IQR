@@ -11,7 +11,7 @@
 set -e
 
 # Container image to use
-IQR_CONTAINER=kitware/smqtk/iqr_playground
+IQR_CONTAINER=${SMQTK_REGISTRY}/iqr_playground
 IQR_CONTAINER_VERSION="latest-cuda9.2-cudnn7-runtime-ubuntu18.04"
 # Name for run container instance
 CONTAINER_NAME="smqtk-iqr-playground-gpu"
