@@ -393,4 +393,3 @@ Returns 200 on success and the message: {
     ...
     removed_label: <str>
 }
-
