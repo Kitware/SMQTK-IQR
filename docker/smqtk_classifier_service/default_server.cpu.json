@@ -1,50 +1,50 @@
 {
     "classification_factory": {
-        "smqtk.representation.classification_element.memory.MemoryClassificationElement": {},
-        "type": "smqtk.representation.classification_element.memory.MemoryClassificationElement"
+        "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement": {},
+        "type": "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement"
     },
     "classifier_collection": {},
     "descriptor_factory": {
-        "smqtk.representation.descriptor_element.local_elements.DescriptorMemoryElement": {},
-        "type": "smqtk.representation.descriptor_element.local_elements.DescriptorMemoryElement"
+        "smqtk_descriptors.impls.descriptor_element.memory.DescriptorMemoryElement": {},
+        "type": "smqtk_descriptors.impls.descriptor_element.memory.DescriptorMemoryElement"
     },
     "descriptor_generator": {
-        "smqtk.algorithms.descriptor_generator.caffe_descriptor.CaffeDescriptorGenerator": {
+        "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator": {
             "batch_size": 10,
             "data_layer": "data",
             "gpu_device_id": 0,
             "image_mean": {
-                "smqtk.representation.data_element.file_element.DataFileElement": {
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
                     "explicit_mimetype": null,
                     "filepath": "/caffe/models/msra_resnet/ResNet_mean.binaryproto",
                     "readonly": true
                 },
-                "type": "smqtk.representation.data_element.file_element.DataFileElement"
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
             },
             "input_scale": null,
             "load_truncated_images": true,
             "network_is_bgr": true,
             "network_model": {
-                "smqtk.representation.data_element.file_element.DataFileElement": {
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
                     "explicit_mimetype": null,
                     "filepath": "/caffe/models/msra_resnet/ResNet-50-model.caffemodel",
                     "readonly": true
                 },
-                "type": "smqtk.representation.data_element.file_element.DataFileElement"
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
             },
             "network_prototxt": {
-                "smqtk.representation.data_element.file_element.DataFileElement": {
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
                     "explicit_mimetype": null,
                     "filepath": "/caffe/models/msra_resnet/ResNet-50-deploy.prototxt",
                     "readonly": true
                 },
-                "type": "smqtk.representation.data_element.file_element.DataFileElement"
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
             },
             "pixel_rescale": null,
             "return_layer": "pool5",
             "use_gpu": false
         },
-        "type": "smqtk.algorithms.descriptor_generator.caffe_descriptor.CaffeDescriptorGenerator"
+        "type": "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator"
     },
     "enable_classifier_removal": true,
     "flask_app": {
@@ -54,18 +54,9 @@
     },
     "immutable_labels": [],
     "iqr_state_classifier_config": {
-        "smqtk.algorithms.classifier.libsvm.LibSvmClassifier": {
-            "normalize": 2,
-            "svm_label_map_uri": null,
-            "svm_model_uri": null,
-            "train_params": {
-                "-b": 1,
-                "-c": 2,
-                "-s": 0,
-                "-t": 0
-            }
+        "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression": {
         },
-        "type": "smqtk.algorithms.classifier.libsvm.LibSvmClassifier"
+        "type": "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression"
     },
     "server": {
         "host": "0.0.0.0",
