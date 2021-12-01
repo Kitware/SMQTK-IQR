@@ -9,5 +9,7 @@ Updates / New Features
  * Add auto-negative selection in IqrSession for negative adjudications
    in case where none are provided
 
+ * Transfer web classifier service from mono-repo to this repo
+
 Fixes
 -----
