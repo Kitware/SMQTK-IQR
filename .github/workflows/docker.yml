@@ -43,27 +43,15 @@ jobs:
             ~/.local
           key: python-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
 
-      - name: Test GH context
+      - name: Docker pull
+        run: |
+          docker-compose --env-file docker/.env -f docker/docker-compose.build.yml pull
+
+      - name: Build docker image
+        run: |
+          docker-compose --env-file docker/.env -f docker/docker-compose.build.yml build
+
+      - name: Push images
         if: ${{ github.event_name == 'workflow_dispatch' }}
         run: |
-          echo "SUCCESS"
-          echo "${{ github.event_name }}"
-          echo "${{ github.ref }}"
-
-      - name: Test GH context 2
-        run: |
-          echo "${{ github.event_name }}"
-          echo "${{ github.ref }}"
-
-      #- name: Docker pull
-        #run: |
-          #docker-compose --env-file docker/.env -f docker/docker-compose.build.yml pull
-
-      # - name: Build docker image
-      #   run: |
-      #     docker-compose --env-file docker/.env -f docker/docker-compose.build.yml build
-
-      # - name: Push images
-      #  if: ${{ github.event_name == 'workflow_dispatch' }}
-      #  run: |
-      #    docker-compose --env-file docker/.env -f docker/docker-compose.build.yml push
+          docker-compose --env-file docker/.env -f docker/docker-compose.build.yml push
