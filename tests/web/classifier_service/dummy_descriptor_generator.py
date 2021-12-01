@@ -1,10 +1,12 @@
 import numpy as np
+from typing import Any, Dict, Set, Iterable
 
-from smqtk.algorithms.descriptor_generator import DescriptorGenerator
+from smqtk_dataprovider import DataElement
+from smqtk_descriptors import DescriptorGenerator
 
 
 class DummyDescriptorGenerator (DescriptorGenerator):
-    def get_config(self):
+    def get_config(self) -> Dict[str, Any]:
         """
         Return a JSON-compliant dictionary that could be passed to this
         class's ``from_config`` method to produce an instance with identical
@@ -22,7 +24,7 @@ class DummyDescriptorGenerator (DescriptorGenerator):
         return {}
 
     @classmethod
-    def is_usable(cls):
+    def is_usable(cls) -> bool:
         """
         Check whether this class is available for use.
 
@@ -44,15 +46,15 @@ class DummyDescriptorGenerator (DescriptorGenerator):
         """
         return True
 
-    def valid_content_types(self):
+    def valid_content_types(self) -> Set[str]:
         """
         :return: A set valid MIME type content types that this descriptor can
             handle.
         :rtype: set[str]
         """
-        return ['text/plain']
+        return {'text/plain'}
 
-    def _generate_arrays(self, data_iter):
+    def _generate_arrays(self, data_iter: Iterable[DataElement]) -> Iterable[np.ndarray]:
         """
         Inner template method that defines the generation of descriptor vectors
         for a given iterable of data elements.
