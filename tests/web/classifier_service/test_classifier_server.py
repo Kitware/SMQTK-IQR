@@ -7,7 +7,7 @@ import unittest
 
 from typing import Any
 
-from six.moves import cPickle as pickle
+import pickle
 
 from smqtk_classifier import ClassifyDescriptor
 from smqtk_relevancy import RankRelevancy
