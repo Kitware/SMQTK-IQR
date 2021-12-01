@@ -45,16 +45,20 @@ jobs:
 
       - name: Docker login
         run: |
+          echo "${{ github.event.action }}"
+          echo "${{ github.base_ref }}"
+          echo "${{ github.head_ref }}"
+          echo "${{ github.ref }}"
           docker login gitlab.kitware.com:4567 -u gl-container-ci -p ${{ secrets.GITLAB_CONTAINER_TOKEN  }}
 
       - name: Docker pull
         run: |
-          docker-compose -f docker/docker-compose.build.yml pull
+          docker-compose --env-file docker/.env -f docker/docker-compose.build.yml pull
 
       - name: Build docker image
         run: |
-          docker-compose --env-file "docker/.env" -f "docker/docker-compose.build.yml" build
+          docker-compose --env-file docker/.env -f docker/docker-compose.build.yml build
 
       - name: Push images
         run: |
-          docker-compose -f docker/docker-compose.build.yml push
+          docker-compose --env-file docker/.env -f docker/docker-compose.build.yml push
