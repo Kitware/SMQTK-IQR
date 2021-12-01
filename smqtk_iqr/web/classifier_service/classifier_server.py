@@ -9,34 +9,37 @@ import urllib.parse
 
 import flask
 import six
+import logging
 
-from smqtk.algorithms import (
+from typing import Any, List, Dict, Optional, Tuple, Union
+
+from smqtk_relevancy import RankRelevancy
+from smqtk_descriptors import (
     DescriptorGenerator,
-    RankRelevancy,
-    SupervisedClassifier
-)
-from smqtk.algorithms.classifier import (
-    ClassifierCollection,
-)
-from smqtk.exceptions import MissingLabelError
-from smqtk.iqr import IqrSession
-from smqtk.representation import (
-    ClassificationElementFactory,
     DescriptorElementFactory,
-    DescriptorSet,
+    DescriptorSet
 )
-from smqtk.representation.data_element.memory_element import DataMemoryElement
-from smqtk.representation.descriptor_set.memory import MemoryDescriptorSet
-from smqtk.utils import probability
-from smqtk.utils.configuration import (
-    from_config_dict,
+from smqtk_classifier import (
+    ClassifyDescriptorSupervised,
+    ClassificationElementFactory,
+    ClassifyDescriptorCollection
+)
+from smqtk_classifier.exceptions import MissingLabelError
+from smqtk_iqr.iqr import IqrSession
+from smqtk_dataprovider.impls.data_element.memory import DataMemoryElement
+from smqtk_descriptors.impls.descriptor_set.memory import MemoryDescriptorSet
+from smqtk_iqr.utils import probability
+from smqtk_core.configuration import (
     make_default_config,
+    from_config_dict
 )
-from smqtk.utils.web import make_response_json
-import smqtk.web
+from smqtk_iqr.utils.web import make_response_json
+import smqtk_iqr.web
+
+LOG = logging.getLogger(__name__)
 
 
-def labels_from_input(label_str):
+def labels_from_input(label_str: Optional[str]) -> Optional[List[str]]:
     """
     Parse out a single or multiple labels from the provided JSON-encoded value.
 
@@ -91,7 +94,7 @@ def labels_from_input(label_str):
     return labels
 
 
-class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
+class SmqtkClassifierService (smqtk_iqr.web.SmqtkWebApp):
     """
     Headless web-app providing a RESTful API for classifying new data against
     a set of statically and dynamically loaded classifier models.
@@ -136,18 +139,18 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
     DEFAULT_IQR_STATE_CLASSIFIER_KEY = '__default__'
 
     @classmethod
-    def is_usable(cls):
+    def is_usable(cls) -> bool:
         return True
 
     @classmethod
-    def get_default_config(cls):
+    def get_default_config(cls) -> Dict[str, Any]:
         c = super(SmqtkClassifierService, cls).get_default_config()
 
         c[cls.CONFIG_ENABLE_CLASSIFIER_REMOVAL] = False
 
         # Static classifier configurations
         c[cls.CONFIG_CLASSIFIER_COLLECTION] = \
-            ClassifierCollection.get_default_config()
+            ClassifyDescriptorCollection.get_default_config()
         # Classification element factory for new classification results.
         c[cls.CONFIG_CLASSIFICATION_FACTORY] = \
             ClassificationElementFactory.get_default_config()
@@ -165,13 +168,13 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
         )
         # from-IQR-state *supervised* classifier configuration
         c[cls.CONFIG_IQR_CLASSIFIER] = make_default_config(
-            SupervisedClassifier.get_impls()
+            ClassifyDescriptorSupervised.get_impls()
         )
         c[cls.CONFIG_IMMUTABLE_LABELS] = []
 
         return c
 
-    def __init__(self, json_config):
+    def __init__(self, json_config: Dict):
         super(SmqtkClassifierService, self).__init__(json_config)
 
         self.enable_classifier_removal = \
@@ -194,8 +197,8 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
             ClassificationElementFactory.from_config(
                 json_config[self.CONFIG_CLASSIFICATION_FACTORY]
             )
-        #: :type: ClassifierCollection
-        self.classifier_collection = ClassifierCollection.from_config(
+        #: :type: ClassifyDescriptorCollection
+        self.classifier_collection = ClassifyDescriptorCollection.from_config(
             json_config[self.CONFIG_CLASSIFIER_COLLECTION]
         )
 
@@ -206,7 +209,7 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
         #: :type: smqtk.algorithms.DescriptorGenerator
         self.descriptor_gen = from_config_dict(
             json_config[self.CONFIG_DESCRIPTOR_GENERATOR],
-            smqtk.algorithms.DescriptorGenerator.get_impls()
+            DescriptorGenerator.get_impls()
         )
 
         # Descriptor set bundled for classification-by-UID.
@@ -225,7 +228,7 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
 
         self.add_routes()
 
-    def add_routes(self):
+    def add_routes(self) -> None:
         # REST API endpoint routes
         #
         # Example:
@@ -264,14 +267,14 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
 
     # GET /is_ready
     # noinspection PyMethodMayBeStatic
-    def is_ready(self):
+    def is_ready(self) -> Tuple[flask.Response, int]:
         """
         Simple endpoint that just means this server is up and responding.
         """
         return make_response_json("Yes, I'm alive!")
 
     # GET /classifier_labels
-    def get_classifier_labels(self):
+    def get_classifier_labels(self) -> Tuple[flask.Response, int]:
         """
         Get the descriptive labels of the classifiers currently set to
         classify input data.
@@ -286,7 +289,7 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
                                   labels=list(all_labels))
 
     # GET /classifier_metadata
-    def get_classifier_metadata(self):
+    def get_classifier_metadata(self) -> Tuple[flask.Response, int]:
         """
         Get metadata associated with a specific classifier instance referred to
         by label.
@@ -318,7 +321,7 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
                                   class_labels=class_labels)
 
     # POST /classify_uids
-    def classify_uids(self):
+    def classify_uids(self) -> Tuple[flask.Response, int]:
         """
         Given a list of descriptor UIDs, we attempt to retrieve descriptor
         vectors from our configured descriptor index and classify those vectors
@@ -407,7 +410,7 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
         return make_response_json("", 200, result=pred_map)
 
     # POST /classify
-    def classify(self):
+    def classify(self) -> Tuple[flask.Response, int]:
         """
         Given a file's bytes (standard base64-format) and content mimetype,
         describe and classify the content against all currently stored
@@ -534,13 +537,12 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
             return make_response_json("No content type provided.", 400)
 
         data_bytes = base64.b64decode(data_b64.encode('utf-8'))
-        self._log.debug("Length of byte data: %d" % len(data_bytes))
+        LOG.debug("Length of byte data: %d" % len(data_bytes))
 
         data_elem = DataMemoryElement(data_bytes, content_type, readonly=True)
         descr_elem = self.descriptor_gen.generate_one_element(
             data_elem, descr_factory=self.descriptor_factory
         )
-        self._log.debug("Descriptor shape: %s", descr_elem.vector().shape)
 
         try:
             clfr_map = self.classifier_collection.classify(
@@ -572,7 +574,8 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
                                   result=c_json)
 
     # GET /classifier
-    def get_classifier(self):
+    def get_classifier(self) -> Union[Tuple[flask.Response, int],
+                                      Tuple[bytes, int]]:
         """
         Download the classifier corresponding to the provided label, pickled
         and encoded in standard base64 encoding.
@@ -627,7 +630,7 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
                                       label=label)
 
     # POST /iqr_classifier
-    def add_iqr_state_classifier(self):
+    def add_iqr_state_classifier(self) -> Tuple[flask.Response, int]:
         """
         Train a classifier based on the user-provided IQR state file bytes in
         a base64 encoding, matched with a descriptive label of that
@@ -704,8 +707,7 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
             # alphabets.
             data_bytes = base64.urlsafe_b64decode(data_b64.encode('utf-8'))
         except (TypeError, binascii.Error) as ex:
-            return make_response_json("Invalid base64 input: %s" % str(ex)), \
-                   400
+            return make_response_json("Invalid base64 input: %s" % str(ex), 400)
 
         # If the given label conflicts with one already in the collection,
         # fail.
@@ -724,10 +726,10 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
         # Make a classifier instance from the stored config for IQR
         # session-based classifiers.
         # noinspection PyTypeChecker
-        #: :type: SupervisedClassifier
+        #: :type: ClassifyDescriptorSupervised
         classifier = from_config_dict(
             self.iqr_state_classifier_config,
-            SupervisedClassifier.get_impls()
+            ClassifyDescriptorSupervised.get_impls()
         )
         classifier.train(class_examples={'positive': pos, 'negative': neg})
 
@@ -754,7 +756,7 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
                                   label=label)
 
     # POST /classifier
-    def add_classifier(self):
+    def add_classifier(self) -> Tuple[flask.Response, int]:
         """
         Upload a **trained** classifier pickled and encoded in standard base64
         encoding, matched with a descriptive label of that classifier's topic.
@@ -865,7 +867,7 @@ class SmqtkClassifierService (smqtk.web.SmqtkWebApp):
                                   label=label)
 
     # DEL /classifier
-    def del_classifier(self):
+    def del_classifier(self) -> Tuple[flask.Response, int]:
         """
         Remove a classifier by the given label.
 

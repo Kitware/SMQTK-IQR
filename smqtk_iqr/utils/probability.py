@@ -1,7 +1,9 @@
 import numpy as np
+from typing import Iterable, Union
 
 
-def adjust_proba(proba, adj):
+def adjust_proba(proba: Union[np.ndarray, Iterable],
+                 adj: Union[np.ndarray, Iterable]) -> np.ndarray:
     """
     Adjust the probabilities in `proba` with the log-scale adjustments `adj`.
     If the probabilities in a row of `proba` are `(p1,...,pd)`, and the

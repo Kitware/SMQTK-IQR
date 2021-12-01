@@ -1,5 +1,5 @@
 import time
-from typing import Dict, Any, Tuple, Iterable, Union
+from typing import Tuple, Iterable, Union, Sequence, Hashable, Mapping
 import flask
 import requests
 
@@ -7,7 +7,9 @@ from smqtk_core.dict import merge_dict
 
 
 def make_response_json(
-    message: str, return_code: int = 200, **params: Dict[str, Any]
+    message: str, return_code: int = 200,
+    **params: Union[Hashable, Sequence[Hashable],
+                    Sequence[Sequence[Hashable]], Mapping]
 ) -> Tuple[flask.Response, int]:
     """
     Basic message constructor for returning JSON from a flask routing function

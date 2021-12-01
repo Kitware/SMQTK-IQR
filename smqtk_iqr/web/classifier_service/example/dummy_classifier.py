@@ -1,8 +1,11 @@
-from smqtk.algorithms.classifier import Classifier
+from typing import Any, Hashable, Dict, Sequence
+
+from smqtk_classifier import ClassifyImage
+from smqtk_descriptors import DescriptorElement
 
 
-class DummyClassifier (Classifier):
-    def get_config(self):
+class DummyClassifier (ClassifyImage):
+    def get_config(self) -> Dict[str, Any]:
         """
         Return a JSON-compliant dictionary that could be passed to this
         class's ``from_config`` method to produce an instance with identical
@@ -20,7 +23,7 @@ class DummyClassifier (Classifier):
         return {}
 
     @classmethod
-    def is_usable(cls):
+    def is_usable(cls) -> bool:
         """
         Check whether this class is available for use.
 
@@ -42,7 +45,7 @@ class DummyClassifier (Classifier):
         """
         return True
 
-    def _classify(self, d):
+    def _classify(self, d: DescriptorElement) -> Dict[Hashable, float]:
         """
         Internal method that constructs the label-to-confidence map (dict) for
         a given DescriptorElement.
@@ -68,7 +71,7 @@ class DummyClassifier (Classifier):
             'positive': 0.5,
         }
 
-    def get_labels(self):
+    def get_labels(self) -> Sequence[Hashable]:
         """
         Get the sequence of class labels that this classifier can classify
         descriptors into. This includes the negative label.
