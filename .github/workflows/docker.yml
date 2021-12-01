@@ -4,12 +4,15 @@ name: Docker
 
 # Controls when the action will run.
 on:
-  # Triggers the workflow on push events for the master branch and scheduled nightly runs
+  # Triggers the workflow on push or pull request events but only for the master branch
   push:
     branches:
       - master
+  pull_request:
+    branches:
+      - master
+  # Trigger nightly Docker build to check for dependency issues
   schedule:
-      # Nightly run unit tests to check for implicit dependency issues between pull requests.
       - cron: '0 0 * * *'
 
   # Allows you to run this workflow manually from the Actions tab
@@ -52,6 +55,7 @@ jobs:
           docker-compose --env-file docker/.env -f docker/docker-compose.build.yml build
 
       - name: Push images
-        if: ${{ github.event_name == 'workflow_dispatch' }}
+        # Only push images if branch that triggered this workflow is the master branch
+        if: ${{ github.ref == 'refs/heads/master' }}
         run: |
           docker-compose --env-file docker/.env -f docker/docker-compose.build.yml push
