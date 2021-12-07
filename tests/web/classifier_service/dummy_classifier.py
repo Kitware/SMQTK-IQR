@@ -18,9 +18,10 @@ class DummyClassifier (ClassifyDescriptor):
     def is_usable(cls) -> bool:
         return True
 
-    def _classify_arrays(self,
-                         array_iter: Union[np.ndarray,
-                                           Iterable[np.ndarray]]) -> Iterator[Dict[Hashable, float]]:
+    def _classify_arrays(
+        self,
+        array_iter: Union[np.ndarray, Iterable[np.ndarray]]
+    ) -> Iterator[Dict[Hashable, float]]:
         for _ in array_iter:
             yield {
                 'negative': 0.5,
