@@ -58,4 +58,5 @@ jobs:
         # Only push images if branch that triggered this workflow is the master branch
         if: ${{ github.ref == 'refs/heads/master' }}
         run: |
+          docker login gitlab.kitware.com:4567 -u gl-container-ci -p ${{ secrets.GITLAB_CONTAINER_TOKEN }}
           docker-compose --env-file docker/.env -f docker/docker-compose.build.yml push
