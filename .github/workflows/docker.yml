@@ -28,6 +28,8 @@ defaults:
 jobs:
   docker:
     runs-on: ubuntu-latest
+    # Only run this job if the current repository owner is Kitware (don't want to run on forks)
+    if: github.repository_owner == 'Kitware'
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
@@ -55,8 +57,7 @@ jobs:
           docker-compose --env-file docker/.env -f docker/docker-compose.build.yml build
 
       - name: Push images
-        # Only push images if branch that triggered this workflow is the master branch
-        if: ${{ github.ref == 'refs/heads/master' }}
+        if: github.ref == 'refs/heads/master'
         run: |
           docker login gitlab.kitware.com:4567 -u gl-container-ci -p ${{ secrets.GITLAB_CONTAINER_TOKEN }}
           docker-compose --env-file docker/.env -f docker/docker-compose.build.yml push
