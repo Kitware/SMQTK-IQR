@@ -57,6 +57,8 @@ jedi = "^0.17"
 "smqtk_iqr.web.iqr_service.iqr_server" = "smqtk_iqr.web.iqr_service.iqr_server"
 #IqrSearchDispatcher
 "smqtk_iqr.web.search_app" = "smqtk_iqr.web.search_app.__init__"
+#SmqtkClassifierService
+"smqtk_iqr.web.classifier_service" = "smqtk_iqr.web.classifier_service.classifier_server"
 
 [tool.poetry.scripts]
 runApplication = "smqtk_iqr.utils.runApplication:main"

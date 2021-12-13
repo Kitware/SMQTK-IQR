@@ -116,3 +116,33 @@ services:
         CAFFE_COPY_FROM_IMAGE: ${SMQTK_REGISTRY}/tpl-caffe:1.0-cuda${CUDA_DEVEL_IMAGE_TAG}
         FAISS_COPY_FROM_IMAGE: ${SMQTK_REGISTRY}/tpl-faiss:${FAISS_VERSION}-cuda${CUDA_DEVEL_IMAGE_TAG}
         FAISS_VERSION:  # using value from .env file.
+
+  #
+  # Classifier Service
+  # TODO: Refactor to use common smqtk install image instead of duplicating.
+  #
+  classifier-service-cpu:
+    image: ${SMQTK_REGISTRY}/classifier_service:${SMQTK_TAG}-cpu
+    depends_on:
+      - tpl-caffe-cpu
+    build:
+      # Repo root
+      context: ..
+      dockerfile: docker/smqtk_classifier_service/Dockerfile
+      target: smqtk-cpu
+      args:
+        CUDA_RUNTIME_IMAGE_TAG:  # using value from .env file.
+        CAFFE_COPY_FROM_IMAGE: ${SMQTK_REGISTRY}/tpl-caffe:1.0-cpu
+
+  classifier-service-gpu:
+    image: ${SMQTK_REGISTRY}/classifier_service:${SMQTK_TAG}-cuda${CUDA_RUNTIME_IMAGE_TAG}
+    depends_on:
+      - tpl-caffe-gpu
+    build:
+      # Repo root
+      context: ..
+      dockerfile: docker/smqtk_classifier_service/Dockerfile
+      target: smqtk-gpu
+      args:
+        CUDA_RUNTIME_IMAGE_TAG:  # using value from .env file.
+        CAFFE_COPY_FROM_IMAGE: ${SMQTK_REGISTRY}/tpl-caffe:1.0-cuda${CUDA_DEVEL_IMAGE_TAG}
