@@ -16,8 +16,13 @@ CI
 Web
 
  * Transfer IQR web demo from mono-repo to this repo
- 
+
  * Transfer web classifier service from mono-repo to this repo
 
 Fixes
 -----
+
+CI
+
+* Also run CI unittests for PRs targetting branches that match the `release*`
+    glob.
