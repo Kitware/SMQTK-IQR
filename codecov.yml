@@ -7,7 +7,7 @@ coverage:
         paths:
           - "tests/"
       package:
-        target: 80%
+        target: 55%
         paths:
           - "!tests/"
     patch:
