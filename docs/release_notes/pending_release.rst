@@ -13,11 +13,18 @@ CI
 
  * Add a Github action to build the SMQTK-IQR web demo Docker image
 
+ * Add workflow to inherit the smqtk-core publish workflow
+
 Web
 
  * Transfer IQR web demo from mono-repo to this repo
 
  * Transfer web classifier service from mono-repo to this repo
+
+Miscellaneous
+
+ * Add a wrapper script to pull the versioning/changelog update helper from
+   smqtk-core to use here without duplication.
 
 Fixes
 -----
