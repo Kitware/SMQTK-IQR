@@ -1,7 +1,5 @@
 # Contributing to SMQTK-IQR
 
-Please reference the [SMQTK-Core CONTRIBUTING documentation] as such
-documentation for this package is nearly identical.
-Of course, replace references of `SMQTK-Core` with `SMQTK-IQR`.
-
-[SMQTK-Core CONTRIBUTING documentation]: https://github.com/Kitware/SMQTK-Core/blob/master/CONTRIBUTING.md
+Please reference the [SMQTK-Core contributing documentation](https://github.com/Kitware/SMQTK-Core/blob/master/CONTRIBUTING.md)
+as that same content is applicable here, of course replacing references to `smqtk-core` with
+`smqtk-iqr`.
