@@ -6,24 +6,24 @@ Updates / New Features
 
 Auto-negative Selection
 
- * Add auto-negative selection in IqrSession for negative adjudications
-   in case where none are provided
+ * Added auto-negative selection in IqrSession for negative adjudications
+   in case where none are provided.
 
 CI
 
- * Add a Github action to build the SMQTK-IQR web demo Docker image
+ * Added a Github action to build the SMQTK-IQR web demo Docker image.
 
- * Add workflow to inherit the smqtk-core publish workflow
+ * Added workflow to inherit the smqtk-core publish workflow.
 
 Web
 
- * Transfer IQR web demo from mono-repo to this repo
+ * Transferred IQR web demo from mono-repo to this repo.
 
- * Transfer web classifier service from mono-repo to this repo
+ * Transferred web classifier service from mono-repo to this repo.
 
 Miscellaneous
 
- * Add a wrapper script to pull the versioning/changelog update helper from
+ * Added a wrapper script to pull the versioning/changelog update helper from
    smqtk-core to use here without duplication.
 
 Fixes
@@ -31,12 +31,12 @@ Fixes
 
 CI
 
-* Also run CI unittests for PRs targetting branches that match the `release*`
-  glob.
+* Modified CI unittests workflow to run for PRs targetting branches that match
+  the `release*` glob.
 
 Dependency Versions
 
-* Update the developer dependency and locked version of ipython to address a
+* Updated the developer dependency and locked version of ipython to address a
   security vulnerability.
 
 * Removed `jedi = "^0.17"` requirement and update to `ipython = "^7.17.3"`
