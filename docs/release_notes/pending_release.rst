@@ -15,6 +15,9 @@ CI
 
  * Added workflow to inherit the smqtk-core publish workflow.
 
+ * Updated CI unittests workflow to install optional packages and to
+   run nightly.
+
 Web
 
  * Transferred IQR web demo from mono-repo to this repo.
