@@ -6,28 +6,28 @@ Updates / New Features
 
 Auto-negative Selection
 
- * Added auto-negative selection in IqrSession for negative adjudications
-   in case where none are provided.
+* Added auto-negative selection in IqrSession for negative adjudications
+  in case where none are provided.
 
 CI
 
- * Added a Github action to build the SMQTK-IQR web demo Docker image.
+* Added a Github action to build the SMQTK-IQR web demo Docker image.
 
- * Added workflow to inherit the smqtk-core publish workflow.
+* Added workflow to inherit the smqtk-core publish workflow.
 
- * Updated CI unittests workflow to install optional packages and to
-   run nightly.
+* Updated CI unittests workflow to install optional packages.
+  Reduced CodeCov report submission by skipping this step on scheduled runs.
 
 Web
 
- * Transferred IQR web demo from mono-repo to this repo.
+* Transferred IQR web demo from mono-repo to this repo.
 
- * Transferred web classifier service from mono-repo to this repo.
+* Transferred web classifier service from mono-repo to this repo.
 
 Miscellaneous
 
- * Added a wrapper script to pull the versioning/changelog update helper from
-   smqtk-core to use here without duplication.
+* Added a wrapper script to pull the versioning/changelog update helper from
+  smqtk-core to use here without duplication.
 
 Fixes
 -----
