@@ -2,21 +2,48 @@
 __doc__="
 Pulls down a multi-module working environment
 
-Requirements:
-    # For auto-branch upgrades
-    pip install git_well
 
-    # Not the best way, but a way.
-    curl https://raw.githubusercontent.com/Erotemic/local/main/init/utils.sh > erotemic_utils.sh
+TODO:
+    - [ ] Parameterize relevant options, in the meantime edit the script to modify them.
+
 
 Usage:
-    source ~/code/SMQTK-IQR/scripts/dev_setup.sh
+    source scripts/dev_setup.sh
 "
+
+#### PARAMTERS #####
 
 # Place where the source packages are located
 CODE_DPATH=$HOME/code
 
+DO_CLONE=1
+DO_FETCH=1
+DRY_RUN=0
+FORCE_INSTALL=1
+
+####################
+
+bash_array_repr(){
+    __doc__='
+    Given a bash array, this should print a literal copy-pastable
+    representation
+
+    Example:
+        ARR=(1 "2 3" 4)
+        bash_array_repr "${ARR[@]}"
+    '
+    ARGS=("$@")
+    if [ "${#ARGS}" -gt 0 ]; then
+        # Not sure if the double or single quotes is better here
+        echo "($(printf "'%s' " "${ARGS[@]}"))"
+        #echo "($(printf "\'%s\' " "${ARGS[@]}"))"
+    else
+        echo "()"
+    fi
+}
+
 mylibs=(
+SMQTK-Core
 SMQTK-Indexing
 SMQTK-Detection
 SMQTK-Classifier
@@ -24,11 +51,6 @@ SMQTK-Descriptors
 SMQTK-Image-IO
 SMQTK-Relevancy
 )
-
-
-DO_FETCH=0
-DRY_RUN=0
-DO_CLONE=0
 
 if [[ "$DO_CLONE" == "1" ]]; then
     ### Clone
@@ -59,7 +81,9 @@ if [[ "$DO_FETCH" == "1" ]]; then
             #(cd "$dpath" && gup)
             echo "dpath = $dpath"
             #(cd "$dpath" && git fetch && python ~/local/git_tools/git_devbranch.py update)
-            (cd "$dpath" && git fetch && git-well branch_upgrade)
+            # Git-well branch_upgrade looks for "dev/{version}" branches and updates to the latest
+            #(cd "$dpath" && git fetch && git-well branch_upgrade)
+            (cd "$dpath" && git fetch)
         else
             echo "does not exist dpath = $dpath"
         fi
@@ -69,8 +93,6 @@ fi
 echo "
 My Libs:"
 bash_array_repr "${mylibs[@]}"
-
-FORCE_INSTALL=1
 
 needs_uninstall=()
 needs_install=()
