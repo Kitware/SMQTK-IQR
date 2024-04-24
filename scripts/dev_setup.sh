@@ -28,6 +28,9 @@ bash_array_repr(){
     Given a bash array, this should print a literal copy-pastable
     representation
 
+    From:
+        https://raw.githubusercontent.com/Erotemic/local/main/init/utils.sh
+
     Example:
         ARR=(1 "2 3" 4)
         bash_array_repr "${ARR[@]}"
@@ -160,7 +163,8 @@ if [[ "$DRY_RUN" == "0" ]]; then
         # * Disable build isolation because it is faster and we usually wont need it.
         # * Note the -e needs to be before every package, this is handled earlier
         set -x
-        pip install --no-build-isolation "${needs_install[@]}"
+        pip install "${needs_install[@]}"
+        #pip install --no-build-isolation "${needs_install[@]}"
         set +x
         echo "
         Finished Installing
