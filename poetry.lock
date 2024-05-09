@@ -194,17 +194,6 @@ toml = {version = "*", optional = true, markers = "extra == \"toml\""}
 toml = ["toml"]
 
 [[package]]
-name = "dataclasses"
-version = "0.8"
-description = "A backport of the dataclasses module for Python 3.6"
-optional = false
-python-versions = ">=3.6, <3.7"
-files = [
-    {file = "dataclasses-0.8-py3-none-any.whl", hash = "sha256:0201d89fa866f68c8ebd9d08ee6ff50c0b255f8ec63a71c16fda7af82bb887bf"},
-    {file = "dataclasses-0.8.tar.gz", hash = "sha256:8479067f342acf957dc82ec415d355ab5edb7e7646b90dc6e2fd1d96ad084c97"},
-]
-
-[[package]]
 name = "decorator"
 version = "5.0.9"
 description = "Decorators for Humans"
@@ -1199,7 +1188,6 @@ files = [
 ]
 
 [package.dependencies]
-dataclasses = {version = ">=0.8,<0.9", markers = "python_version < \"3.7\""}
 numpy = ">=1.19.5,<2.0.0"
 smqtk-core = ">=0.18.0"
 smqtk-dataprovider = ">=0.16.0"
@@ -1581,9 +1569,6 @@ files = [
     {file = "Werkzeug-2.0.1.tar.gz", hash = "sha256:1de1db30d010ff1af14a009224ec49ab2329ad2cde454c8a708130642d579c42"},
 ]
 
-[package.dependencies]
-dataclasses = {version = "*", markers = "python_version < \"3.7\""}
-
 [package.extras]
 watchdog = ["watchdog"]
 
@@ -1604,5 +1589,5 @@ testing = ["func-timeout", "jaraco.itertools", "pytest (>=4.6)", "pytest-black (
 
 [metadata]
 lock-version = "2.0"
-python-versions = "^3.6"
-content-hash = "2a76c6520c992eedfcfb129fcf495a5bcb4a00f86b6efe82c36a6cf34f5354de"
+python-versions = "^3.7"
+content-hash = "0cafb53108b992e1f18b4f77e6aa07a41227f22dac2123ac7d4046a73669f48c"
