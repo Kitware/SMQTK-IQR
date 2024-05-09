@@ -29,7 +29,7 @@ defaults:
 jobs:
   lint:
     runs-on: ubuntu-latest
-    container: python:3.6
+    container: python:3.7
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
@@ -46,7 +46,7 @@ jobs:
           path: |
             ~/.cache/pypoetry/virtualenvs/
             ~/.local
-          key: python-3.6-${{ hashFiles('poetry.lock') }}
+          key: python-3.7-${{ hashFiles('poetry.lock') }}
       - name: Setup Environment
         # See: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-using-a-public-action-in-a-subdirectory
         uses: Kitware/SMQTK-Core/.github/actions/python-poetry-setup@master
@@ -55,7 +55,7 @@ jobs:
 
   typecheck:
     runs-on: ubuntu-latest
-    container: python:3.6
+    container: python:3.7
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
       - uses: actions/checkout@v2
@@ -72,7 +72,7 @@ jobs:
           path: |
             ~/.cache/pypoetry/virtualenvs/
             ~/.local
-          key: python-3.6-${{ hashFiles('poetry.lock') }}
+          key: python-3.7-${{ hashFiles('poetry.lock') }}
       - name: Setup Environment
         # See: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-using-a-public-action-in-a-subdirectory
         uses: Kitware/SMQTK-Core/.github/actions/python-poetry-setup@master
@@ -83,7 +83,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.6, 3.7, 3.8, 3.9]
+        python-version: [3.7, 3.8, 3.9]
         # Extras for included, optional plugin support (space-separated lists)
         opt-extra: [
             "",  # no extras
@@ -128,9 +128,13 @@ jobs:
         run: poetry run pytest
 
       - name: CodeCov report submission
-        if: ${{ github.event_name != 'schedule' }}
-        uses: codecov/codecov-action@v1
+        # Only upload coverage if we have the token
+        env:
+          HAVE_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
+        if: ${{ github.event_name != 'schedule' && env.HAVE_CODECOV_TOKEN == 'true' }}
+        uses: codecov/codecov-action@v4.0.1
         with:
           fail_ci_if_error: true
           files: coverage.xml
           flags: unittests
+          token: ${{ secrets.CODECOV_TOKEN }}

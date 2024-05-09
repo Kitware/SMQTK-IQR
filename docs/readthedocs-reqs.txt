@@ -1,3 +1,5 @@
+sphinx >= 4.3.2
+sphinx_rtd_theme >= 1.0.0
 # SMQTK specific documentation depedencies
 sphinx-argparse==0.2.5
 sphinx-prompt==1.4.0
