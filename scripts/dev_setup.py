@@ -1,19 +1,21 @@
 #!/usr/bin/env python3
 """
 Helper to setup a development environment
+
+python ~/code/SMQTK-IQR/scripts/dev_setup.py
 """
 import pathlib
 import subprocess
 import textwrap
 
 REPO_INFOS = [
-    {'repo_name': 'SMQTK-Core', 'module_name': 'smqtk_core'},
-    {'repo_name': 'SMQTK-Indexing', 'module_name': 'smqtk_indexing'},
-    {'repo_name': 'SMQTK-Detection', 'module_name': 'smqtk_detection'},
-    {'repo_name': 'SMQTK-Classifier', 'module_name': 'smqtk_classifier'},
-    {'repo_name': 'SMQTK-Descriptors', 'module_name': 'smqtk_descriptors'},
-    {'repo_name': 'SMQTK-Image-IO', 'module_name': 'smqtk_image_io'},
-    {'repo_name': 'SMQTK-Relevancy', 'module_name': 'smqtk_relevancy'},
+    {'repo_name': 'SMQTK-Core', 'module_name': 'smqtk_core', 'repo_url': 'https://github.com/Kitware/SMQTK-Core.git'},
+    {'repo_name': 'SMQTK-Indexing', 'module_name': 'smqtk_indexing', 'repo_url': 'https://github.com/Kitware/SMQTK-Indexing.git'},
+    {'repo_name': 'SMQTK-Detection', 'module_name': 'smqtk_detection', 'repo_url': 'https://github.com/Kitware/SMQTK-Detection.git'},
+    {'repo_name': 'SMQTK-Classifier', 'module_name': 'smqtk_classifier', 'repo_url': 'https://github.com/Kitware/SMQTK-Classifier.git'},
+    {'repo_name': 'SMQTK-Descriptors', 'module_name': 'smqtk_descriptors', 'repo_url': 'https://github.com/Kitware/SMQTK-Descriptors.git'},
+    {'repo_name': 'SMQTK-Image-IO', 'module_name': 'smqtk_image_io', 'repo_url': 'https://github.com/Kitware/SMQTK-Image-IO.git'},
+    {'repo_name': 'SMQTK-Relevancy', 'module_name': 'smqtk_relevancy', 'repo_url': 'https://github.com/Kitware/SMQTK-Relevancy.git'},
 ]
 
 
@@ -21,7 +23,7 @@ def parse_args():
     import argparse
     parser = argparse.ArgumentParser(
         prog='DevSetupCLI',
-        description='SMQTK Developer Setup',
+        description='Developer Setup',
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     parser.add_argument('--code_dpath', help='The directory where code should be checked out / installed', default='/home/joncrall/code', dest='code_dpath', required=False)
@@ -48,7 +50,7 @@ def parse_args_scriptconfig():
         fetch = scfg.Value(True, isflag=True)
         install = scfg.Value(True, isflag=True)
 
-    if 1:
+    if 0:
         # Print the code for the pure argparse variant
         print(DevSetupCLI().port_to_argparse())
 
@@ -92,6 +94,35 @@ def is_installed_in_editable_mode(repo_info):
         return True
 
 
+def preprocess_repo_infos(code_dpath):
+    for repo_info in REPO_INFOS:
+        # This logic should be configurable, but it is correct for SMQTK
+        if 'repo_name' not in repo_info:
+            if 'repo_url' in repo_info:
+                repo_info['repo_name'] = pathlib.Path(repo_info['repo_url']).stem
+            else:
+                raise Exception('unable to infer repo_name')
+
+        if 'module_name' not in repo_info:
+            if 'repo_name' in repo_info:
+                # Hueristic, does not always work.
+                repo_info['module_name'] = repo_info['repo_name'].lower().replace('-', '_')
+            else:
+                raise Exception('unable to infer module_name')
+
+        if 'repo_url' not in repo_info:
+            raise Exception('unable to infer repo_url')
+
+        if 'package_name' not in repo_info:
+            # Heuristic
+            repo_info['package_name'] = repo_info['module_name']
+
+        if 'repo_dpath' not in repo_info:
+            repo_info['repo_dpath'] = code_dpath / repo_info['repo_name']
+
+        repo_info['module_dpath'] = repo_info['repo_dpath'] / repo_info['module_name']
+
+
 def main():
     try:
         config = parse_args_scriptconfig()
@@ -100,25 +131,21 @@ def main():
 
     code_dpath = pathlib.Path(config['code_dpath'])
 
-    for repo_info in REPO_INFOS:
-        # This logic should be configurable, but it is correct for SMQTK
-        repo_info['repo_dpath'] = code_dpath / repo_info['repo_name']
-        repo_info['repo_url'] = 'https://github.com/Kitware/' + repo_info['repo_name'] + '.git'
-        repo_info['module_dpath'] = repo_info['repo_dpath'] / repo_info['module_name']
-        repo_info['package_name'] = repo_info['module_name']
+    preprocess_repo_infos(code_dpath)
 
     if config['clone']:
         for repo_info in REPO_INFOS:
             repo_dpath = repo_info['repo_dpath']
+            repo_url = repo_info['repo_url']
             if not repo_dpath.exists():
-                command = 'git clone {repo_url} {repo_dpath}'
-                subprocess.call(command)
+                command = f'git clone {repo_url} {repo_dpath}'
+                subprocess.check_call(command, shell=True)
 
     if config['fetch']:
         for repo_info in REPO_INFOS:
             repo_dpath = repo_info['repo_dpath']
             if repo_dpath.exists():
-                subprocess.call('git fetch', cwd=repo_info['repo_dpath'], shell=True)
+                subprocess.check_call('git fetch', cwd=repo_info['repo_dpath'], shell=True)
 
     if config['install']:
         to_uninstall = []
@@ -137,10 +164,4 @@ def main():
 
 
 if __name__ == '__main__':
-    """
-
-    CommandLine:
-        python ~/code/SMQTK-IQR/scripts/dev_setup.py --help
-        python ~/code/SMQTK-IQR/scripts/dev_setup.py
-    """
     main()
