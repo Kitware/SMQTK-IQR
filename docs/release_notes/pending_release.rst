@@ -44,3 +44,5 @@ Dependency Versions
 
 * Removed `jedi = "^0.17"` requirement and update to `ipython = "^7.17.3"`
   since recent ipython update appropriately addresses the dependency.
+
+* Updated readthedocs config
