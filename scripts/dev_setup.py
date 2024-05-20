@@ -8,6 +8,8 @@ import pathlib
 import subprocess
 import textwrap
 
+DEFAULT_CODE_DPATH = pathlib.Path('~/code/smqtk-repos').expanduser()
+
 REPO_INFOS = [
     {'repo_name': 'SMQTK-Core', 'module_name': 'smqtk_core', 'repo_url': 'https://github.com/Kitware/SMQTK-Core.git'},
     {'repo_name': 'SMQTK-Indexing', 'module_name': 'smqtk_indexing', 'repo_url': 'https://github.com/Kitware/SMQTK-Indexing.git'},
@@ -16,6 +18,7 @@ REPO_INFOS = [
     {'repo_name': 'SMQTK-Descriptors', 'module_name': 'smqtk_descriptors', 'repo_url': 'https://github.com/Kitware/SMQTK-Descriptors.git'},
     {'repo_name': 'SMQTK-Image-IO', 'module_name': 'smqtk_image_io', 'repo_url': 'https://github.com/Kitware/SMQTK-Image-IO.git'},
     {'repo_name': 'SMQTK-Relevancy', 'module_name': 'smqtk_relevancy', 'repo_url': 'https://github.com/Kitware/SMQTK-Relevancy.git'},
+    {'repo_name': 'SMQTK-IQR', 'module_name': 'smqtk_iqr', 'repo_url': 'https://github.com/Kitware/SMQTK-IQR.git'},
 ]
 
 
@@ -26,7 +29,7 @@ def parse_args():
         description='Developer Setup',
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument('--code_dpath', help='The directory where code should be checked out / installed', default='/home/joncrall/code', dest='code_dpath', required=False)
+    parser.add_argument('--code_dpath', help='The directory where code should be checked out / installed', default=DEFAULT_CODE_DPATH, dest='code_dpath', required=False)
     parser.add_argument('--clone', help='', default=True, dest='clone', required=False)
     parser.add_argument('--fetch', help='', default=True, dest='fetch', required=False)
     parser.add_argument('--install', help='', default=True, dest='install', required=False)
@@ -45,7 +48,7 @@ def parse_args_scriptconfig():
         """
         SMQTK Developer Setup
         """
-        code_dpath  = scfg.Value(pathlib.Path('~/code').expanduser(), help='The directory where code should be checked out / installed')
+        code_dpath  = scfg.Value(DEFAULT_CODE_DPATH, help='The directory where code should be checked out / installed')
         clone = scfg.Value(True, isflag=True)
         fetch = scfg.Value(True, isflag=True)
         install = scfg.Value(True, isflag=True)
