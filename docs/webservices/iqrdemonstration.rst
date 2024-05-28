@@ -107,6 +107,26 @@ Once Mongo has been started you can start the ``IqrSearchApp`` and ``IqrService`
    # Terminal 2
    runApplication -a IqrSearchDispatcher -c runApp.IqrSearchDispatcher.json
 
+
+Alternatively, you can run these commands in a single terminal to spawn the above processes in special tmux sessions::
+
+
+    COMMAND="runApplication -a IqrService -c runApp.IqrService.json"
+    SESSION_ID="SMQTK-IQR-SERVICE"
+    tmux kill-session -t "$SESSION_ID" || true
+    tmux new-session -d -s "$SESSION_ID" "bash"
+    tmux send -t "$SESSION_ID" "$COMMAND" Enter
+
+    COMMAND="runApplication -a IqrSearchDispatcher -c runApp.IqrSearchDispatcher.json"
+    SESSION_ID="SMQTK-IQR-SEARCH-DISPATCHER"
+    tmux kill-session -t "$SESSION_ID" || true
+    tmux new-session -d -s "$SESSION_ID" "bash"
+    tmux send -t "$SESSION_ID" "$COMMAND" Enter
+
+    python -c "import webbrowser; webbrowser.open('127.0.0.1:27017')"
+
+
+
 After the services have been started, open a web browser and navigate to ``http://localhost:5000``.
 Click lick on the ``login`` button in the upper-right and then enter the credentials specified in the default login settings file :file:`source/python/smqtk/web/search_app/modules/login/users.json`.
 

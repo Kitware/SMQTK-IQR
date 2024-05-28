@@ -2,7 +2,7 @@
 """
 Helper to setup a development environment
 
-python ~/code/SMQTK-IQR/scripts/dev_setup.py
+python ~/code/smqtk-repos/SMQTK-IQR/scripts/dev_setup.py
 """
 import pathlib
 import subprocess
