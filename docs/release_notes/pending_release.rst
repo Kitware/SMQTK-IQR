@@ -29,10 +29,14 @@ Miscellaneous
 * Added a wrapper script to pull the versioning/changelog update helper from
   smqtk-core to use here without duplication.
 
+* Updated minimum version to Python 3.7
+
 Fixes
 -----
 
 CI
+
+* Update CI to work with the state of software in 2024.
 
 * Modified CI unittests workflow to run for PRs targetting branches that match
   the `release*` glob.

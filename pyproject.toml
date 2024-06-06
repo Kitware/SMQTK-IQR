@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core>=1.0.0"]
+requires = ["poetry-core>=1.6.0"]
 build-backend = "poetry.core.masonry.api"
 
 ###############################################################################
@@ -17,7 +17,7 @@ repository = "https://github.com/Kitware/SMQTK-IQR"
 documentation = "https://smqtk-iqr.readthedocs.io/"
 
 [tool.poetry.dependencies]
-python = "^3.6"
+python = "^3.7"
 smqtk-indexing = ">=0.17.0"
 smqtk-relevancy = ">=0.16.1"
 smqtk-descriptors = ">=0.18.1"
@@ -45,8 +45,8 @@ sphinx-prompt = "^1.4.0"
 livereload = "^2.6.3"
 # Testing
 coverage = "^5.5"
-pytest = "^6.2.2"
-pytest-cov = "^2.11.1"
+pytest = "^6.2.5"
+pytest-cov = "^3.0.0"
 # Development
 ipython = "^7.16.3"
 
