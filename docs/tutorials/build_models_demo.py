@@ -108,7 +108,7 @@ def remove_cache_files(ui_config, iqr_config) -> None:
 def generate_sets(manifest_path, data_set, descriptor_set, descriptor_elem_factory):
     """
     Loads metadata from the JSON file and builds a data by adding each image.
-    Fromt the data set, each image UUID is used to generate the associated
+    From the data set, each image UUID is used to generate the associated
     desciptor and build the descriptor set.
     """
     # Load JSON data from the file
@@ -136,6 +136,8 @@ def generate_sets(manifest_path, data_set, descriptor_set, descriptor_elem_facto
             with open(desc_path, "rb") as f:
                 json_vec = json.load(f)
             vector = np.array(json_vec)
+
+            # print(f"vector shape {vector.shape}")
 
             # Generate descriptor element with image uuid and known vector
             descriptor = descriptor_elem_factory.new_descriptor(data_fe.uuid())
