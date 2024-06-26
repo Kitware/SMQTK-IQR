@@ -1,3 +1,4 @@
+# Notes for chipping images with hidden layer descriptors
 # --------------------------------------------------------------------------
 # IQR demo with PrePopulated Descriptor Set
 # ---------------------------------------------------------------------------
@@ -48,25 +49,104 @@ curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
 # Steps to run the IQR demo with a prepopulated descriptor set
 # ---------------------------------------------------------------------------
 
-# A. If not already merged into the main branch, git clone the fork for
-# SMQTK-Descriptors with the branch
-https://github.com/pbeasly/SMQTK-Descriptors.git@dev/prepopulated_descr_generator
-# and install the package with `pip install e.`
-# Config files use the
-# 'PrePopulatedDescriptorGenerator' class.
 
-# B. (Optional) Remove previous directories and contents for a clean model build
+DVC_DATA_DPATH=$HOME/data/dvc-repos/toy_data_dvc
+DVC_EXPT_DPATH=$HOME/data/dvc-repos/toy_expt_dvc
+TRAIN_FPATH=$DVC_DATA_DPATH/vidshapes_rgb_train/data.kwcoco.json
+VALI_FPATH=$DVC_DATA_DPATH/vidshapes_rgb_vali/data.kwcoco.json
+TEST_FPATH=$DVC_DATA_DPATH/vidshapes_rgb_test/data.kwcoco.json
+
+# Generate toy datasets using the "kwcoco toydata" tool
+kwcoco toydata vidshapes2-frames10-amazon --bundle_dpath "$DVC_DATA_DPATH"/vidshapes_rgb_train
+kwcoco toydata vidshapes4-frames10-amazon --bundle_dpath "$DVC_DATA_DPATH"/vidshapes_rgb_vali
+kwcoco toydata vidshapes2-frames6-amazon --bundle_dpath "$DVC_DATA_DPATH"/vidshapes_rgb_test
+
+WORKDIR=$DVC_EXPT_DPATH/training/$HOSTNAME/$USER
+EXPERIMENT_NAME=ToyRGB_Demo_V001
+DATASET_CODE=ToyRGB
+DEFAULT_ROOT_DIR=$WORKDIR/$DATASET_CODE/runs/$EXPERIMENT_NAME
+MAX_STEPS=32
+TARGET_LR=3e-4
+WEIGHT_DECAY=$(python -c "print($TARGET_LR * 1e-2)")
+python -m geowatch.tasks.fusion fit --config "
+data:
+    num_workers          : 0
+    train_dataset        : $TRAIN_FPATH
+    vali_dataset         : $VALI_FPATH
+    channels             : 'r|g|b'
+    time_steps           : 5
+    chip_dims            : 128
+    batch_size           : 3
+model:
+    class_path: MultimodalTransformer
+    init_args:
+        name        : $EXPERIMENT_NAME
+        arch_name   : smt_it_stm_p8
+        global_box_weight: 1
+optimizer:
+  class_path: torch.optim.AdamW
+  init_args:
+    lr: $TARGET_LR
+    weight_decay: $WEIGHT_DECAY
+trainer:
+  default_root_dir     : $DEFAULT_ROOT_DIR
+  accelerator          : $ACCELERATOR
+  devices              : 1
+  #devices              : 0,
+  max_steps: $MAX_STEPS
+  num_sanity_val_steps: 0
+  limit_val_batches    : 2
+  limit_train_batches  : 4
+"
+
+PACKAGE_FPATH="$DEFAULT_ROOT_DIR"/final_package.pt
+
+# Find a package if training did not complete
+PACKAGE_FPATH=$(python -c "if 1:
+    import pathlib
+    default_root = pathlib.Path(r'$DEFAULT_ROOT_DIR')
+    pkg = default_root / 'final_package.pt'
+    if pkg.exists():
+        print(pkg)
+    else:
+        cand = sorted(default_root.glob('package-interupt/*.pt'))
+        assert len(cand)
+        print(cand[-1])
+")
+echo "$PACKAGE_FPATH"
+
+# Predict
+python -m geowatch.tasks.fusion.predict \
+    --test_dataset="$TEST_FPATH" \
+    --package_fpath="$PACKAGE_FPATH"  \
+    --with_hidden_layers=True  \
+    --pred_dataset="$DVC_EXPT_DPATH"/predictions/pred.kwcoco.json
+
+PREDICT_OUTPUT_FPATH="$DVC_EXPT_DPATH"/predictions/pred.kwcoco.json
+
+
+# A. (Optional) Remove previous directories and contents for a clean model build
 # /smqtk_iqr/demodata
 # /smqtk_iqr/docs/tutorials/models and /workdir
 
-# 1. Generate image chips from kwcoco image generator
+#xdoctest -m geowatch.tasks.fusion.predict predict:0
+# The doctest generates the output in this location
+# TODO: usage rgb fit -> predict steps to generate the output explicitly
+# PREDICT_OUTPUT_FPATH=$HOME/.cache/geowatch/tests/fusion/predict/pred.kwcoco.json
+
+# 1. Generate image chips with hidden layer descriptors
+# TODO: Update this info
 # navigate to smqtk_iqr/docs/tutorials then run:
-python chip_images_demo.py
+OUTPUT_DPATH=./output
+cd ~/code/SMQTK-IQR/smqtk_iqr/docs/tutorials/
+python chip_geodata_images.py --DEMODATA_OUTPUT_PATH=$OUTPUT_DPATH --DATA_FPATH=$PREDICT_OUTPUT_FPATH
+
+cat $OUTPUT_DPATH/manifest.json
 
 # 2. Generate the SMQTK-IQR data set, descriptor set and faiss nnindex
 python build_models_demo.py -v \
   -c runApp.IqrSearchApp.json runApp.IqrRestService.json \
-  -m ../../demodata/manifest.json \
+  -m $OUTPUT_DPATH/manifest.json \
   -t "GEOWATCH_DEMO"
 
 # 3. Run mongodb service if not already started - config is set to use default
