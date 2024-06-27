@@ -201,7 +201,7 @@ IqrRefineView.prototype.update_refine_pane = function () {
             else {
                 // disable buttons + hide bottom button container
                 // noinspection JSValidateTypes
-                self.button_container_refine_top.children().prop("disabled", true);
+                self.button_container_refine_top.children().prop("disabled", false);
                 self.button_container_refine_bot.hide();
             }
         }
@@ -253,6 +253,7 @@ IqrRefineView.prototype.iqr_refine = function() {
     // helper methods for display stuff
     function disable_buttons() {
         // noinspection JSValidateTypes
+        self.button_container_refine_top.children().not(self.button_toggle_random).prop("disabled", false);
         self.button_container_refine_top.children().prop("disabled", true);
         self.button_container_refine_bot.children().prop("disabled", true);
     }

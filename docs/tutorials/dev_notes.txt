@@ -1,0 +1,49 @@
+Notes taken during development:
+
+How IQR is setup
+The command runApplication: runs the main() function in smqt_iqr/smqtk_iqr/utils/runApplication.py
+This parses the cli inputs gathering the web app arg and configuration.
+The line "app: smqtk_iqr.web.SmqtkWebApp = app_class.from_config(config)"
+creates an instance of the service app, in this case IqrServiceApp, and will perform the __init__ methods.
+The superclasses __init__ method is called, which is the SmqtWeb __init__ method, which in turn
+calls the Flask __init__ method.
+
+The runApplication function then calls the run method on the app instance, which is the Flask run method.
+Flask starts a development server, which listens for incoming HTTP requests
+and routes them to the appropriate view functions within your application.
+
+
+# notes on debugging the error to connect to the iqr server
+# to check the status of a port use in ipython:
+
+In [1]: import requests
+   ...: response = requests.get('127.0.0.1:5000/is_ready')
+# or
+response = requests.get('http://127.0.0.1:5000')
+
+response = requests.get('http://127.0.0.1:5000/is_ready')
+response = requests.get('http://127.0.0.1:5001/is_ready')
+response.text
+response.status_code
+
+
+# Changed version of Flask and Wergzeug to older versions
+flask 2.0.1
+werkzeug 2.0.0
+
+
+# Error occurs in searchapp file with 'pop_path_info'
+
+# check status of iqr service on browser by navigating to:
+# localhost:5001/is_ready or other /<add_url> methods
+
+Debugging trick
+# debugging
+    import ubelt as ub
+    import rich
+    from rich.markup import escape
+    rich.print("\n Config: ", escape(ub.urepr(config, nl=True)))
+
+Setting the log level to debug
+# Change logging level after development work.
+LOG.setLevel(logging.DEBUG)
