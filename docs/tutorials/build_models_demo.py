@@ -254,16 +254,17 @@ def main() -> None:
         manifest_path, data_set, descriptor_set, descriptor_elem_factory
     )
 
-    print(f"\nData set with {data_set.count()} elements created")
-    print(f"Descriptor set with {descriptor_set.count()} elements created\n")
+    print(f"\nData set for IQR model with{data_set.count()} elements created")
+    print(f"Descriptor set for IQR model with {descriptor_set.count()} elements created\n")
 
-    log.info("Building nearest neighbors index {}".format(nn_index))
-    nn_index.build_index(descriptor_set)
+    # Debuggint/Test - test the nearest neighbors index operation works
+    # log.info("Building nearest neighbors index {}".format(nn_index))
+    # nn_index.build_index(descriptor_set)
 
     # Debugging/Test - test nnindex with a descriptor
-    desc_test = get_nth_descriptor(descriptor_set, 4)
-    nn_test = nn_index.nn(desc_test, 3)
-    print("\nNearest Neighbors: ", nn_test)
+    # desc_test = get_nth_descriptor(descriptor_set, 4)
+    # nn_test = nn_index.nn(desc_test, 3)
+    # print("\nNearest Neighbors: ", nn_test)
 
 
 if __name__ == "__main__":
