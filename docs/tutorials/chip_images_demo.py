@@ -1,5 +1,6 @@
 # Script to generate and chip kwcoco geowatch images and
 # create associated 'dummy' descriptors.
+# Descriptors contain some information about active annotations
 # Stores results in a manifest.json file that has image/desciptor pairs
 # with associated file paths.
 

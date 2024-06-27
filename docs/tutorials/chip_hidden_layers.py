@@ -30,7 +30,7 @@ import scriptconfig as scfg
 class DemoModelBuildCLI(scfg.DataConfig):
   DEMODATA_OUTPUT_PATH = str(ub.Path.appdir('smqtk/model_demo'))
   # Define the file paths to store generated data
-  DATA_FPATH = "/home/local/KHQ/paul.beasly/.cache/geowatch/tests/fusion/predict/pred.kwcoco.json"
+  DATA_FPATH = "$HOME/.cache/geowatch/tests/fusion/predict/pred.kwcoco.json"
   window_size = scfg.Value((128, 128), help='Size of the window for slicing the image')
 
 config = DemoModelBuildCLI.cli()
@@ -160,3 +160,5 @@ for ii in range(dset.n_images):
 
 tables = {"Image_Descriptor_Pairs": rows}
 OUTPUT_FPATH.write_text(json.dumps(tables, indent="    "))
+
+print(f"Manifest JSON file written to : {OUTPUT_FPATH}")
