@@ -162,6 +162,7 @@ class PrepareContrivedDescriptorsConfig(scfg.DataConfig):
                 rows.append(row)
 
         tables = {"Image_Descriptor_Pairs": rows}
+        print(f'Write manifest to: {out_mainfest_fpath}')
         out_mainfest_fpath.write_text(json.dumps(tables, indent="    "))
 
 

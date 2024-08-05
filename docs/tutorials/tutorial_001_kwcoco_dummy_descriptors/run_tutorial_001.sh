@@ -41,17 +41,31 @@ developers machine this looks like:
 # Steps to run the IQR demo with a prepopulated descriptor set
 # ---------------------------------------------------------------------------
 
-# A. If not already merged into the main branch, git clone the fork for
-# SMQTK-Descriptors with the branch
-# https://github.com/pbeasly/SMQTK-Descriptors.git@dev/prepopulated_descr_generator
-# and install the package with `pip install e.`
 # Config files use the
 # 'PrePopulatedDescriptorGenerator' class.
 
 
 # Choose a working directory where we can write data
-WORKING_DIRECTORY=$HOME/.cache/smqtk_iqr/demo/tutorial_001_data
-# B. (Optional) Remove previous directories and contents for a clean model build
+#WORKING_DIRECTORY=$HOME/.cache/smqtk_iqr/demo/tutorial_001_data
+WORKING_DIRECTORY=./workdir
+
+
+### Setup Environment Variables
+# The location of all important paths should be knowable a-priori to running
+# this script and potentially before the data is even generated.
+KWCOCO_BUNDLE_DPATH=$WORKING_DIRECTORY/kwcoco_bundle
+KWCOCO_FPATH=$KWCOCO_BUNDLE_DPATH/data.kwcoco.json
+CHIPPED_IMAGES_DPATH=$WORKING_DIRECTORY/processed/chips
+MANIFEST_FPATH=$WORKING_DIRECTORY/processed/manifest.json
+
+echo "
+KWCOCO_BUNDLE_DPATH  = $KWCOCO_BUNDLE_DPATH
+KWCOCO_FPATH         = $KWCOCO_FPATH
+CHIPPED_IMAGES_DPATH = $CHIPPED_IMAGES_DPATH
+MANIFEST_FPATH       = $MANIFEST_FPATH
+"
+
+# (Optional) Remove previous directories and contents for a clean model build
 # rm -rf "$WORKING_DIRECTORY"
 mkdir -p "$WORKING_DIRECTORY"
 
@@ -63,39 +77,49 @@ Generate the demo kwcoco data
 "
 
 # Generate toy datasets using the "kwcoco toydata" tool
-KWCOCO_BUNDLE_DPATH=$WORKING_DIRECTORY/kwcoco_bundle
-KWCOCO_FPATH=$KWCOCO_BUNDLE_DPATH/data.kwcoco.json
-
-CHIPPED_IMAGES_DPATH=$WORKING_DIRECTORY/processed/chips
-MANIFEST_FPATH=$WORKING_DIRECTORY/processed/manifest.json
-
 kwcoco toydata vidshapes2-frames10-amazon --bundle_dpath "$KWCOCO_BUNDLE_DPATH" --dst "$KWCOCO_FPATH"
 
 
-# 1. Generate image chips and contrived descriptors for this kwcoco file.
+echo "
+------
+Step 2
+------
+Convert the kwcoco file into a directory of chipped images with descriptors.
+"
 python prepare_contrived_descriptors.py \
     --coco_fpath "$KWCOCO_FPATH" \
     --out_chips_dpath "$CHIPPED_IMAGES_DPATH" \
     --out_mainfest_fpath "$MANIFEST_FPATH"
 
+
+echo "
+------
+Step 3
+------
+Ingest the images and descriptors into the SMQTK database.
+"
 # NOTE: there is a "workdir" in the runApp configs, which will put outputs in
 # this working directory. TODO: make this specifiable on the CLI here.
-
 # 2. Generate the SMQTK-IQR data set, descriptor set and faiss nnindex
 python ingest_precomputed_descriptors.py \
     --verbose=True \
     --config runApp.IqrSearchApp.json runApp.IqrRestService.json \
     --manifest_fpath "$MANIFEST_FPATH" \
+    --debug_nn_index=True \
     --tab "GEOWATCH_DEMO"
 
-# 3. Run mongodb service if not already started - config is set to use default
-# host and port ://127.0.0.1:27017
-#
+echo "
+Step 4
+------
+Ensure MongoDB is running
+"
 # NOTE: depending on versions of mongo version 3.x for Ubuntu 20.04 is the
 # above command and 7.x for Ubuntu 22.04
 mongo_20_04_startup(){
-    sudo systemctl start mongodb
-    sudo systemctl status mongodb --no-pager
+    if ! systemctl status mongodb --no-pager; then
+        sudo systemctl start mongodb
+        systemctl status mongodb --no-pager
+    fi
 
     # 4. check the status of the service
     mongo --eval "db.getMongo()"
@@ -109,8 +133,10 @@ mongo_20_04_startup(){
 }
 
 mongo_22_04_startup(){
-    sudo systemctl start mongod
-    sudo systemctl status mongod --no-pager
+    if ! systemctl status mongod --no-pager; then
+        sudo systemctl start mongod
+        systemctl status mongod --no-pager
+    fi
     # 4. check the status of the service
     mongosh --eval "db.getMongo()"
     # Should have message:
@@ -127,8 +153,12 @@ else
     mongo_22_04_startup
 fi
 
-# 4. Run the IQR search dispatcher and IQR service from the same directory.
 
+echo "
+Step 5
+------
+Run the IQR search dispatcher and IQR service from the same directory.
+"
 # Following script provides commands to run in two background tmux sessions
 COMMAND="runApplication -v -a IqrService -c runApp.IqrRestService.json"
 SESSION_ID="SMQTK-IQR-SERVICE"
@@ -155,10 +185,8 @@ THE FOLLOWING ARE MANUAL STEPS THE USER MUST TAKE.
 9. You may now interact with the IQR web interface.
 "
 
-
 ## Appendix:  If you want to perform step 5 in separate terminals, run:
-#runApplication -a IqrService \
-#-c runApp.IqrRestService.json
+#runApplication -a IqrService -c runApp.IqrRestService.json
 
 ## In second terminal run the IQRsearch dispatcher
 #runApplication -a IqrSearchDispatcher -c runApp.IqrSearchApp.json

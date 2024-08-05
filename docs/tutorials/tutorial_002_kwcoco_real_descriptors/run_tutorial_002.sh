@@ -320,7 +320,6 @@ kill-sever(){
 }
 
 debugging(){
-
     mongosh --eval "show dbs"
     # Reset SMQTK database
     mongosh --eval "
