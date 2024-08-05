@@ -28,8 +28,9 @@ response.status_code
 
 
 # Changed version of Flask and Wergzeug to older versions
-flask 2.0.1
-werkzeug 2.0.0
+pyversion werkzeug
+pyversion flask
+pip install "werkzeug==2.0.0" "flask==2.0.1"
 
 
 # Error occurs in searchapp file with 'pop_path_info'

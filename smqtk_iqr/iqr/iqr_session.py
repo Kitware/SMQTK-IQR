@@ -329,6 +329,11 @@ class IqrSession ():
 
             # Get working set descriptors
             pool_uids, pool_de = zip(*self.working_set.items())
+            # working_set_items = list(self.working_set)
+            # if len(working_set_items):
+            #     pool_uids, pool_de = zip(*working_set_items)
+            # else:
+            #     pool_uids, pool_de = [], []
             pool = [de.vector() for de in pool_de]
             pool_mat = np.asarray(pool)
             pool_de_mat = np.asarray(pool_de)

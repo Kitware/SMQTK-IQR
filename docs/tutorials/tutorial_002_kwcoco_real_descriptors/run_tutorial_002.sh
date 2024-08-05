@@ -203,7 +203,8 @@ python -m geowatch.tasks.fusion.predict \
     --test_dataset="$TEST_FPATH" \
     --package_fpath="$PACKAGE_FPATH"  \
     --with_hidden_layers=True  \
-    --pred_dataset="$PREDICT_OUTPUT_FPATH"
+    --pred_dataset="$PREDICT_OUTPUT_FPATH" \
+    --devices="0,"
 
 
 # ---------------------------------------------------------------------------
