@@ -196,6 +196,12 @@ Step 3
 Predict deep descriptors for a kwcoco file.
 "
 
+if [[ "$ACCELERATOR" == "gpu" ]]; then
+    PREDICT_DEVICE_ARGS=(--devices="0,")
+else
+    PREDICT_DEVICE_ARGS=()
+fi
+
 # ---------------------------------------------------------------------------
 # Perform the predict operation to generate the hidden layer descriptors
 # and build the kwcoco dataset for IQR
@@ -204,7 +210,7 @@ python -m geowatch.tasks.fusion.predict \
     --package_fpath="$PACKAGE_FPATH"  \
     --with_hidden_layers=True  \
     --pred_dataset="$PREDICT_OUTPUT_FPATH" \
-    --devices="0,"
+     "${PREDICT_DEVICE_ARGS[@]}"
 
 
 # ---------------------------------------------------------------------------
