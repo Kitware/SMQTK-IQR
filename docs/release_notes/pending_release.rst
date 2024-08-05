@@ -51,6 +51,9 @@ Dependency Versions
 
 * Updated readthedocs config
 
+
+* Use sys.exit instead of exit
+
 Changes
 -------
 
