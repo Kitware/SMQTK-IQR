@@ -50,3 +50,8 @@ Dependency Versions
   since recent ipython update appropriately addresses the dependency.
 
 * Updated readthedocs config
+
+Changes
+-------
+
+* Changed READMEs from .md to .rst and improved formatting consistency
