@@ -1,3 +1,4 @@
+#!/usr/bin/env python3
 # Generates models for IQR applcation with prepopulated descriptors.
 # Generates image data set, descriptor set, and nearest neighbors index.
 # Implements the 'PrePopulatedDescriptorGenerator' class
@@ -18,14 +19,14 @@ from smqtk_dataprovider import DataSet
 from smqtk_dataprovider.impls.data_element.file import DataFileElement
 from smqtk_descriptors.descriptor_element_factory import DescriptorElementFactory
 from smqtk_descriptors import DescriptorSet
-from smqtk_indexing import NearestNeighborsIndex
+# from smqtk_indexing import NearestNeighborsIndex
 from smqtk_core.configuration import (
     from_config_dict,
 )
 
 
 # ---------------------------------------------------------------
-class MyConfig(scfg.DataConfig):
+class IngestPrecomputedDescriptorsConfig(scfg.DataConfig):
     """
     Define the configuration class using the scriptconfig package for CLI args
     """
@@ -48,7 +49,7 @@ class MyConfig(scfg.DataConfig):
         ),
         nargs=2,
     )
-    metadata = scfg.Value(
+    manifest_fpath = scfg.Value(
         None,
         short_alias=["m"],
         help=ub.paragraph(
@@ -165,13 +166,16 @@ def get_nth_descriptor(descriptor_set, n):
 # ---------------------------------------------------------------
 def main() -> None:
     # Instantiate the configuration class and gather the arguments
-    args = MyConfig.cli(special_options=False)
+    import rich
+    from rich.markup import escape
+    args = IngestPrecomputedDescriptorsConfig.cli(special_options=False, strict=True)
+    rich.print('config = ' + escape(ub.urepr(args, nl=1)))
 
     # --------------------------------------------------------------
     # Set up config values:
     ui_config_filepath, iqr_config_filepath = args.config
     llevel = logging.DEBUG if args.verbose else logging.INFO
-    manifest_path = args.metadata
+    manifest_path = args.manifest_fpath
     tab = args.tab
 
     # Not using `cli.utility_main_helper`` due to deviating from single-
@@ -220,7 +224,7 @@ def main() -> None:
 
     # Configure NearestNeighborIndex algorithm implementation, parameters and
     # persistent model component locations (if implementation has any).
-    nn_index_config = iqr_plugins_config["neighbor_index"]
+    # nn_index_config = iqr_plugins_config["neighbor_index"]
 
     # --------------------------------------------------------------
     # Remove any existing cache files in data set config file path
@@ -245,9 +249,9 @@ def main() -> None:
     )
 
     # Create instance of the class NearestNeighborsIndex from the configuration
-    nn_index: NearestNeighborsIndex = from_config_dict(
-        nn_index_config, NearestNeighborsIndex.get_impls()
-    )
+    # nn_index: NearestNeighborsIndex = from_config_dict(
+    #     nn_index_config, NearestNeighborsIndex.get_impls()
+    # )
 
     # Generate data set and descriptor set from the JSON manifest file
     data_set, descriptor_set = generate_sets(
