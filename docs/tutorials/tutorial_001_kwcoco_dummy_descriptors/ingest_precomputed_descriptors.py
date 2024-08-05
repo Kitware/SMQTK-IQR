@@ -9,6 +9,7 @@ import os.path as osp
 import os
 import json
 import numpy as np
+import sys
 
 import ubelt as ub
 import scriptconfig as scfg
@@ -19,7 +20,7 @@ from smqtk_dataprovider import DataSet
 from smqtk_dataprovider.impls.data_element.file import DataFileElement
 from smqtk_descriptors.descriptor_element_factory import DescriptorElementFactory
 from smqtk_descriptors import DescriptorSet
-# from smqtk_indexing import NearestNeighborsIndex
+from smqtk_indexing import NearestNeighborsIndex
 from smqtk_core.configuration import (
     from_config_dict,
 )
@@ -71,6 +72,8 @@ class IngestPrecomputedDescriptorsConfig(scfg.DataConfig):
             """
         ),
     )
+
+    debug_nn_index = scfg.Value(False, isflag=1, help='if True, test to see if a NN index can be created and works')
 
 
 # ---------------------------------------------------------------
@@ -194,14 +197,14 @@ def main() -> None:
     # Ensure the given "tab" exists in UI configuration.
     if tab is None:
         log.error("No configuration tab provided to drive model generation.")
-        exit(1)
+        sys.exit(1)
     if tab not in ui_config["iqr_tabs"]:
         log.error(
             "Invalid tab provided: '{}'. Available tags: {}".format(
                 tab, list(ui_config["iqr_tabs"])
             )
         )
-        exit(1)
+        sys.exit(1)
 
     # ----------------------------------------------------------------
     # Gather Configurations
@@ -224,7 +227,7 @@ def main() -> None:
 
     # Configure NearestNeighborIndex algorithm implementation, parameters and
     # persistent model component locations (if implementation has any).
-    # nn_index_config = iqr_plugins_config["neighbor_index"]
+    nn_index_config = iqr_plugins_config["neighbor_index"]
 
     # --------------------------------------------------------------
     # Remove any existing cache files in data set config file path
@@ -249,9 +252,9 @@ def main() -> None:
     )
 
     # Create instance of the class NearestNeighborsIndex from the configuration
-    # nn_index: NearestNeighborsIndex = from_config_dict(
-    #     nn_index_config, NearestNeighborsIndex.get_impls()
-    # )
+    nn_index: NearestNeighborsIndex = from_config_dict(
+        nn_index_config, NearestNeighborsIndex.get_impls()
+    )
 
     # Generate data set and descriptor set from the JSON manifest file
     data_set, descriptor_set = generate_sets(
@@ -262,13 +265,16 @@ def main() -> None:
     print(f"Descriptor set for IQR model with {descriptor_set.count()} elements created\n")
 
     # Debuggint/Test - test the nearest neighbors index operation works
-    # log.info("Building nearest neighbors index {}".format(nn_index))
-    # nn_index.build_index(descriptor_set)
+    if args.debug_nn_index:
+        log.info("Building nearest neighbors index {}".format(nn_index))
+        nn_index.build_index(descriptor_set)
 
-    # Debugging/Test - test nnindex with a descriptor
-    # desc_test = get_nth_descriptor(descriptor_set, 4)
-    # nn_test = nn_index.nn(desc_test, 3)
-    # print("\nNearest Neighbors: ", nn_test)
+        # Debugging/Test - test nnindex with a descriptor
+        test_query_desc = get_nth_descriptor(descriptor_set, 4)
+        print(f'Testing query with: {test_query_desc}')
+        nearest_descriptors, nearest_distances = nn_index.nn(test_query_desc, 3)
+        print(f'nearest_descriptors = {ub.urepr(nearest_descriptors, nl=1)}')
+        print(f'nearest_distances = {ub.urepr(nearest_distances, nl=1)}')
 
 
 if __name__ == "__main__":
