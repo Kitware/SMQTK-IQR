@@ -24,22 +24,10 @@ Workaround issue by installing specific versions
 pip install flask==2.0.1 werkzeug==2.0.0
 
 Also need the faiss library to be installed
-pip install faiss-cpu
+pip install faiss-cpu==1.8.0
+pip install "psycopg2-binary>=2.9.5,<3.0.0"
 
-Install Mongo:
-https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
-
-curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
-  sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg \
-  --dearmor
-
-  echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] \
-  https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | \
-  sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-
-  sudo apt-get install -y mongodb-org
-
-  sudo systemctl start mongod
+To install MongoDB see: ../../environment/installing_mongodb.rst
 
 This script should be run from inside the tutorial directory. E.g. on the
 developers machine this looks like:

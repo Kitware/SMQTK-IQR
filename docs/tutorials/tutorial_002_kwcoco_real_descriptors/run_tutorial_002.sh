@@ -42,21 +42,10 @@ Workaround issue by installing specific versions
 pip install flask==2.0.1 werkzeug==2.0.0
 
 Also need the faiss library to be installed
-pip install faiss-cpu
+pip install faiss-cpu==1.8.0
+pip install "psycopg2-binary>=2.9.5,<3.0.0"
 
-Install Mongo:
-https://www.mongodb.com/docs/manual/tutorial/install-mongodb-on-ubuntu/
-
-curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
-  sudo gpg -o /usr/share/keyrings/mongodb-server-7.0.gpg \
-  --dearmor
-
-  echo "deb [ arch=amd64,arm64 signed-by=/usr/share/keyrings/mongodb-server-7.0.gpg ] \
-  https://repo.mongodb.org/apt/ubuntu jammy/mongodb-org/7.0 multiverse" | \
-  sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
-
-  sudo apt-get install -y mongodb-org
-  sudo systemctl start mongod
+To install MongoDB see: ../../environment/installing_mongodb.rst
 
 This script should be run from inside the tutorial directory. E.g. on the
 developers machine this looks like:
@@ -67,7 +56,8 @@ developers machine this looks like:
 '
 
 # Choose a working directory where we can write data
-WORKING_DIRECTORY=$HOME/.cache/smqtk_iqr/demo/tutorial_002_data
+#WORKING_DIRECTORY=$HOME/.cache/smqtk_iqr/demo/tutorial_002_data
+WORKING_DIRECTORY=./workdir
 
 # Choose cpu or gpu
 if nvidia-smi > /dev/null ; then
@@ -145,26 +135,25 @@ if [ ! -f "$PACKAGE_FPATH" ]; then
         channels             : 'r|g|b'
         time_steps           : 5
         chip_dims            : 128
-        batch_size           : 3
+        batch_size           : 2
     model:
         class_path: MultimodalTransformer
         init_args:
-            name        : ToyRGB_Demo_V001
-            arch_name   : smt_it_stm_p8
-            global_box_weight: 1
+            name              : ToyRGB_Demo_V001
+            arch_name         : smt_it_stm_p8
+            global_box_weight : 1
     optimizer:
       class_path: torch.optim.AdamW
       init_args:
-        lr: 3e-4
-        weight_decay: 3e-5
+        lr           : 3e-4
+        weight_decay : 3e-5
     trainer:
       default_root_dir     : $TRAINING_ROOT_DIR
       accelerator          : $ACCELERATOR
       devices              : 1
-      #devices              : 0,
-      max_steps: 32
-      num_sanity_val_steps: 0
-      limit_val_batches    : 2
+      max_steps            : 2
+      num_sanity_val_steps : 0
+      limit_val_batches    : 1
       limit_train_batches  : 4
     "
 
@@ -193,6 +182,9 @@ echo "
 Step 3
 ------
 Predict deep descriptors for a kwcoco file.
+
+Perform the predict operation to generate the hidden layer descriptors and
+build the kwcoco dataset for IQR
 "
 
 if [[ "$ACCELERATOR" == "gpu" ]]; then
@@ -200,10 +192,6 @@ if [[ "$ACCELERATOR" == "gpu" ]]; then
 else
     PREDICT_DEVICE_ARGS=()
 fi
-
-# ---------------------------------------------------------------------------
-# Perform the predict operation to generate the hidden layer descriptors
-# and build the kwcoco dataset for IQR
 python -m geowatch.tasks.fusion.predict \
     --test_dataset="$TEST_FPATH" \
     --package_fpath="$PACKAGE_FPATH"  \
@@ -212,7 +200,6 @@ python -m geowatch.tasks.fusion.predict \
      "${PREDICT_DEVICE_ARGS[@]}"
 
 
-# ---------------------------------------------------------------------------
 echo "
 Step 4
 ------
@@ -231,13 +218,13 @@ Step 5
 Build the models for IQR. Generate the SMQTK-IQR data set, descriptor set and faiss nnindex
 "
 
-
 # NOTE: there is a "workdir" in the runApp configs, which will put outputs in
 # this working directory. TODO: make this specifiable on the CLI here.
 python ingest_precomputed_descriptors.py \
     --verbose=True \
     --config runApp.IqrSearchApp.json runApp.IqrRestService.json \
     --manifest_fpath "$MANIFEST_FPATH" \
+    --debug_nn_index=True \
     --tab "GEOWATCH_DEMO"
 
 
@@ -249,8 +236,10 @@ Ensure MongoDB is running
 # NOTE: depending on versions of mongo version 3.x for Ubuntu 20.04 is the
 # above command and 7.x for Ubuntu 22.04
 mongo_20_04_startup(){
-    sudo systemctl start mongodb
-    sudo systemctl status mongodb --no-pager
+    if ! systemctl status mongodb --no-pager; then
+        sudo systemctl start mongodb
+        systemctl status mongodb --no-pager
+    fi
 
     # 4. check the status of the service
     mongo --eval "db.getMongo()"
@@ -264,8 +253,10 @@ mongo_20_04_startup(){
 }
 
 mongo_22_04_startup(){
-    sudo systemctl start mongod
-    sudo systemctl status mongod --no-pager
+    if ! systemctl status mongod --no-pager; then
+        sudo systemctl start mongod
+        systemctl status mongod --no-pager
+    fi
     # 4. check the status of the service
     mongosh --eval "db.getMongo()"
     # Should have message:
@@ -320,3 +311,19 @@ THE FOLLOWING ARE MANUAL STEPS THE USER MUST TAKE.
 
 ## In second terminal run the IQRsearch dispatcher
 #runApplication -a IqrSearchDispatcher -c runApp.IqrSearchApp.json
+
+kill-sever(){
+    SESSION_ID="SMQTK-IQR-SERVICE"
+    tmux kill-session -t "$SESSION_ID" 2> /dev/null || true
+    SESSION_ID="SMQTK-IQR-SEARCH-DISPATCHER"
+    tmux kill-session -t "$SESSION_ID" 2> /dev/null || true
+}
+
+debugging(){
+
+    mongosh --eval "show dbs"
+    # Reset SMQTK database
+    mongosh --eval "
+    use smqtk; db.dropDatabase()
+    "
+}
