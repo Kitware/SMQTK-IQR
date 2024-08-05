@@ -7,12 +7,12 @@ import logging
 import os.path as osp
 import os
 import json
-import os
 import numpy as np
 
-# SMQTK specific packages
 import ubelt as ub
 import scriptconfig as scfg
+
+# SMQTK specific packages
 from smqtk_iqr.utils import cli
 from smqtk_dataprovider import DataSet
 from smqtk_dataprovider.impls.data_element.file import DataFileElement

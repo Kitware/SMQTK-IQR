@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # --------------------------------------------------------------------------
 # IQR demo with PrePopulated Hidden Layer/Activations Descriptors
 # ---------------------------------------------------------------------------
@@ -62,6 +63,13 @@ curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
 
 export ACCELERATOR="${ACCELERATOR:-gpu}"
 
+echo "
+------
+Step 1
+------
+Generate the demo kwcoco data
+"
+
 DVC_DATA_DPATH=$HOME/data/dvc-repos/toy_data_dvc
 DVC_EXPT_DPATH=$HOME/data/dvc-repos/toy_expt_dvc
 TRAIN_FPATH=$DVC_DATA_DPATH/vidshapes_rgb_train/data.kwcoco.json
@@ -72,6 +80,15 @@ TEST_FPATH=$DVC_DATA_DPATH/vidshapes_rgb_test/data.kwcoco.json
 kwcoco toydata vidshapes2-frames10-amazon --bundle_dpath "$DVC_DATA_DPATH"/vidshapes_rgb_train
 kwcoco toydata vidshapes4-frames10-amazon --bundle_dpath "$DVC_DATA_DPATH"/vidshapes_rgb_vali
 kwcoco toydata vidshapes2-frames6-amazon --bundle_dpath "$DVC_DATA_DPATH"/vidshapes_rgb_test
+
+
+echo "
+------
+Step 2
+------
+The next step is to train a small model on these images.
+This step is only needed if you don't already have a pretrained model.
+"
 
 WORKDIR=$DVC_EXPT_DPATH/training/$HOSTNAME/$USER
 EXPERIMENT_NAME=ToyRGB_Demo_V001
@@ -126,6 +143,14 @@ PACKAGE_FPATH=$(python -c "if 1:
         print(cand[-1])
 ")
 echo "$PACKAGE_FPATH"
+
+
+echo "
+------
+Step 3
+------
+Predict deep descriptors for a kwcoco file.
+"
 
 # ---------------------------------------------------------------------------
 # Perform the predict operation to generate the hidden layer descriptors
