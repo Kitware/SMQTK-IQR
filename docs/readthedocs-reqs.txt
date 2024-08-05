@@ -1,5 +1,4 @@
-sphinx >= 3.5.3
-sphinx_rtd_theme >= 0.5.1
-# SMQTK specific documentation depedencies
-sphinx-argparse==0.2.5
-sphinx-prompt==1.4.0
+# Additional requirements for building our documentation in RTD
+sphinx-argparse>=0.4
+sphinx-prompt>=1.8.0
+sphinx_rtd_theme>=2.0.0

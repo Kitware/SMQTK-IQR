@@ -1,5 +1,5 @@
 [build-system]
-requires = ["poetry-core>=1.6.0"]
+requires = ["poetry-core>=1.9"]
 build-backend = "poetry.core.masonry.api"
 
 ###############################################################################
@@ -17,38 +17,38 @@ repository = "https://github.com/Kitware/SMQTK-IQR"
 documentation = "https://smqtk-iqr.readthedocs.io/"
 
 [tool.poetry.dependencies]
-python = "^3.7"
-smqtk-indexing = ">=0.17.0"
-smqtk-relevancy = ">=0.16.1"
-smqtk-descriptors = ">=0.18.1"
-smqtk-core = ">=0.18"
-smqtk-dataprovider = ">=0.16.0"
-Flask = "^2.0.1"
-pymongo = "^3.12.0"
-Flask-Cors = "^3.0.10"
-imageio = "^2.9.0"
-Flask-BasicAuth = "^0.2.0"
+python = "^3.9"
+smqtk-core = ">=0.19"
+smqtk-dataprovider = ">=0.18.0"
+smqtk-descriptors = ">=0.19.0"
+smqtk-indexing = ">=0.18"
+smqtk-relevancy = ">=0.17"
+Flask = ">=2.0.1"
+pymongo = ">=3.12.0"
+Flask-Cors = ">=3.0.10"
+imageio = ">=2.9.0"
+Flask-BasicAuth = ">=0.2.0"
 smqtk-classifier = ">=0.18.0"
-Pillow = "^8.3.2"
+Pillow = ">=8.3.2"
 
 [tool.poetry.dev-dependencies]
 # CI
-flake8 = "^3.9.0"
-flake8-mutable = "^1.2.0"
-mypy = "^0.812"
+flake8 = ">=3.9.0"
+flake8-mutable = ">=1.2.0"
+mypy = ">=0.812"
 # Docs
 # - Also see: `docs/readthedocs-reqs.txt` for use by RTD
-Sphinx = "^3.5.3"
-sphinx-rtd-theme = "^0.5.1"
-sphinx-argparse = "^0.2.5"
-sphinx-prompt = "^1.4.0"
-livereload = "^2.6.3"
+Sphinx = ">=3.5.3"
+sphinx-rtd-theme = ">=0.5.1"
+sphinx-argparse = ">=0.2.5"
+sphinx-prompt = ">=1.4.0"
+livereload = ">=2.6.3"
 # Testing
-coverage = "^5.5"
-pytest = "^6.2.5"
-pytest-cov = "^3.0.0"
+coverage = ">=5.5"
+pytest = ">=6.2.5"
+pytest-cov = ">=3.0.0"
 # Development
-ipython = "^7.16.3"
+ipython = ">=7.16.3"
 
 [tool.poetry.plugins."smqtk_plugins"]
 #IQRServer
