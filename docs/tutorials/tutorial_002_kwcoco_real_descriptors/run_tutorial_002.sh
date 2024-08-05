@@ -10,7 +10,7 @@ The overall process is outlined as follows:
 1. Generate a geowatch toydata set based upon the code in Geowatch Tutorial 1.
 2. Perform the geowatch.fusion.predict operation to generate the hidden layer
    descriptors, and stitch them back to form the kwcoco data set.
-3. Build the IQR model using the build_models_demo.py script.
+3. Build the IQR model using the ingest_precomputed_descriptors.py script.
 4. Run the IQR service and search dispatcher with the config files provided
 in the tutorials directory.
 
@@ -24,8 +24,8 @@ were removed in werkzeug 2.3.0 release that were deprecated in 2.2.0. These
 methods are used by the IQR Search Dispatcher that generates the link for
 each IQR instance `smqtk/smqtk_iqr/web/search_app/__init__.py`.
 
-The `build_models_demo.py` script is used to generate the descriptor set
-without calling the methods in one of the descriptor generator
+The `ingest_precomputed_descriptors.py` script is used to generate the
+descriptor set without calling the methods in one of the descriptor generator
 modules. Using the PrePopulatedDescriptorGenerator class, the descriptor set
 is generated from a manifest file that contains the paths to the image files
 and the corresponding descriptor files. The manifest file is created by the
@@ -56,7 +56,6 @@ curl -fsSL https://www.mongodb.org/static/pgp/server-7.0.asc | \
   sudo tee /etc/apt/sources.list.d/mongodb-org-7.0.list
 
   sudo apt-get install -y mongodb-org
-
   sudo systemctl start mongod
 
 This script should be run from inside the tutorial directory. E.g. on the
