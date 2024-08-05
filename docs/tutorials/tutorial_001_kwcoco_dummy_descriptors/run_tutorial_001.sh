@@ -46,7 +46,7 @@ developers machine this looks like:
 
 .. code:: bash
 
-    cd ~/code/smqtk-repos/SMQTK-IQR/docs/tutorials/tutorial_001_kwcoco_dummy_descriptors/
+    cd ~/code/smqtk-repos/SMQTK-IQR/docs/tutorials/tutorial_001_kwcoco_dummy_descriptors
 '
 
 # ---------------------------------------------------------------------------
@@ -67,6 +67,13 @@ WORKING_DIRECTORY=$HOME/.cache/smqtk_iqr/demo/tutorial_001_data
 # rm -rf "$WORKING_DIRECTORY"
 mkdir -p "$WORKING_DIRECTORY"
 
+echo "
+------
+Step 1
+------
+Generate the demo kwcoco data
+"
+
 # Generate toy datasets using the "kwcoco toydata" tool
 KWCOCO_BUNDLE_DPATH=$WORKING_DIRECTORY/kwcoco_bundle
 KWCOCO_FPATH=$KWCOCO_BUNDLE_DPATH/data.kwcoco.json
@@ -78,7 +85,7 @@ kwcoco toydata vidshapes2-frames10-amazon --bundle_dpath "$KWCOCO_BUNDLE_DPATH" 
 
 
 # 1. Generate image chips and contrived descriptors for this kwcoco file.
-python precompute_contrived_descriptors.py \
+python prepare_contrived_descriptors.py \
     --coco_fpath "$KWCOCO_FPATH" \
     --out_chips_dpath "$CHIPPED_IMAGES_DPATH" \
     --out_mainfest_fpath "$MANIFEST_FPATH"
@@ -100,7 +107,7 @@ python ingest_precomputed_descriptors.py \
 # above command and 7.x for Ubuntu 22.04
 mongo_20_04_startup(){
     sudo systemctl start mongodb
-    sudo systemctl status mongodb
+    sudo systemctl status mongodb --no-pager
 
     # 4. check the status of the service
     mongo --eval "db.getMongo()"
@@ -115,7 +122,7 @@ mongo_20_04_startup(){
 
 mongo_22_04_startup(){
     sudo systemctl start mongod
-    sudo systemctl status mongod
+    sudo systemctl status mongod --no-pager
     # 4. check the status of the service
     mongosh --eval "db.getMongo()"
     # Should have message:

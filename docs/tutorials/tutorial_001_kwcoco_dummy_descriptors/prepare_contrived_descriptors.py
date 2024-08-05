@@ -11,7 +11,7 @@ import scriptconfig as scfg
 import ubelt as ub
 
 
-class PrecomputeContrivedDescriptorsConfig(scfg.DataConfig):
+class PrepareContrivedDescriptorsConfig(scfg.DataConfig):
     """
     Creates chips and contrived descriptors for images in a kwcoco dataset.
     """
@@ -165,7 +165,7 @@ class PrecomputeContrivedDescriptorsConfig(scfg.DataConfig):
         out_mainfest_fpath.write_text(json.dumps(tables, indent="    "))
 
 
-__cli__ = PrecomputeContrivedDescriptorsConfig
+__cli__ = PrepareContrivedDescriptorsConfig
 
 if __name__ == '__main__':
     """

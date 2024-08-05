@@ -8,3 +8,6 @@ this turns out to work surprisingly well as shown by [DeepCluster]_.
 
 
 .. [DeepCluster] https://openaccess.thecvf.com/content_ECCV_2018/papers/Mathilde_Caron_Deep_Clustering_for_ECCV_2018_paper.pdf
+
+The script `./run_tutorial_002.sh` is a well-documented bash script that you
+should step through manually to understand the individual steps of the process.

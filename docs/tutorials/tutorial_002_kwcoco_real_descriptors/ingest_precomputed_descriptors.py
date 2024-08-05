@@ -1,0 +1,1 @@
+/home/joncrall/code/smqtk-repos/SMQTK-IQR/docs/tutorials/tutorial_001_kwcoco_dummy_descriptors/ingest_precomputed_descriptors.py

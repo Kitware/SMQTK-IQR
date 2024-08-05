@@ -5,10 +5,6 @@ Script to chip images with associated descriptors in the dataset
 Script to generate and chip kwcoco geowatch images and
 Stores results in a manifest.json file that has image/desciptor pairs
 with associated file paths.
-
-Need to navigate to folder containing the JSON file predict file
-
-$ cd /home/local/KHQ/paul.beasly/.cache/geowatch/tests/fusion/predict
 """
 # Standard libraries
 import numpy as np
@@ -25,10 +21,11 @@ import kwutil
 import scriptconfig as scfg
 
 
-class DemoModelBuildCLI(scfg.DataConfig):
-    demodata_output_path = str(ub.Path.appdir('smqtk/model_demo'))
-
-    DATA_FPATH = scfg.Value("$HOME/.cache/geowatch/tests/fusion/predict/pred.kwcoco.json", help='Define the file paths to store generated data')
+class PrepareRealDescriptorsConfig(scfg.DataConfig):
+    # Define the file paths to store generated data
+    coco_fpath = scfg.Value(None, help='input kwcoco file to create chips / descriptors for')
+    out_chips_dpath = scfg.Value('./chipped_images', help='Path to output the chips and their descriptors')
+    out_mainfest_fpath = scfg.Value('manifest.json', help='Path that references all output data')
 
     window_size = scfg.Value((128, 128), help='Size of the window for slicing the image')
 
@@ -49,15 +46,13 @@ class DemoModelBuildCLI(scfg.DataConfig):
                          special_options=False)
         rich.print('config = ' + rich.markup.escape(ub.urepr(config, nl=1)))
 
-        config.demodata_output_path = ub.Path(config.demodata_output_path).ensuredir()
-        CHIPPED_IMAGES_DPATH = (config.demodata_output_path) / "chipped"
-        OUTPUT_FPATH = (config.demodata_output_path) / "manifest.json"
+        # Create the directory to store chipped images if it does not exist
+        out_mainfest_fpath = ub.Path(config.out_mainfest_fpath)
+        out_images_dpath = ub.Path(config.out_chips_dpath)
+        out_images_dpath.ensuredir()
 
         # Instantiate the kwcoco.CocoDataset object from the loaded JSON data
-        dset = kwcoco.CocoDataset(config.DATA_FPATH)
-
-        # Create the directory to store chipped images if it does not exist
-        CHIPPED_IMAGES_DPATH.ensuredir()
+        dset = kwcoco.CocoDataset.coerce(config.coco_fpath)
 
         # Define the dimensions of the window slider for image chips
         window = kwutil.Yaml.coerce(config.window_size)
@@ -66,10 +61,7 @@ class DemoModelBuildCLI(scfg.DataConfig):
         rows = []
 
         # Outer loop for each image in dataset
-        for ii in range(dset.n_images):
-
-            # Select image for slicing/chipping
-            image_id = dset.images()[ii]
+        for image_id in dset.images():
 
             # Generate a coco_image class object from the data set using the image id
             coco_image = dset.coco_image(image_id)
@@ -106,13 +98,6 @@ class DemoModelBuildCLI(scfg.DataConfig):
             slider = kwarray.SlidingWindow(shape, window, allow_overshoot=True)
             # print("\n slider params: ", slider, '\n')
 
-            # TODO: this needs to have a consistent ordering if the descriptors
-            # are used with other toy datasets
-
-            # Define the number of descriptor dimensions from number of categories
-            # categories = dset.object_categories()
-            # descriptor_dims = len(categories) * 2
-
             # Chipping/slicing loop using ub.ProgIter and slider args.
             for index in ub.ProgIter(slider, desc="sliding a window", verbose=3):
 
@@ -144,7 +129,7 @@ class DemoModelBuildCLI(scfg.DataConfig):
                 # Generate file paths
                 part_image = kwimage.ensure_uint255(part_image)
                 suffix = f"img_{image_id:05d}-xywh={x:04d}_{y:04d}_{w:03d}_{h:03d}.png"
-                slice_path = CHIPPED_IMAGES_DPATH / suffix
+                slice_path = out_images_dpath / suffix
                 slice_desc_path = slice_path.augment(stemsuffix="_desc", ext=".json")
 
                 # Save image chip/slice to the path defined above
@@ -166,12 +151,13 @@ class DemoModelBuildCLI(scfg.DataConfig):
                 rows.append(row)
 
         tables = {"Image_Descriptor_Pairs": rows}
-        OUTPUT_FPATH.write_text(json.dumps(tables, indent="    "))
+        out_mainfest_fpath.parent.ensuredir()
+        out_mainfest_fpath.write_text(json.dumps(tables, indent="    "))
 
-        print(f"Manifest JSON file written to : {OUTPUT_FPATH}")
+        print(f"Manifest JSON file written to : {out_mainfest_fpath}")
 
 
-__cli__ = DemoModelBuildCLI
+__cli__ = PrepareRealDescriptorsConfig
 
 
 if __name__ == '__main__':
