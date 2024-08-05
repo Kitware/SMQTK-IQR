@@ -32,6 +32,12 @@ and the corresponding descriptor files. The manifest file is created by the
 chip_images_demo.py script that generates image chips from kwcoco images and
 builds dummy descriptor files.
 
+
+This will require geowatch:
+
+pip install geowatch
+geowatch finish_install
+
 Workaround issue by installing specific versions
 pip install flask==2.0.1 werkzeug==2.0.0
 
@@ -61,15 +67,15 @@ developers machine this looks like:
     cd $HOME/code/smqtk-repos/SMQTK-IQR/docs/tutorials/tutorial_002_kwcoco_real_descriptors
 '
 
+# Choose a working directory where we can write data
+WORKING_DIRECTORY=$HOME/.cache/smqtk_iqr/demo/tutorial_002_data
+
 # Choose cpu or gpu
 if nvidia-smi > /dev/null ; then
     export ACCELERATOR="${ACCELERATOR:-gpu}"
 else
     export ACCELERATOR="${ACCELERATOR:-cpu}"
 fi
-
-# Choose a working directory where we can write data
-WORKING_DIRECTORY=$HOME/.cache/smqtk_iqr/demo/tutorial_002_data
 
 ### Setup Environment Variables
 # The location of all important paths should be knowable a-priori to running
@@ -86,7 +92,8 @@ TEST_FPATH=$KWCOCO_SPLITS_DPATH/vidshapes_rgb_test/data.kwcoco.json
 PREDICT_DPATH=$WORKING_DIRECTORY/predictions
 PREDICT_OUTPUT_FPATH="$PREDICT_DPATH"/pred.kwcoco.json
 
-PACKAGE_FPATH="$DEFAULT_ROOT_DIR"/deep_model.pt
+TRAINING_ROOT_DIR=$WORKING_DIRECTORY/training/$HOSTNAME/$USER/ToyRGB/runs/ToyRGB_Demo_V001
+PACKAGE_FPATH="$TRAINING_ROOT_DIR"/deep_model.pt
 
 echo "
 ACCELERATOR          = $ACCELERATOR
@@ -125,65 +132,61 @@ echo "
 Step 2
 ------
 The next step is to train a small model on these images.
-This step is only needed if you don't already have a pretrained model.
 "
 
-WORKDIR=$WORKING_DIRECTORY/training/$HOSTNAME/$USER
-EXPERIMENT_NAME=ToyRGB_Demo_V001
-DATASET_CODE=ToyRGB
-DEFAULT_ROOT_DIR=$WORKDIR/$DATASET_CODE/runs/$EXPERIMENT_NAME
-MAX_STEPS=32
-TARGET_LR=3e-4
-WEIGHT_DECAY=$(python -c "print($TARGET_LR * 1e-2)")
-python -m geowatch.tasks.fusion fit --config "
-data:
-    num_workers          : 0
-    train_dataset        : $TRAIN_FPATH
-    vali_dataset         : $VALI_FPATH
-    channels             : 'r|g|b'
-    time_steps           : 5
-    chip_dims            : 128
-    batch_size           : 3
-model:
-    class_path: MultimodalTransformer
-    init_args:
-        name        : $EXPERIMENT_NAME
-        arch_name   : smt_it_stm_p8
-        global_box_weight: 1
-optimizer:
-  class_path: torch.optim.AdamW
-  init_args:
-    lr: $TARGET_LR
-    weight_decay: $WEIGHT_DECAY
-trainer:
-  default_root_dir     : $DEFAULT_ROOT_DIR
-  accelerator          : $ACCELERATOR
-  devices              : 1
-  #devices              : 0,
-  max_steps: $MAX_STEPS
-  num_sanity_val_steps: 0
-  limit_val_batches    : 2
-  limit_train_batches  : 4
-"
+# This step is only needed if the pretrained model doesnt exist
+# (or you want to retrain with different hyperparams, but for this
+#  demo it doesnt matter)
+if [ ! -f "$PACKAGE_FPATH" ]; then
+    python -m geowatch.tasks.fusion fit --config "
+    data:
+        num_workers          : 0
+        train_dataset        : $TRAIN_FPATH
+        vali_dataset         : $VALI_FPATH
+        channels             : 'r|g|b'
+        time_steps           : 5
+        chip_dims            : 128
+        batch_size           : 3
+    model:
+        class_path: MultimodalTransformer
+        init_args:
+            name        : ToyRGB_Demo_V001
+            arch_name   : smt_it_stm_p8
+            global_box_weight: 1
+    optimizer:
+      class_path: torch.optim.AdamW
+      init_args:
+        lr: 3e-4
+        weight_decay: 3e-5
+    trainer:
+      default_root_dir     : $TRAINING_ROOT_DIR
+      accelerator          : $ACCELERATOR
+      devices              : 1
+      #devices              : 0,
+      max_steps: 32
+      num_sanity_val_steps: 0
+      limit_val_batches    : 2
+      limit_train_batches  : 4
+    "
 
-# Ensure that a model package is written to the place we expect it to be.
-# The training process is a bit wonky with our assumption that we can
-# know the locations of intermediate files a-priori. In a production
-# use-case, you would know where this model filepath is.
-python -c "if 1:
-    import pathlib
-    import shutil
-    package_fpath = pathlib.Path(r'$PACKAGE_FPATH')
-    if not package_fpath.exists():
-        default_root = pathlib.Path(r'$DEFAULT_ROOT_DIR')
-        pkg = default_root / 'final_package.pt'
-        if not pkg.exists():
-            cand = sorted(default_root.glob('package-interupt/*.pt'))
-            assert len(cand)
-            pkg = cand[-1]
-        shutil.copy(pkg, package_fpath)
-"
-echo "$PACKAGE_FPATH"
+    # Ensure that a model package is written to the place we expect it to be.
+    # The training process is a bit wonky with our assumption that we can
+    # know the locations of intermediate files a-priori. In a production
+    # use-case, you would know where this model filepath is.
+    python -c "if 1:
+        import pathlib
+        import shutil
+        package_fpath = pathlib.Path(r'$PACKAGE_FPATH')
+        if not package_fpath.exists():
+            default_root = pathlib.Path(r'$TRAINING_ROOT_DIR')
+            pkg = default_root / 'final_package.pt'
+            if not pkg.exists():
+                cand = sorted(default_root.glob('package-interupt/*.pt'))
+                assert len(cand)
+                pkg = cand[-1]
+            shutil.copy(pkg, package_fpath)
+    "
+fi
 
 
 echo "
@@ -210,25 +213,21 @@ Step 4
 Generate image chips with hidden layer descriptors
 "
 
-
-# A. (Optional) Remove previous directories and contents for a clean model build
-# /smqtk_iqr/demodata
-# /smqtk_iqr/docs/tutorials/models and /workdir
-
 python prepare_real_descriptors.py \
     --coco_fpath "$PREDICT_OUTPUT_FPATH" \
     --out_chips_dpath "$CHIPPED_IMAGES_DPATH" \
     --out_mainfest_fpath "$MANIFEST_FPATH"
 
 
-# cat $OUTPUT_DPATH
-#
 echo "
 Step 5
 ------
 Build the models for IQR. Generate the SMQTK-IQR data set, descriptor set and faiss nnindex
 "
 
+
+# NOTE: there is a "workdir" in the runApp configs, which will put outputs in
+# this working directory. TODO: make this specifiable on the CLI here.
 python ingest_precomputed_descriptors.py \
     --verbose=True \
     --config runApp.IqrSearchApp.json runApp.IqrRestService.json \
