@@ -51,6 +51,11 @@ Dependency Versions
 
 * Updated readthedocs config
 
+* Updated pillow requirement to allow for more recent versions.
+
+* Fixed issue with flask cookies to be compatible with newer and older versions of flask.
+
+
 Changes
 -------
 
