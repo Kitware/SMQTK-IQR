@@ -159,6 +159,9 @@ Step 5
 ------
 Run the IQR search dispatcher and IQR service from the same directory.
 "
+
+# NOTE: ensure the relevant venv is activated in the new sessions.
+
 # Following script provides commands to run in two background tmux sessions
 COMMAND="runApplication -v -a IqrService -c runApp.IqrRestService.json"
 SESSION_ID="SMQTK-IQR-SERVICE"
