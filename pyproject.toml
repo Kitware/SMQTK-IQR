@@ -29,7 +29,7 @@ Flask-Cors = "^3.0.10"
 imageio = "^2.9.0"
 Flask-BasicAuth = "^0.2.0"
 smqtk-classifier = ">=0.18.0"
-Pillow = "^8.3.2"
+Pillow = ">=8.3.2"
 
 [tool.poetry.dev-dependencies]
 # CI

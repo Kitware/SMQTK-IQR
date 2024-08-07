@@ -1,0 +1,1 @@
+../tutorial_001_kwcoco_dummy_descriptors/ingest_precomputed_descriptors.py
