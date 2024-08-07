@@ -55,3 +55,6 @@ Changes
 -------
 
 * Changed READMEs from .md to .rst and improved formatting consistency
+
+* The "Toggle Random Results" and "Refine" buttons are now enabled by default
+  to let the user test database images as queries.
