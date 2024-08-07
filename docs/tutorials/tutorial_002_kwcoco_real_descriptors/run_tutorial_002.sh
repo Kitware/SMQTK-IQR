@@ -229,6 +229,35 @@ python ingest_precomputed_descriptors.py \
 
 
 echo "
+Step 6
+------
+Ensure MongoDB is running
+"
+# NOTE: depending on versions of mongo version 3.x for Ubuntu 20.04 is the
+# above command and 7.x for Ubuntu 22.04
+mongo_20_04_startup(){
+    if ! systemctl status mongodb --no-pager; then
+        sudo systemctl start mongodb
+        systemctl status mongodb --no-pager
+    fi
+}
+
+mongo_22_04_startup(){
+    if ! systemctl status mongod --no-pager; then
+        sudo systemctl start mongod
+        systemctl status mongod --no-pager
+    fi
+}
+
+if lsb_release -a | grep "Ubuntu 20.04" ; then
+    mongo_20_04_startup
+else
+    # Assume the commands on 22.04 will work on later versions
+    mongo_22_04_startup
+fi
+
+
+echo "
 Step 7
 ------
 Run the IQR search dispatcher and IQR service from the same directory.

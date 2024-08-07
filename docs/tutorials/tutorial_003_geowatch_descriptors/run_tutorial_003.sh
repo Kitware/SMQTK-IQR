@@ -59,7 +59,6 @@ MANIFEST_FPATH       = $MANIFEST_FPATH
 
 PREDICT_DPATH        = $PREDICT_DPATH
 PREDICT_OUTPUT_FPATH = $PREDICT_OUTPUT_FPATH
-
 "
 
 # Download the model if it does not exist
@@ -96,11 +95,20 @@ python -m geowatch.tasks.fusion.predict \
      "${PREDICT_DEVICE_ARGS[@]}"
 
 
-python prepare_real_descriptors.py \
+python prepare_real_multitemporal_descriptors.py \
     --coco_fpath "$PREDICT_OUTPUT_FPATH" \
     --out_chips_dpath "$CHIPPED_IMAGES_DPATH" \
     --out_mainfest_fpath "$MANIFEST_FPATH" \
-    --visual_channels "red|green|blue"
+    --visual_channels "red|green|blue" \
+    --space_window_size "196,196" \
+    --time_window_size 10
+
+python ~/code/smqtk-repos/SMQTK-IQR/docs/tutorials/tutorial_002_kwcoco_real_descriptors/prepare_real_descriptors.py \
+    --coco_fpath "$PREDICT_OUTPUT_FPATH" \
+    --out_chips_dpath "$CHIPPED_IMAGES_DPATH" \
+    --out_mainfest_fpath "$MANIFEST_FPATH" \
+    --visual_channels "red|green|blue" \
+    --space_window_size "196,196" \
 
 
 # NOTE: there is a "workdir" in the runApp configs, which will put outputs in
@@ -108,38 +116,9 @@ python prepare_real_descriptors.py \
 python ingest_precomputed_descriptors.py \
     --verbose=True \
     --config runApp.IqrSearchApp.json runApp.IqrRestService.json \
+    --debug_nn_index True \
     --manifest_fpath "$MANIFEST_FPATH" \
-    --debug_nn_index=True \
     --tab "GEOWATCH_DEMO"
-
-
-echo "
-Step 6
-------
-Ensure MongoDB is running
-"
-# NOTE: depending on versions of mongo version 3.x for Ubuntu 20.04 is the
-# above command and 7.x for Ubuntu 22.04
-mongo_20_04_startup(){
-    if ! systemctl status mongodb --no-pager; then
-        sudo systemctl start mongodb
-        systemctl status mongodb --no-pager
-    fi
-}
-
-mongo_22_04_startup(){
-    if ! systemctl status mongod --no-pager; then
-        sudo systemctl start mongod
-        systemctl status mongod --no-pager
-    fi
-}
-
-if lsb_release -a | grep "Ubuntu 20.04" ; then
-    mongo_20_04_startup
-else
-    # Assume the commands on 22.04 will work on later versions
-    mongo_22_04_startup
-fi
 
 
 echo "

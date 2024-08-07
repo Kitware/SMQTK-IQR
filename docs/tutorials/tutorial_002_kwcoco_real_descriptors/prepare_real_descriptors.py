@@ -66,8 +66,29 @@ class PrepareRealDescriptorsConfig(scfg.DataConfig):
         visual_channels = kwcoco.FusedChannelSpec.coerce(config.visual_channels)
         descriptor_channels = kwcoco.FusedChannelSpec.coerce(config.descriptor_channels)
 
+        # Hack for multi-temporal data, just take the middle frame of each
+        # video to prevent spatial overlaps.
+        MULTI_TEMPORAL_HACK = True
+        if MULTI_TEMPORAL_HACK:
+            # Find images without video ids and consider them as loose images
+            # to be included.
+            all_images = dset.images()
+            loose_flags = [v is None for v in all_images.lookup('video_id', None)]
+            loose_images = all_images.compress(loose_flags)
+
+            chosen_image_ids = list(loose_images)
+
+            all_videos = dset.videos()
+            for video_id in all_videos:
+                video_images = dset.images(video_id=video_id)
+                middle_image_id = video_images[len(video_images) // 2]
+                chosen_image_ids.append(middle_image_id)
+        else:
+            chosen_image_ids = dset.images()
+
         # Outer loop for each image in dataset
-        for image_id in dset.images():
+        for image_id in ub.ProgIter(chosen_image_ids, desc='Extracting Image Chips', verbose=3):
+            print(f'Chosen image_id={image_id}')
 
             # Generate a coco_image class object from the data set using the image id
             coco_image = dset.coco_image(image_id)
