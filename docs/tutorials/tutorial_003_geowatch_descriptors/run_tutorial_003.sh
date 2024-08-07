@@ -7,6 +7,8 @@ IQR demo with real GeoWATCH models
 This script should be run from inside the tutorial directory. E.g. on the
 developers machine this looks like:
 
+To install MongoDB see: ../../environment/installing_mongodb.rst
+
 Prerequisites:
     pip install girder-client
 
@@ -42,6 +44,7 @@ MODEL_DOWNLOAD_ZIP_FPATH="$WORKING_DIRECTORY"/download_models/release_2024-01-11
 
 # TODO: provide a mechanism to download this dataset
 KWCOCO_FPATH=/media/joncrall/flash1/smart_phase3_data/Drop8-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
+KWCOCO_FPATH=/flash/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
 
 #PACKAGE_FPATH="$WORKING_DIRECTORY"/download_models/release_2024-01-11/models/fusion/Drop7-Cropped2GSD/packages/Drop7-Cropped2GSD_SC_bgrn_gnt_split6_V84/Drop7-Cropped2GSD_SC_bgrn_gnt_split6_V84_epoch17_step1548.pt
 PACKAGE_FPATH="$WORKING_DIRECTORY/download_models/release_2024-01-11/models/fusion/uconn/D7-V2-COLD-candidate/epoch=203-step=4488.pt"
@@ -77,6 +80,12 @@ else
 fi
 
 
+echo "
+------
+Step 1
+------
+Predict descriptors on the chosen dataset with the chosen model
+"
 if [[ "$ACCELERATOR" == "gpu" ]]; then
     PREDICT_DEVICE_ARGS=(--devices="0,")
 else
@@ -94,7 +103,12 @@ python -m geowatch.tasks.fusion.predict \
     --fixed_resolution=10GSD \
      "${PREDICT_DEVICE_ARGS[@]}"
 
-
+echo "
+------
+Step 2
+------
+Extract multi-temporal windows and a single descriptor for each item.
+"
 python prepare_real_multitemporal_descriptors.py \
     --coco_fpath "$PREDICT_OUTPUT_FPATH" \
     --out_chips_dpath "$CHIPPED_IMAGES_DPATH" \
@@ -103,14 +117,20 @@ python prepare_real_multitemporal_descriptors.py \
     --space_window_size "196,196" \
     --time_window_size 10
 
-python ~/code/smqtk-repos/SMQTK-IQR/docs/tutorials/tutorial_002_kwcoco_real_descriptors/prepare_real_descriptors.py \
-    --coco_fpath "$PREDICT_OUTPUT_FPATH" \
-    --out_chips_dpath "$CHIPPED_IMAGES_DPATH" \
-    --out_mainfest_fpath "$MANIFEST_FPATH" \
-    --visual_channels "red|green|blue" \
-    --space_window_size "196,196" \
+# Single Frame Alternative
+#python ../tutorial_002_kwcoco_real_descriptors/prepare_real_descriptors.py \
+#    --coco_fpath "$PREDICT_OUTPUT_FPATH" \
+#    --out_chips_dpath "$CHIPPED_IMAGES_DPATH" \
+#    --out_mainfest_fpath "$MANIFEST_FPATH" \
+#    --visual_channels "red|green|blue"
 
 
+echo "
+------
+Step 3
+------
+Ingest the prepared descriptors into SMQTK
+"
 # NOTE: there is a "workdir" in the runApp configs, which will put outputs in
 # this working directory. TODO: make this specifiable on the CLI here.
 python ingest_precomputed_descriptors.py \
@@ -122,7 +142,7 @@ python ingest_precomputed_descriptors.py \
 
 
 echo "
-Step 7
+Step 4
 ------
 Run the IQR search dispatcher and IQR service from the same directory.
 "
