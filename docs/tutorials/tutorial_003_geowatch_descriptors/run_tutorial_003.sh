@@ -12,6 +12,12 @@ To install MongoDB see: ../../environment/installing_mongodb.rst
 Prerequisites:
     pip install girder-client
 
+    Workaround issue by installing specific versions
+    pip install flask==2.0.1 werkzeug==2.0.0
+
+    Also need the faiss library to be installed
+    pip install faiss-cpu==1.8.0
+
 .. code:: bash
 
     cd $HOME/code/smqtk-repos/SMQTK-IQR/docs/tutorials/tutorial_003_geowatch_descriptors
