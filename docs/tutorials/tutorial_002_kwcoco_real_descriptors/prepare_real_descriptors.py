@@ -29,6 +29,9 @@ class PrepareRealDescriptorsConfig(scfg.DataConfig):
 
     window_size = scfg.Value((128, 128), help='Size of the window for slicing the image')
 
+    visual_channels = scfg.Value('r|g|b', help='Channels used to generate visual chips')
+    descriptor_channels = scfg.Value('hidden_layers:128', help='Channels used to generate descriptors')
+
     @classmethod
     def main(cls, cmdline=1, **kwargs):
         """
@@ -60,6 +63,9 @@ class PrepareRealDescriptorsConfig(scfg.DataConfig):
         # Initialize list to store image/descriptor pairs for each chipped image
         rows = []
 
+        visual_channels = kwcoco.FusedChannelSpec.coerce(config.visual_channels)
+        descriptor_channels = kwcoco.FusedChannelSpec.coerce(config.descriptor_channels)
+
         # Outer loop for each image in dataset
         for image_id in dset.images():
 
@@ -75,15 +81,15 @@ class PrepareRealDescriptorsConfig(scfg.DataConfig):
             delayed_rasters = coco_image.imdelay()
             channels = delayed_rasters.channels
 
-            if channels.intersection('r|g|b').numel() == 3:
-                delayed_rgb = delayed_rasters.take_channels("r|g|b")
+            if channels.intersection(visual_channels).numel() == 3:
+                delayed_rgb = delayed_rasters.take_channels(visual_channels)
             else:
                 print('warning: no rgb in data, falling back on first 3')
                 delayed_rgb = delayed_rasters.take_channels(channels[0:3])
 
-            if channels.intersection(kwcoco.FusedChannelSpec.coerce('hidden_layers:128')).numel() == 128:
+            if channels.intersection(descriptor_channels).numel() == 128:
                 # select hidden_layers channels
-                hidden_channels = kwcoco.FusedChannelSpec.coerce('hidden_layers:128')
+                hidden_channels = descriptor_channels
             else:
                 print('warning no hidden layers in data, falling back on last 128')
                 hidden_channels = channels[-128:]
