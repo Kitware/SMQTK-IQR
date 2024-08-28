@@ -32,6 +32,9 @@ class PrepareRealMultiTemporalDescriptorsConfig(scfg.DataConfig):
 
     visual_channels = scfg.Value('r|g|b', help='Channels used to generate visual chips')
     descriptor_channels = scfg.Value('hidden_layers:128', help='Channels used to generate descriptors')
+    normalize = scfg.Value(False, help='if True normalize the descriptor')
+
+    method = scfg.Value('average', help='Can be average or center')
 
     @classmethod
     def main(cls, cmdline=1, **kwargs):
@@ -69,109 +72,175 @@ class PrepareRealMultiTemporalDescriptorsConfig(scfg.DataConfig):
 
         time_window = (config.time_window_size,)
 
-        all_videos = dset.videos()
-        for video_id in all_videos:
+        from kwutil.util_progress import ProgressManager
+        pman = ProgressManager()
 
-            video = dset.index.videos[video_id]
-            video_name = video['name']
-            video_width = video['width']
-            video_height = video['height']
+        with pman:
 
-            video_image_ids = list(dset.images(video_id=video_id))
+            all_videos = dset.videos()
+            for video_id in pman.progiter(all_videos, desc='process video'):
 
-            num_frames = len(video_image_ids)
+                video = dset.index.videos[video_id]
+                video_name = video['name']
+                video_width = video['width']
+                video_height = video['height']
 
-            video_shape = (video_height, video_width)
-            space_slider = kwarray.SlidingWindow(video_shape, space_window, allow_overshoot=True)
+                video_image_ids = list(dset.images(video_id=video_id))
 
-            time_slider = kwarray.SlidingWindow((num_frames,), time_window, allow_overshoot=True)
+                num_frames = len(video_image_ids)
 
-            for space_slice in space_slider:
+                video_shape = (video_height, video_width)
+                space_slider = kwarray.SlidingWindow(video_shape, space_window, allow_overshoot=True)
 
-                for time_slice in time_slider:
-                    sub_image_ids = video_image_ids[time_slice[0]]
+                time_slider = kwarray.SlidingWindow((num_frames,), time_window, allow_overshoot=True)
 
-                    image_visual_stack = []
-                    image_descriptor_stack = []
+                annot_grid_locs = []
+                annots = dset.annots(video_id=video_id)
+                annot_track_ids = annots.lookup('track_id')
+                tid_to_aids = ub.group_items(annots, annot_track_ids)
+                for tid, aids in tid_to_aids.items():
+                    track_annots = dset.annots(aids)
+                    track_imgs = track_annots.images
+                    det_boxes = []
+                    for gid, aid in zip(track_imgs, track_annots):
+                        coco_img = dset.coco_image(gid)
+                        det = coco_img._detections_for_resolution(aids=[aid], space='video')
+                        det.boxes
+                        det_boxes.append(det.boxes)
+                    boxes = kwimage.Boxes.concatenate(det_boxes)
+                    space_slice = boxes.bounding_box().to_slices()[0]
+                    sub_image_ids = list(track_imgs)
+                    annot_grid_locs.append({
+                        'space_slice': space_slice,
+                        'sub_image_ids': sub_image_ids,
+                    })
 
-                    # Outer loop for each image in dataset
-                    for image_id in sub_image_ids:
+                generic_grid_locs = []
+                for space_slice in space_slider:
+                    for time_slice in time_slider:
+                        sub_image_ids = video_image_ids[time_slice[0]]
+                        generic_grid_locs.append({
+                            'space_slice': space_slice,
+                            'sub_image_ids': sub_image_ids,
+                        })
 
-                        # Generate a coco_image class object from the data set using the image id
-                        coco_image = dset.coco_image(image_id)
+                grid_locs = annot_grid_locs
+                grid_locs += generic_grid_locs
 
-                        # Assign the various elements for processing
-                        delayed_rasters = coco_image.imdelay(space='video')
-                        channels = delayed_rasters.channels
+                for grid_loc in  pman.progiter(annot_grid_locs, desc=f'process {video_name}'):
+                    space_slice = grid_loc['space_slice']
+                    sub_image_ids = grid_loc['sub_image_ids']
+                    frame_idxs = dset.images(sub_image_ids).lookup('frame_index')
+                    time_start = frame_idxs[0]
+                    time_stop = frame_idxs[-1]
 
-                        if channels.intersection(visual_channels).numel() == 3:
-                            delayed_rgb = delayed_rasters.take_channels(visual_channels)
-                        else:
-                            print('warning: no rgb in data, falling back on first 3')
-                            delayed_rgb = delayed_rasters.take_channels(channels[0:3])
+                    assert time_start == min(frame_idxs)
+                    assert time_stop == max(frame_idxs)
 
-                        if channels.intersection(descriptor_channels).numel() == 128:
-                            # select hidden_layers channels
-                            hidden_channels = descriptor_channels
-                        else:
-                            print('warning no hidden layers in data, falling back on last 128')
-                            hidden_channels = channels[-128:]
+                    try:
+                        image_visual_stack, sequence_descriptor = extract_spacetime_data(
+                            dset, sub_image_ids, space_slice, visual_channels,
+                            descriptor_channels, config)
+                    except Exception as ex:
+                        print(f'Issue for {grid_loc} ex={ex}')
+                    else:
+                        box = kwimage.Box.from_slice(space_slice).quantize().astype(int)
+                        x, y, w, h = box.to_xywh().data
 
-                        delayed_descriptors = delayed_rasters.take_channels(hidden_channels)
+                        # Generate file paths
+                        suffix = f"{video_name}-xywh={x:04d}_{y:04d}_{w:03d}_{h:03d}-frames-{time_start}-{time_stop}.gif"
+                        visual_fpath = out_images_dpath / suffix
+                        descriptor_fpath = visual_fpath.augment(stemsuffix="_desc", ext=".json")
 
-                        # Slice out the relevant part of the image using the slider function
-                        # The index performs the slicer operation on the
-                        # first two dimensions of image
-                        delayed_part_image = delayed_rgb[space_slice]
-                        delayed_part_descriptor = delayed_descriptors[space_slice]
-                        part_image = delayed_part_image.finalize()
-                        part_descriptor = delayed_part_descriptor.finalize()
+                        # Save image chip/slice to the path defined above
+                        # kwimage.imwrite(visual_fpath, image_visual_stack[0], backend='pil')
+                        # fpath, image_list = visual_fpath, image_visual_stack
+                        pil_write_animated_gif(visual_fpath, image_visual_stack)
 
-                        part_image = kwarray.robust_normalize(part_image)
-                        part_image = kwimage.ensure_uint255(part_image)
+                        # Convert the NumPy array to a Python list
+                        # if config.normalize:
+                        #     raise NotImplementedError
 
-                        frame_descriptor = np.nanmean(part_descriptor, axis=(0, 1))
+                        part_descriptor_list = sequence_descriptor.tolist()
 
-                        image_visual_stack.append(part_image)
-                        image_descriptor_stack.append(frame_descriptor)
+                        # Save the list to the JSON file
+                        with open(descriptor_fpath, "w") as json_file:
+                            json.dump(part_descriptor_list, json_file)
 
-                    sequence_descriptor = np.nanmean(np.stack(image_descriptor_stack), axis=0)
-
-                    box = kwimage.Box.from_slice(space_slice)
-                    x, y, w, h = box.to_xywh().data
-
-                    time_start = time_slice[0].start
-                    time_stop = time_slice[0].stop
-
-                    # Generate file paths
-                    suffix = f"{video_name}-xywh={x:04d}_{y:04d}_{w:03d}_{h:03d}-frames-{time_start}-{time_stop}.gif"
-                    visual_fpath = out_images_dpath / suffix
-                    descriptor_fpath = visual_fpath.augment(stemsuffix="_desc", ext=".json")
-
-                    # Save image chip/slice to the path defined above
-                    # kwimage.imwrite(visual_fpath, image_visual_stack[0], backend='pil')
-                    # fpath, image_list = visual_fpath, image_visual_stack
-                    pil_write_animated_gif(visual_fpath, image_visual_stack)
-
-                    # Convert the NumPy array to a Python list
-                    part_descriptor_list = sequence_descriptor.tolist()
-
-                    # Save the list to the JSON file
-                    with open(descriptor_fpath, "w") as json_file:
-                        json.dump(part_descriptor_list, json_file)
-
-                    # Append to outer loop list
-                    row = {
-                        "image_path": os.fspath(visual_fpath),
-                        "desc_path": os.fspath(descriptor_fpath),
-                    }
-                    rows.append(row)
+                        # Append to outer loop list
+                        row = {
+                            "image_path": os.fspath(visual_fpath),
+                            "desc_path": os.fspath(descriptor_fpath),
+                        }
+                        rows.append(row)
 
         tables = {"Image_Descriptor_Pairs": rows}
         out_mainfest_fpath.parent.ensuredir()
         out_mainfest_fpath.write_text(json.dumps(tables, indent="    "))
 
         print(f"Manifest JSON file written to : {out_mainfest_fpath}")
+
+
+def extract_spacetime_data(dset, sub_image_ids, space_slice, visual_channels, descriptor_channels, config):
+    image_visual_stack = []
+    image_descriptor_stack = []
+
+    # Outer loop for each image in dataset
+    for image_id in sub_image_ids:
+
+        # Generate a coco_image class object from the data set using the image id
+        coco_image = dset.coco_image(image_id)
+
+        # Assign the various elements for processing
+        delayed_rasters = coco_image.imdelay(space='video')
+        channels = delayed_rasters.channels
+
+        if channels.intersection(visual_channels).numel() == 3:
+            delayed_rgb = delayed_rasters.take_channels(visual_channels)
+        else:
+            print('warning: no rgb in data, falling back on first 3')
+            delayed_rgb = delayed_rasters.take_channels(channels[0:3])
+
+        if channels.intersection(descriptor_channels).numel() == 128:
+            # select hidden_layers channels
+            hidden_channels = descriptor_channels
+        else:
+            print('warning no hidden layers in data, falling back on last 128')
+            hidden_channels = channels[-128:]
+
+        delayed_descriptors = delayed_rasters.take_channels(hidden_channels)
+
+        # Slice out the relevant part of the image using the slider function
+        # The index performs the slicer operation on the
+        # first two dimensions of image
+        delayed_part_image = delayed_rgb[space_slice]
+        delayed_part_descriptor = delayed_descriptors[space_slice]
+        part_image = delayed_part_image.finalize()
+        part_descriptor = delayed_part_descriptor.finalize()
+
+        part_image = kwarray.robust_normalize(part_image)
+        part_image = kwimage.ensure_uint255(part_image)
+
+        if config.method == 'average':
+            frame_descriptor = np.nanmean(part_descriptor, axis=(0, 1))
+        elif config.method == 'middle':
+            h, w = part_descriptor.shape[0:2]
+            frame_descriptor = part_descriptor[h // 2, w // 2]
+            frame_descriptor = np.nan_to_num(frame_descriptor)
+        else:
+            raise KeyError(config.method)
+
+        image_visual_stack.append(part_image)
+        image_descriptor_stack.append(frame_descriptor)
+
+    if config.method == 'average':
+        sequence_descriptor = np.nanmean(np.stack(image_descriptor_stack), axis=0)
+    elif config.method == 'middle':
+        sequence_descriptor = image_descriptor_stack[len(image_descriptor_stack) // 2]
+    else:
+        raise KeyError(config.method)
+
+    return image_visual_stack, sequence_descriptor
 
 
 def pil_write_animated_gif(fpath, image_list):

@@ -50,7 +50,21 @@ MODEL_DOWNLOAD_ZIP_FPATH="$WORKING_DIRECTORY"/download_models/release_2024-01-11
 
 # TODO: provide a mechanism to download this dataset
 KWCOCO_FPATH=/media/joncrall/flash1/smart_phase3_data/Drop8-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
+
+KWCOCO_FPATH=/data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
+
 KWCOCO_FPATH=/flash/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
+
+# HACK
+
+kwcoco union --src \
+    /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R002/imganns-KR_R002-rawbands.kwcoco.zip \
+    /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R001/imganns-KR_R001-rawbands.kwcoco.zip \
+    /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/NZ_R001/imganns-NZ_R001-rawbands.kwcoco.zip \
+    /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/CH_R001/imganns-CH_R001-rawbands.kwcoco.zip \
+    --dst $WORKING_DIRECTORY/combo.kwcoco.zip
+
+KWCOCO_FPATH=$WORKING_DIRECTORY/combo.kwcoco.zip
 
 #PACKAGE_FPATH="$WORKING_DIRECTORY"/download_models/release_2024-01-11/models/fusion/Drop7-Cropped2GSD/packages/Drop7-Cropped2GSD_SC_bgrn_gnt_split6_V84/Drop7-Cropped2GSD_SC_bgrn_gnt_split6_V84_epoch17_step1548.pt
 PACKAGE_FPATH="$WORKING_DIRECTORY/download_models/release_2024-01-11/models/fusion/uconn/D7-V2-COLD-candidate/epoch=203-step=4488.pt"
@@ -107,6 +121,7 @@ python -m geowatch.tasks.fusion.predict \
     --quality_threshold=0 \
     --use_cloudmask=False \
     --fixed_resolution=10GSD \
+    --clear_annots=False \
      "${PREDICT_DEVICE_ARGS[@]}"
 
 echo "
@@ -121,6 +136,7 @@ python prepare_real_multitemporal_descriptors.py \
     --out_mainfest_fpath "$MANIFEST_FPATH" \
     --visual_channels "red|green|blue" \
     --space_window_size "196,196" \
+    --method="middle" \
     --time_window_size 10
 
 # Single Frame Alternative

@@ -21,16 +21,16 @@
                 },
                 "type": "smqtk_dataprovider.impls.data_set.memory.DataMemorySet"
             },
-            "iqr_service_url": "0.0.0.0:5001",
+            "iqr_service_url": "127.0.0.1:5001",
             "working_directory": "workdir"
         }
     },
     "mongo": {
         "database": "smqtk",
-        "server": "0.0.0.0:27017"
+        "server": "127.0.0.1:27017"
     },
     "server": {
-        "host": "0.0.0.0",
+        "host": "127.0.0.1",
         "port": 5000
     }
 }
