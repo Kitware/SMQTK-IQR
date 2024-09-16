@@ -107,9 +107,61 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
         configuration by default. 'host' and 'port' values specified as argument
         or keyword will override the app configuration.
         """
-        super(SmqtkWebApp, self)\
-            .run(host=(host or self.json_config['server']['host']),
-                 port=(port or self.json_config['server']['port']),
-                 debug=debug,
-                 load_dotenv=load_dotenv,
-                 **options)
+        host = (host or self.json_config['server']['host'])
+        port = (port or self.json_config['server']['port'])
+        runkw = dict(
+            host=host,
+            port=port,
+            debug=debug,
+            load_dotenv=load_dotenv,
+            **options
+        )
+
+        try:
+            super().run(**runkw)  # type: ignore
+        except Exception as ex:
+            note_parts = [f'Issue running server with {runkw}']
+            if 'Address already in use' in str(ex):
+                note_parts.append(
+                    'On Linux you can debug which ports are in use with '
+                    '``netstat -ntlp``, and determine which process ids '
+                    'are using which ports with '
+                    f'``sudo lsof -t -i tcp:{port}``'
+                )
+            note = '. '.join(note_parts)
+            add_exception_note(ex, note)
+            raise
+
+
+def add_exception_note(
+        ex: BaseException,
+        note: str,
+        force_legacy: bool = False
+) -> BaseException:
+    """
+    Add unstructured information to an exception.
+
+    If PEP 678 is available (i.e. on Python >= 3.11), use it, otherwise create
+    a new exeception based on the old one with an updated note.
+
+    Args:
+        ex (BaseException): the exception to modify
+        note (str): extra information to append to the exception
+        force_legacy (bool): for testing
+
+    Returns:
+        BaseException: modified exception
+
+    Example:
+        >>> ex = Exception('foo')
+        >>> new_ex = add_exception_note(ex, 'hello world', force_legacy=False)
+        >>> print(new_ex)
+        >>> new_ex = add_exception_note(ex, 'hello world', force_legacy=True)
+        >>> print(new_ex)
+    """
+    if not force_legacy and hasattr(ex, 'add_note'):
+        # Requires python.311 PEP 678
+        ex.add_note(note)  # type: ignore
+        return ex
+    else:
+        return type(ex)(f'{ex}\n{note}')
