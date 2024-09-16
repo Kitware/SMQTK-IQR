@@ -45,6 +45,7 @@ sphinx-prompt = "^1.4.0"
 livereload = "^2.6.3"
 # Testing
 coverage = "^5.5"
+xdoctest = "^1.1.5"
 pytest = "^6.2.5"
 pytest-cov = "^3.0.0"
 # Development
@@ -71,7 +72,7 @@ smqtk-nn-index-tool = "smqtk_iqr.utils.nn_index_tool:cli_group"
 [tool.pytest.ini_options]
 addopts = [
     "-lv",                      # Show local in trace-backs.
-    "--doctest-modules",        # Increased verbosity.
+    "--xdoctest-modules",       # Increased verbosity.
     "--tb=long",                # Trace-back print mode.
     "--cov=./smqtk_iqr",        # Cover our package specifically
     "--cov=./tests",            # Cover tests

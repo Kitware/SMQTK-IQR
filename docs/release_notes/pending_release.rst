@@ -66,3 +66,5 @@ Changes
   to let the user test database images as queries.
 
 * Added debugging information to server exception when ports are in use.
+
+* Use xdoctest in testing instead of regular doctest
