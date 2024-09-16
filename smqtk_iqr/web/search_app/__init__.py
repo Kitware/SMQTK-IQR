@@ -289,7 +289,7 @@ APPLICATION_CLASS = IqrSearchDispatcher
 
 
 def peek_path_info(
-    environ, charset: str = "utf-8", errors: str = "replace"
+    environ: dict, charset: str = "utf-8", errors: str = "replace"
 ) -> Optional[str]:
     """
     Vendored from werkzeug 2.0.0, should try to remove in the future.
@@ -328,7 +328,7 @@ def peek_path_info(
 
 
 def pop_path_info(
-    environ, charset: str = "utf-8", errors: str = "replace"
+    environ: dict, charset: str = "utf-8", errors: str = "replace"
 ) -> Optional[str]:
     """
     Vendored from werkzeug 2.0.0, should try to remove in the future.
