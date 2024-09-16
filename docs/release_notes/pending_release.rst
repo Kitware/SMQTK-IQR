@@ -18,6 +18,11 @@ CI
 * Updated CI unittests workflow to install optional packages.
   Reduced CodeCov report submission by skipping this step on scheduled runs.
 
+Dependencies
+
+* Update minimum minimum python to 3.9 to reflect currently and soon-to-be
+  deprecated versions of python.
+
 Web
 
 * Transferred IQR web demo from mono-repo to this repo.
