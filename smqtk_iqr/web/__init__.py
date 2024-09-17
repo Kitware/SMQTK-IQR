@@ -129,8 +129,7 @@ class SmqtkWebApp (flask.Flask, Plugfigurable):
                     f'``sudo lsof -t -i tcp:{port}``'
                 )
             note = '. '.join(note_parts)
-            add_exception_note(ex, note)
-            raise
+            raise add_exception_note(ex, note)
 
 
 def add_exception_note(
