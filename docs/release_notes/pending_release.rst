@@ -51,6 +51,12 @@ Dependency Versions
 
 * Updated readthedocs config
 
+* Updated pillow requirement to allow for more recent versions.
+
+* Handle versions of werkzeug > 2.0.0 up to at least 3.0.4
+
+* Handle versions of flask > 2.0.1 up to at least 3.0.3
+
 Changes
 -------
 

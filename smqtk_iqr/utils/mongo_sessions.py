@@ -27,7 +27,7 @@ class MongoSession(CallbackDict, SessionMixin):
     def __init__(
         self,
         initial: Union[Mapping, Iterable[Tuple[Any, Any]], None] = None,
-        sid: Optional[str] = None
+        sid: Optional[str] = None,
     ):
         def on_update(_: Mapping) -> None:
             self.modified = True
@@ -40,26 +40,40 @@ class MongoSession(CallbackDict, SessionMixin):
 class MongoSessionInterface(SessionInterface):
 
     def __init__(
-        self, host: str = 'localhost', port: int = 27017, db: str = '',
-        collection: str = 'sessions', delete_on_empty: bool = False
+        self,
+        host: str = "localhost",
+        port: int = 27017,
+        db: str = "",
+        collection: str = "sessions",
+        delete_on_empty: bool = False,
     ):
         client = MongoClient(host, port)
         self.store = client[db][collection]
         self._delete_on_empty = delete_on_empty
 
     def open_session(self, app: flask.Flask, request: Request) -> MongoSession:
-        sid = request.cookies.get(app.session_cookie_name)
+
+        # Different versions of Flask may have different ways of getting the
+        # session_cookie_name
+        try:
+            session_cookie_name = app.session_cookie_name
+        except AttributeError:
+            session_cookie_name = app.config["SESSION_COOKIE_NAME"]
+
+        sid = request.cookies.get(session_cookie_name)
         if sid:
-            stored_session = self.store.find_one({'_id': sid})
+            stored_session = self.store.find_one({"_id": sid})
             if stored_session:
-                if stored_session.get('expiration') > datetime.utcnow():
-                    LOG.debug("Returning existing MongoSession instance for "
-                              "SID={}".format(sid))
-                    return MongoSession(initial=stored_session['data'],
-                                        sid=stored_session['_id'])
+                if stored_session.get("expiration") > datetime.utcnow():
+                    LOG.debug(
+                        "Returning existing MongoSession instance for "
+                        "SID={}".format(sid)
+                    )
+                    return MongoSession(
+                        initial=stored_session["data"], sid=stored_session["_id"]
+                    )
         sid = str(uuid4())
-        LOG.debug("Returning NEW MongoSession instance for SID={}"
-                  .format(sid))
+        LOG.debug("Returning NEW MongoSession instance for SID={}".format(sid))
         return MongoSession(sid=sid)
 
     def save_session(
@@ -77,11 +91,18 @@ class MongoSessionInterface(SessionInterface):
             expiration = datetime.utcnow() + timedelta(hours=1)
         # Assuming that the SessionMixin has an sid attribute
         ssid = session.sid  # type: ignore
-        self.store.update({'_id': ssid},
-                          {'data': session,
-                           'expiration': expiration},
-                          upsert=True)
+        self.store.update(
+            {"_id": ssid}, {"data": session, "expiration": expiration}, upsert=True
+        )
         LOG.debug("Setting session cookie for SID={}".format(ssid))
-        response.set_cookie(app.session_cookie_name, ssid,
-                            expires=expiration,
-                            httponly=True, domain=domain)
+
+        # Different versions of Flask may have different ways of getting the
+        # session_cookie_name
+        try:
+            session_cookie_name = app.session_cookie_name
+        except AttributeError:
+            session_cookie_name = app.config["SESSION_COOKIE_NAME"]
+
+        response.set_cookie(
+            session_cookie_name, ssid, expires=expiration, httponly=True, domain=domain
+        )
