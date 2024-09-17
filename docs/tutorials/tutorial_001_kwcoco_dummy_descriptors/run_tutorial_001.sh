@@ -15,9 +15,12 @@ and the corresponding descriptor files. The manifest file is created by the
 ``prepare_contrived_descriptors.py`` script that generates image chips from
 kwcoco images and builds dummy descriptor files.
 
-Also need the faiss library to be installed
-pip install faiss-cpu==1.8.0
-pip install "psycopg2-binary>=2.9.5,<3.0.0"
+This tutorial has additional Python requirements:
+
+    pip install faiss-cpu==1.8.0
+    pip install "psycopg2-binary>=2.9.5,<3.0.0"
+    pip install scriptconfig ubelt rich kwcoco
+
 
 To install MongoDB see: ../../environment/installing_mongodb.rst
 
