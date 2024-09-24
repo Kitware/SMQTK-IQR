@@ -5,13 +5,14 @@
 
 # Standard libraries
 import logging
-import os.path as osp
 import os
 import json
 import numpy as np
 import sys
+from pathlib import Path
 
 import ubelt as ub
+import safer
 import scriptconfig as scfg
 
 # SMQTK specific packages
@@ -19,6 +20,7 @@ from smqtk_iqr.utils import cli
 from smqtk_dataprovider import DataSet
 from smqtk_dataprovider.impls.data_element.file import DataFileElement
 from smqtk_descriptors.descriptor_element_factory import DescriptorElementFactory
+from smqtk_descriptors.interfaces.descriptor_element import DescriptorElement
 from smqtk_descriptors import DescriptorSet
 from smqtk_indexing import NearestNeighborsIndex
 from smqtk_core.configuration import (
@@ -120,34 +122,50 @@ def generate_sets(manifest_path, data_set, descriptor_set, descriptor_elem_facto
         data = json.load(json_file)
 
     # Access the list of image-descriptor pairs
-    image_descriptor_pairs = data["Image_Descriptor_Pairs"]
+    rows = data["Image_Descriptor_Pairs"]
 
-    # Iterate over each pair to build the data set and descriptor set
-    for pair in image_descriptor_pairs:
+    # Iterate over each row to build the data set and descriptor set
+    for row in rows:
 
         # Extract image path and descriptor path
-        image_path = pair["image_path"]
-        image_path = osp.expanduser(image_path)
+        image_path = Path(row["image_path"])
+        desc_path = Path(row["desc_path"])
+        model_path = row["model_path"]
+        if model_path:
+            model_path = Path(model_path)
 
-        desc_path = pair["desc_path"]
-        desc_path = osp.expanduser(desc_path)
-
-        if osp.isfile(image_path) and osp.isfile(desc_path):
-            data_fe = DataFileElement(image_path, readonly=True)
+        if image_path.is_file() and desc_path.is_file():
+            data_fe = DataFileElement(os.fspath(image_path), readonly=True)
             data_set.add_data(data_fe)
 
             # Load the associated descriptor json vector
-            with open(desc_path, "rb") as f:
-                json_vec = json.load(f)
+            json_vec = json.loads(desc_path.read_bytes())
             vector = np.array(json_vec)
 
-            # print(f"vector shape {vector.shape}")
-
-            # Generate descriptor element with image uuid and known vector
-            descriptor = descriptor_elem_factory.new_descriptor(data_fe.uuid())
+            # Note: the UUID is actually a sha1 content-based hash of the bytes
+            # in the image file.
+            uuid: str = data_fe.uuid()
+            descriptor: DescriptorElement
+            descriptor = descriptor_elem_factory.new_descriptor(uuid)
             descriptor.set_vector(vector)
 
+            # Generate descriptor element with image uuid and known vector
             descriptor_set.add_descriptor(descriptor)
+
+            # HACK:
+            # We will need to provide external users with the ability to
+            # reference the items in the SMQTK database. To do this we will
+            # load any associated site-model and rewrite it to contain the UUID
+            # used by SMTQK.
+            if model_path:
+                site_model = json.loads(model_path.read_bytes())
+                features = site_model['features']
+                assert len(features) > 0, 'expected site model to have features'
+                site_header = features[0]
+                assert site_header['properties']['type'] == 'site', 'expected site header to be first'
+                site_header['properties']['cache']['smqtk_uuid'] = uuid
+                with safer.open(model_path, "w", temp_file=not ub.WIN32) as file:
+                    json.dump(site_model, file)
 
         else:
             print("\n Image or descriptor file paths not found")
