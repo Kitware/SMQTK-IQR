@@ -7,6 +7,10 @@ IQR demo with real GeoWATCH models
 This script should be run from inside the tutorial directory. E.g. on the
 developers machine this looks like:
 
+.. code:: bash
+
+    cd $HOME/code/smqtk-repos/SMQTK-IQR/docs/tutorials/tutorial_003_geowatch_descriptors
+
 To install MongoDB see: ../../environment/installing_mongodb.rst
 
 Note: this tutorial requires real SMART data.
@@ -16,10 +20,6 @@ Prerequisites:
 
     Also need the faiss library to be installed
     pip install faiss-cpu==1.8.0
-
-.. code:: bash
-
-    cd $HOME/code/smqtk-repos/SMQTK-IQR/docs/tutorials/tutorial_003_geowatch_descriptors
 '
 
 WORKING_DIRECTORY=./workdir
@@ -48,20 +48,22 @@ MODEL_DOWNLOAD_DPATH="$WORKING_DIRECTORY"/download_models
 MODEL_DOWNLOAD_ZIP_FPATH="$WORKING_DIRECTORY"/download_models/release_2024-01-11.zip
 
 # TODO: provide a mechanism to download this dataset
-KWCOCO_FPATH=/media/joncrall/flash1/smart_phase3_data/Drop8-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
-
-KWCOCO_FPATH=/data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
-
-KWCOCO_FPATH=/flash/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
+#KWCOCO_FPATH=/media/joncrall/flash1/smart_phase3_data/Drop8-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
+#KWCOCO_FPATH=/data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
+#KWCOCO_FPATH=/flash/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R002/imgonly-KR_R002-rawbands.kwcoco.zip
 
 # HACK
 
-kwcoco union --src \
-    /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R002/imganns-KR_R002-rawbands.kwcoco.zip \
-    /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R001/imganns-KR_R001-rawbands.kwcoco.zip \
-    /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/NZ_R001/imganns-NZ_R001-rawbands.kwcoco.zip \
-    /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/CH_R001/imganns-CH_R001-rawbands.kwcoco.zip \
-    --dst $WORKING_DIRECTORY/combo.kwcoco.zip
+if [ ! -f $WORKING_DIRECTORY/combo.kwcoco.zip ]; then
+    kwcoco union --src \
+        /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R002/imganns-KR_R002-rawbands.kwcoco.zip \
+        /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/KR_R001/imganns-KR_R001-rawbands.kwcoco.zip \
+        /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/NZ_R001/imganns-NZ_R001-rawbands.kwcoco.zip \
+        /data/joncrall/dvc-repos/smart_phase3_data/Drop8-ARA-Median10GSD-V1/CH_R001/imganns-CH_R001-rawbands.kwcoco.zip \
+        --dst $WORKING_DIRECTORY/combo.kwcoco.zip
+else
+    echo "union dataset is already prepared"
+fi
 
 KWCOCO_FPATH=$WORKING_DIRECTORY/combo.kwcoco.zip
 
