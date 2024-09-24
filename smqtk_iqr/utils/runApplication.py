@@ -11,6 +11,7 @@ from flask_cors import CORS
 
 from smqtk_iqr.utils import cli
 import smqtk_iqr.web
+import sys
 
 
 def cli_parser() -> ArgumentParser:
@@ -123,16 +124,16 @@ def main() -> None:
                          cast(str, cls.__doc__) + '\n' +
                          ('*' * 80) + '\n')
         log.info("")
-        exit(0)
+        sys.exit(0)
 
     application_name = args.application
 
     if application_name is None:
         log.error("No application name given!")
-        exit(1)
+        sys.exit(1)
     elif application_name not in web_applications:
         log.error("Invalid application label '%s'", application_name)
-        exit(1)
+        sys.exit(1)
 
     app_class: Type[smqtk_iqr.web.SmqtkWebApp] = web_applications[application_name]
 
