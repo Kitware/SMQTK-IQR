@@ -4,6 +4,11 @@ Pending Release Notes
 Updates / New Features
 ----------------------
 
+Tutorial to Perform IQR on Prepopulated Descriptor Set
+
+* Added directory `docs/tutorials` that has code to perform IQR on a
+  prepopulated descriptor set.
+
 Auto-negative Selection
 
 * Added auto-negative selection in IqrSession for negative adjudications
