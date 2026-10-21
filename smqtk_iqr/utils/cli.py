@@ -19,7 +19,7 @@ LOG = logging.getLogger(__name__)
 
 def initialize_logging(
     logger: logging.Logger, stream_level: int = logging.WARNING,
-    output_filepath: str = None, file_level: Optional[int] = None
+    output_filepath: Optional[str] = None, file_level: Optional[int] = None
 ) -> None:
     """
     Standard logging initialization.
@@ -260,7 +260,7 @@ class ProgressReporter:
 
 
 def basic_cli_parser(
-    description: str = None, configuration_group: bool = True
+    description: Optional[str] = None, configuration_group: bool = True
 ) -> argparse.ArgumentParser:
     """
     Generate an ``argparse.ArgumentParser`` with the given description and the

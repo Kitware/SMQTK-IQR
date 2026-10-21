@@ -396,7 +396,7 @@ class IqrService (SmqtkWebApp):
 
     # GET /is_ready
     # noinspection PyMethodMayBeStatic
-    def is_ready(self) -> Tuple[Callable, int]:
+    def is_ready(self) -> Tuple[flask.Response, int]:
         """
         Simple function that returns True, indicating that the server is
         active.
@@ -404,7 +404,7 @@ class IqrService (SmqtkWebApp):
         return make_response_json("Yes, I'm alive."), 200
 
     # POST /add_descriptor_from_data
-    def add_descriptor_from_data(self) -> Tuple[Callable, int]:
+    def add_descriptor_from_data(self) -> Tuple[flask.Response, int]:
         """
         Add the description of the given base64 data with content type to the
         descriptor set.
@@ -453,7 +453,7 @@ class IqrService (SmqtkWebApp):
                                   size=self.descriptor_set.count()), 201
 
     # GET /nn_index
-    def get_nn_index_status(self) -> Tuple[Callable, int]:
+    def get_nn_index_status(self) -> Tuple[flask.Response, int]:
         """
         Get status/state information about the nearest-neighbor index.
 
@@ -471,7 +471,7 @@ class IqrService (SmqtkWebApp):
             )
 
     # POST /nn_index
-    def update_nn_index(self) -> Tuple[Callable, int]:
+    def update_nn_index(self) -> Tuple[flask.Response, int]:
         """
         Tell the configured nearest-neighbor-index instance to update with the
         descriptors associated with the provided list of UIDs.
@@ -531,7 +531,7 @@ class IqrService (SmqtkWebApp):
             )
 
     # DELETE /nn_index
-    def remove_from_nn_index(self) -> Tuple[Callable, int]:
+    def remove_from_nn_index(self) -> Tuple[flask.Response, int]:
         """
         Remove descriptors from the nearest-neighbors index given their UIDs.
 
@@ -588,7 +588,7 @@ class IqrService (SmqtkWebApp):
             )
 
     # POST /data_nearest_neighbors
-    def data_nearest_neighbors(self) -> Tuple[Callable, int]:
+    def data_nearest_neighbors(self) -> Tuple[flask.Response, int]:
         """
         Take in data in base64 encoding with a mimetype and find its 'k'
         nearest neighbors according to the current index, including their
@@ -649,7 +649,7 @@ class IqrService (SmqtkWebApp):
                                   neighbor_dists=[d for d in n_dists]), 200
 
     # GET /uid_nearest_neighbors
-    def uid_nearest_neighbors(self) -> Tuple[Callable, int]:
+    def uid_nearest_neighbors(self) -> Tuple[flask.Response, int]:
         """
         Take in the UID that matches an ingested descriptor and find that
         descriptor's 'k' nearest neighbors according to the current index,
@@ -710,7 +710,7 @@ class IqrService (SmqtkWebApp):
                                   neighbor_dists=[d for d in n_dists]), 200
 
     # GET /session_ids
-    def get_sessions_ids(self) -> Tuple[Callable, int]:
+    def get_sessions_ids(self) -> Tuple[flask.Response, int]:
         """
         Get the list of current, active session IDs.
         """
@@ -719,7 +719,7 @@ class IqrService (SmqtkWebApp):
                                   session_uuids=session_uuids), 200
 
     # GET /session
-    def get_session_info(self) -> Tuple[Callable, int]:
+    def get_session_info(self) -> Tuple[flask.Response, int]:
         """
         Get a JSON return with session state information.
 
@@ -801,7 +801,7 @@ class IqrService (SmqtkWebApp):
                                   wi_count=wi_count), 200
 
     # POST /session
-    def init_session(self) -> Tuple[Callable, int]:
+    def init_session(self) -> Tuple[flask.Response, int]:
         """
         Initialize a new session in the controller.
 
@@ -837,7 +837,7 @@ class IqrService (SmqtkWebApp):
                                   sid=sid), 201  # CREATED
 
     # PUT /session
-    def reset_session(self) -> Tuple[Callable, int]:
+    def reset_session(self) -> Tuple[flask.Response, int]:
         """
         Reset an existing session. This does not remove the session, so actions
         may
@@ -872,7 +872,7 @@ class IqrService (SmqtkWebApp):
                                   sid=sid), 200
 
     # DELETE /session
-    def clean_session(self) -> Tuple[Callable, int]:
+    def clean_session(self) -> Tuple[flask.Response, int]:
         """
         Clean resources associated with the session of the given UUID.
 
@@ -904,7 +904,7 @@ class IqrService (SmqtkWebApp):
                                   sid=sid), 200
 
     # POST /add_external_pos
-    def add_external_positive(self) -> Tuple[Callable, int]:
+    def add_external_positive(self) -> Tuple[flask.Response, int]:
         """
         Describe the given data and store as a positive example from external
         data.
@@ -955,7 +955,7 @@ class IqrService (SmqtkWebApp):
         return make_response_json("Success", descr_uuid=descriptor.uuid()), 201
 
     # POST /add_external_neg
-    def add_external_negative(self) -> Tuple[Callable, int]:
+    def add_external_negative(self) -> Tuple[flask.Response, int]:
         """
         Describe the given data and store as a negative example from external
         data.
@@ -1008,7 +1008,7 @@ class IqrService (SmqtkWebApp):
                                   descr_uuid=descriptor.uuid()), 201
 
     # GET /adjudicate
-    def get_adjudication(self) -> Tuple[Callable, int]:
+    def get_adjudication(self) -> Tuple[flask.Response, int]:
         """
         Get the adjudication state of a descriptor given its UID.
 
@@ -1053,7 +1053,7 @@ class IqrService (SmqtkWebApp):
                                   is_pos=is_pos, is_neg=is_neg), 200
 
     # POST /adjudicate
-    def adjudicate(self) -> Tuple[Callable, int]:
+    def adjudicate(self) -> Tuple[flask.Response, int]:
         """
         Incrementally update internal adjudication state given new positives
         and negatives, and optionally IDs for descriptors now marked neutral.
@@ -1197,7 +1197,7 @@ class IqrService (SmqtkWebApp):
         ), 200
 
     # POST /initialize
-    def initialize(self) -> Tuple[Callable, int]:
+    def initialize(self) -> Tuple[flask.Response, int]:
         """
         Update the working set based on the currently positive examples and
         adjudications.
@@ -1233,7 +1233,7 @@ class IqrService (SmqtkWebApp):
         return make_response_json("Success", sid=sid, success=True), 200
 
     # POST /refine
-    def refine(self) -> Tuple[Callable, int]:
+    def refine(self) -> Tuple[flask.Response, int]:
         """
         (Re)Create ranking of working set content by order of relevance to
         examples and adjudications.
@@ -1270,7 +1270,7 @@ class IqrService (SmqtkWebApp):
         return make_response_json("Refine complete", sid=sid), 201
 
     # GET /num_results
-    def num_results(self) -> Tuple[Callable, int]:
+    def num_results(self) -> Tuple[flask.Response, int]:
         """
         Get the total number of results that have been ranked.
 
@@ -1309,7 +1309,7 @@ class IqrService (SmqtkWebApp):
                                   sid=sid), 200
 
     # GET /get_results
-    def get_results(self) -> Tuple[Callable, int]:
+    def get_results(self) -> Tuple[flask.Response, int]:
         """
         Get the relevancy score for working set descriptor elements between
         the optionally specified offset and limit indices, ordered by
@@ -1389,7 +1389,7 @@ class IqrService (SmqtkWebApp):
                                   results=r), 200
 
     # GET /get_feedback
-    def get_feedback(self) -> Tuple[Callable, int]:
+    def get_feedback(self) -> Tuple[flask.Response, int]:
         """
         Get the feedback results for working set descriptor elements that are
         recommended for adjudication feedback. They are listed with the most
@@ -1463,7 +1463,7 @@ class IqrService (SmqtkWebApp):
                                   results=r), 200
 
     # GET /get_positive_adjudication_relevancy
-    def get_positive_adjudication_relevancy(self) -> Tuple[Callable, int]:
+    def get_positive_adjudication_relevancy(self) -> Tuple[flask.Response, int]:
         """
         Get the relevancy scores for positively adjudicated elements in the
         working set between the optionally provided index offset and limit,
@@ -1538,7 +1538,7 @@ class IqrService (SmqtkWebApp):
         ), 200
 
     # GET /get_negative_adjudication_relevancy
-    def get_negative_adjudication_relevancy(self) -> Tuple[Callable, int]:
+    def get_negative_adjudication_relevancy(self) -> Tuple[flask.Response, int]:
         """
         Get the relevancy scores for negatively adjudicated elements in the
         working set between the optionally provided offset and limit,
@@ -1613,7 +1613,7 @@ class IqrService (SmqtkWebApp):
         ), 200
 
     # GET /get_unadjudicated_relevancy
-    def get_unadjudicated_relevancy(self) -> Tuple[Callable, int]:
+    def get_unadjudicated_relevancy(self) -> Tuple[flask.Response, int]:
         """
         Get the relevancy scores for non-adjudicated elements in the working
         set between the optionally provided index offset and limit, ordered
@@ -1691,7 +1691,7 @@ class IqrService (SmqtkWebApp):
             total=total, results=r
         ), 200
 
-    def get_random_uids(self) -> Tuple[Callable, int]:
+    def get_random_uids(self) -> Tuple[flask.Response, int]:
         """
         Get a slice of random descriptor UIDs from the global set between the
         optionally provided index offset and limit.
@@ -1804,7 +1804,7 @@ class IqrService (SmqtkWebApp):
         return classifier, pos_label, neg_label
 
     # GET /classify
-    def classify(self) -> Tuple[Callable, int]:
+    def classify(self) -> Tuple[flask.Response, int]:
         """
         Given a refined session ID and some number of descriptor UUIDs, create
         a classifier according to the current state and classify the given
@@ -1911,7 +1911,7 @@ class IqrService (SmqtkWebApp):
     # TODO: Save/Export classifier model/state/configuration?
 
     # GET /state
-    def get_iqr_state(self) -> Tuple[Callable, int]:
+    def get_iqr_state(self) -> Tuple[flask.Response, int]:
         """ [See api.rst]
         Create and return a binary package representing this IQR session's
         state.
@@ -1964,7 +1964,7 @@ class IqrService (SmqtkWebApp):
                                   state_b64=iqrs_state_b64), 200
 
     # PUT /state
-    def set_iqr_state(self) -> Tuple[Callable, int]:
+    def set_iqr_state(self) -> Tuple[flask.Response, int]:
         """ [See api.rst]
         Set the IQR session state for a given session ID.
 

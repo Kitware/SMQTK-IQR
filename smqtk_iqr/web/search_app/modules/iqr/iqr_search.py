@@ -281,7 +281,7 @@ class IqrSearch (flask.Flask, Configurable):
                 z_wrapper_buffer,
                 mimetype='application/octet-stream',
                 as_attachment=True,
-                attachment_filename="%s.IqrState" % sid
+                download_name="%s.IqrState" % sid
             )
 
         @self.route('/set_iqr_state', methods=['PUT'])

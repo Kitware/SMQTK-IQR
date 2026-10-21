@@ -9,7 +9,7 @@ import os.path
 import threading
 import logging
 import sys
-from typing import Callable, Dict, Any, Optional, Union
+from typing import Callable, Dict, Any, Optional, Union, Iterable
 
 import flask
 from flask_cors import cross_origin
@@ -256,7 +256,7 @@ class IqrSearchDispatcher (SmqtkWebApp):
         with self.instances_lock:
             return self.instances.get(prefix, None)
 
-    def __call__(self, environ: Dict, start_response: Callable) -> Callable:
+    def __call__(self, environ: Dict, start_response: Callable) -> Iterable[bytes]:
         path_prefix = peek_path_info(environ)
         LOG.debug("Base application __call__ path prefix: '%s'", path_prefix)
 
@@ -401,7 +401,7 @@ def _to_str(
     charset: Optional[str] = _default_encoding,
     errors: str = "strict",
     allow_none_charset: bool = False,
-) -> Optional[Union[str, bytes]]:
+) -> Optional[Union[str, bytes, bytearray]]:
     if x is None or isinstance(x, str):
         return x
 

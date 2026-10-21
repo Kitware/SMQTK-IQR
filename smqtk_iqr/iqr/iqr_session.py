@@ -187,7 +187,7 @@ class IqrSession ():
         These descriptors may not be a part of our working set.
 
         TODO: Add ability to "remove" positive/negative external descriptors.
-              See ``adjudicate`` method "un_..." parameters.
+              See ``adjudicate`` method ``un_...`` parameters.
 
         :param positive: Iterable of descriptors from external sources to
             consider positive examples.

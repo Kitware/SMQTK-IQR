@@ -16,40 +16,66 @@ readme = "README.rst"
 repository = "https://github.com/Kitware/SMQTK-IQR"
 documentation = "https://smqtk-iqr.readthedocs.io/"
 
+classifiers = [
+        'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.10',
+        'Programming Language :: Python :: 3.11',
+        'Programming Language :: Python :: 3.12',
+        'Programming Language :: Python :: 3.13',
+        'Programming Language :: Python :: 3.14',
+]
+
 [tool.poetry.dependencies]
-python = "^3.7"
-smqtk-indexing = ">=0.17.0"
-smqtk-relevancy = ">=0.16.1"
-smqtk-descriptors = ">=0.18.1"
-smqtk-core = ">=0.18"
-smqtk-dataprovider = ">=0.16.0"
-Flask = "^2.0.1"
-pymongo = "^3.12.0"
-Flask-Cors = "^3.0.10"
-imageio = "^2.9.0"
+python = "^3.10"
+six = ">=1.17.0"
+numpy = [
+    # Newer Python versions require NumPy releases with compatible wheels.
+    {version = ">=1.23.5", python = "<3.13"},
+    {version = ">=2.1", python = ">=3.13,<3.14"},
+    {version = ">=2.3.2", python = ">=3.14"},
+]
+smqtk-indexing = ">=0.19.0"
+smqtk-relevancy = ">=0.18.0"
+smqtk-descriptors = ">=0.21.0"
+smqtk-core = ">=0.22.0"
+smqtk-dataprovider = ">=0.20.0"
+Flask = ">=3.1.3"
+pymongo = ">=4.18.3"
+Flask-Cors = ">=6.0.0"
+imageio = ">=2.9.0"
 Flask-BasicAuth = "^0.2.0"
-smqtk-classifier = ">=0.18.0"
-Pillow = ">=8.3.2"
+smqtk-classifier = ">=0.21.0"
+pillow = [
+    {version = ">=12.3.0", python = "<3.11"},
+    {version = ">=13.0.0", python = ">=3.11"}
+]
 
 [tool.poetry.dev-dependencies]
 # CI
-flake8 = "^3.9.0"
-flake8-mutable = "^1.2.0"
-mypy = "^0.812"
+flake8 = ">=3.9.0"
+flake8-mutable = ">=1.2.0"
+mypy = ">=0.991"
+types-six = ">=1.17.0"
+types-requests = ">=2.26.0"
 # Docs
 # - Also see: `docs/readthedocs-reqs.txt` for use by RTD
-Sphinx = "^3.5.3"
-sphinx-rtd-theme = "^0.5.1"
-sphinx-argparse = "^0.2.5"
-sphinx-prompt = "^1.4.0"
-livereload = "^2.6.3"
+Sphinx = ">=3.5.3"
+sphinx-rtd-theme = ">=0.5.1"
+sphinx-argparse = ">=0.2.5"
+sphinx-prompt = ">=1.4.0"
+livereload = ">=2.6.3"
+# Security fixes in Tornado 6.6 require Python 3.11 or newer.
+tornado = [
+    {version = ">=6.5.10", python = "<3.11"},
+    {version = ">=6.6", python = ">=3.11"}
+]
 # Testing
-coverage = "^5.5"
-xdoctest = "^1.1.5"
-pytest = "^6.2.5"
-pytest-cov = "^3.0.0"
+coverage = ">=7.10.6"
+xdoctest = ">=1.1.5"
+pytest = ">=9.0.3"
+pytest-cov = ">=3.0.0"
 # Development
-ipython = "^7.16.3"
+ipython = ">=8.10.0"
 
 [tool.poetry.plugins."smqtk_plugins"]
 #IQRServer

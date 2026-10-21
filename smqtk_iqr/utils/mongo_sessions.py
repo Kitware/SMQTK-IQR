@@ -10,7 +10,7 @@ Taken from: http://flask.pocoo.org/snippets/110/
 from datetime import datetime, timedelta
 import logging
 from uuid import uuid4
-from typing import Union, Iterable, Tuple, Mapping, Optional, Any
+from typing import Union, Iterable, Tuple, Mapping, Optional, Any, Dict, cast
 
 import flask
 from flask.sessions import SessionInterface, SessionMixin
@@ -47,24 +47,19 @@ class MongoSessionInterface(SessionInterface):
         collection: str = "sessions",
         delete_on_empty: bool = False,
     ):
-        client = MongoClient(host, port)
+        client: MongoClient[Dict[str, Any]] = MongoClient(host, port)
         self.store = client[db][collection]
         self._delete_on_empty = delete_on_empty
 
     def open_session(self, app: flask.Flask, request: Request) -> MongoSession:
 
-        # Different versions of Flask may have different ways of getting the
-        # session_cookie_name
-        try:
-            session_cookie_name = app.session_cookie_name
-        except AttributeError:
-            session_cookie_name = app.config["SESSION_COOKIE_NAME"]
-
+        session_cookie_name = self.get_cookie_name(app)
         sid = request.cookies.get(session_cookie_name)
         if sid:
             stored_session = self.store.find_one({"_id": sid})
             if stored_session:
-                if stored_session.get("expiration") > datetime.utcnow():
+                expiration = cast(datetime, stored_session.get("expiration"))
+                if expiration > datetime.utcnow():
                     LOG.debug(
                         "Returning existing MongoSession instance for "
                         "SID={}".format(sid)
@@ -80,9 +75,10 @@ class MongoSessionInterface(SessionInterface):
         self, app: flask.Flask, session: SessionMixin, response: Response
     ) -> None:
         domain = self.get_cookie_domain(app)
+        session_cookie_name = self.get_cookie_name(app)
         if self._delete_on_empty and not session:
             LOG.debug("Session cookie content was empty, deleting.")
-            response.delete_cookie(app.session_cookie_name, domain=domain)
+            response.delete_cookie(session_cookie_name, domain=domain)
             # TODO: Delete from mongo as well?
             return
         # Update expiration due to access.
@@ -91,17 +87,10 @@ class MongoSessionInterface(SessionInterface):
             expiration = datetime.utcnow() + timedelta(hours=1)
         # Assuming that the SessionMixin has an sid attribute
         ssid = session.sid  # type: ignore
-        self.store.update(
+        self.store.replace_one(
             {"_id": ssid}, {"data": session, "expiration": expiration}, upsert=True
         )
         LOG.debug("Setting session cookie for SID={}".format(ssid))
-
-        # Different versions of Flask may have different ways of getting the
-        # session_cookie_name
-        try:
-            session_cookie_name = app.session_cookie_name
-        except AttributeError:
-            session_cookie_name = app.config["SESSION_COOKIE_NAME"]
 
         response.set_cookie(
             session_cookie_name, ssid, expires=expiration, httponly=True, domain=domain
