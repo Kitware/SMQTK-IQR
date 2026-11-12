@@ -51,8 +51,10 @@ Fixes
 * Corrected reStructuredText formatting in the release instructions and
   IqrSession documentation.
 
-* Moved the Codecov token availability check to the unit-test job environment
-  so the coverage upload step can use it in its condition.
+* Replaced Codecov uploads with a GitHub Actions coverage job that combines
+  coverage across Python versions and saves reports and a job summary.
+
+* Added tests for MongoDB session persistence, cookie handling, and expiration.
 
 * Required Tornado 6.6 or newer on Python 3.11 and newer to address security
   advisories in the documentation and notebook dependencies.
