@@ -68,6 +68,9 @@ CI
 
 * Update CI to work with the state of software in 2024.
 
+* Limited changed-line coverage checks to pull requests targeting ``master``.
+  Overall package and test coverage checks still run for release pull requests.
+
 * Modified CI unittests workflow to run for PRs targetting branches that match
   the `release*` glob.
 

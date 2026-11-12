@@ -181,7 +181,8 @@ jobs:
             --fail-under=55 > coverage-reports/package.md || status=1
           poetry run coverage report --include='tests/*' --format=markdown \
             --fail-under=100 > coverage-reports/tests.md || status=1
-          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+          # Release PRs include changes already checked on master.
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "$PR_BASE_REF" == "master" ]]; then
             poetry run diff-cover coverage-reports/package.xml --compare-branch="origin/$PR_BASE_REF" \
               --fail-under=80 --format=markdown:coverage-reports/package-diff.md || status=1
             poetry run diff-cover coverage-reports/tests.xml --compare-branch="origin/$PR_BASE_REF" \
@@ -194,7 +195,7 @@ jobs:
             echo
             echo '## Test coverage (minimum 100%)'
             cat coverage-reports/tests.md
-            if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            if [[ "$GITHUB_EVENT_NAME" == "pull_request" && "$PR_BASE_REF" == "master" ]]; then
               echo
               echo '## Changed package lines (minimum 80%)'
               cat coverage-reports/package-diff.md
