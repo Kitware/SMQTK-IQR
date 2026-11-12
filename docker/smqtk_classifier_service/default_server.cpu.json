@@ -1,0 +1,65 @@
+{
+    "classification_factory": {
+        "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement": {},
+        "type": "smqtk_classifier.impls.classification_element.memory.MemoryClassificationElement"
+    },
+    "classifier_collection": {},
+    "descriptor_factory": {
+        "smqtk_descriptors.impls.descriptor_element.memory.DescriptorMemoryElement": {},
+        "type": "smqtk_descriptors.impls.descriptor_element.memory.DescriptorMemoryElement"
+    },
+    "descriptor_generator": {
+        "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator": {
+            "batch_size": 10,
+            "data_layer": "data",
+            "gpu_device_id": 0,
+            "image_mean": {
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                    "explicit_mimetype": null,
+                    "filepath": "/caffe/models/msra_resnet/ResNet_mean.binaryproto",
+                    "readonly": true
+                },
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+            },
+            "input_scale": null,
+            "load_truncated_images": true,
+            "network_is_bgr": true,
+            "network_model": {
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                    "explicit_mimetype": null,
+                    "filepath": "/caffe/models/msra_resnet/ResNet-50-model.caffemodel",
+                    "readonly": true
+                },
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+            },
+            "network_prototxt": {
+                "smqtk_dataprovider.impls.data_element.file.DataFileElement": {
+                    "explicit_mimetype": null,
+                    "filepath": "/caffe/models/msra_resnet/ResNet-50-deploy.prototxt",
+                    "readonly": true
+                },
+                "type": "smqtk_dataprovider.impls.data_element.file.DataFileElement"
+            },
+            "pixel_rescale": null,
+            "return_layer": "pool5",
+            "use_gpu": false
+        },
+        "type": "smqtk_descriptors.impls.descriptor_generator.caffe1.CaffeDescriptorGenerator"
+    },
+    "enable_classifier_removal": true,
+    "flask_app": {
+        "BASIC_AUTH_PASSWORD": "demo",
+        "BASIC_AUTH_USERNAME": "demo",
+        "SECRET_KEY": "MySuperUltraSecret"
+    },
+    "immutable_labels": [],
+    "iqr_state_classifier_config": {
+        "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression": {
+        },
+        "type": "smqtk_classifier.impls.classify_descriptor_supervised.sklearn_logistic_regression.SkLearnLogisticRegression"
+    },
+    "server": {
+        "host": "0.0.0.0",
+        "port": 5002
+    }
+}

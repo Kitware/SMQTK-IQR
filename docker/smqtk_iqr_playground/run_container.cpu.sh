@@ -11,10 +11,10 @@
 set -e
 
 # Container image to use
-IQR_CONTAINER=kitware/smqtk/iqr_playground
+IQR_CONTAINER=${SMQTK_REGISTRY}/iqr_playground
 IQR_CONTAINER_VERSION="latest-cpu"
 # Name for run container instance
-CONTAINER_NAME="smqtk-iqr-playground-gpu"
+CONTAINER_NAME="smqtk-iqr-playground-cpu"
 IQR_GUI_PORT_PUBLISH=5000
 IQR_REST_PORT_PUBLISH=5001
 

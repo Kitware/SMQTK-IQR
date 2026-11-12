@@ -37,11 +37,11 @@ FROM nvidia/cuda:$CUDA_DEVEL_IMAGE_TAG AS base
 
 RUN apt-get -y update \
  && apt-get -y install \
-      git=1:2.17.1-1ubuntu0.7 \
-      libopenblas-dev=0.2.20+ds-4 \
-      python3-dev=3.6.7-1~18.04 \
+      git \
+      libopenblas-dev \
+      python3-dev \
       python3-pip \
-      swig=3.0.12-1 \
+      swig \
  && rm -rf /var/lib/apt/lists/*
 RUN pip3 install numpy==1.18.3
 

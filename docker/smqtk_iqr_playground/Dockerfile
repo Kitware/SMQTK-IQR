@@ -15,27 +15,29 @@ SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y update \
  && apt-get -y install \
-        cmake=3.10.2-1ubuntu2.18.04.1 \
+        cmake \
         curl \
-        less=487-0.1 \
-        parallel=20161222-1 \
-        python3-dev=3.6.7-1~18.04 \
+        less \
+        parallel \
+        python3-dev \
         python3-pip \
         sudo \
         vim \
+        zlib1g-dev \
+        libjpeg-dev \
         # PostgreSQL 10 Installation
-        postgresql-10=10.15-0ubuntu0.18.04.1 \
+        postgresql-10 \
         # MongoDB Installation
-        mongodb=1:3.6.3-0ubuntu1.1 \
+        mongodb \
         # Caffe/FAISS TPL deps
-        libboost-python1.65.1=1.65.1+dfsg-0ubuntu5 \
-        libboost-system1.65.1=1.65.1+dfsg-0ubuntu5 \
-        libboost-thread1.65.1=1.65.1+dfsg-0ubuntu5 \
-        libgoogle-glog0v5=0.3.5-1 \
-        libgflags2.2=2.2.1-1 \
-        libhdf5-100=1.10.0-patch1+docs-4 \
-        libprotobuf10=3.0.0-9.1ubuntu1 \
-        libopenblas-base=0.2.20+ds-4 \
+        libboost-python1.65.1 \
+        libboost-system1.65.1 \
+        libboost-thread1.65.1 \
+        libgoogle-glog0v5 \
+        libgflags2.2 \
+        libhdf5-100 \
+        libprotobuf10 \
+        libopenblas-base \
  # Clean up apt resources.
  && apt-get clean \
  && rm -rf /var/lib/apt/lists/*
@@ -50,7 +52,9 @@ RUN pip3 install \
         psycopg2-binary==2.8.5 \
         # Nice-to-haves
         file-magic==0.4.0 \
-        ipython==7.14.0
+        ipython==7.14.0 \
+        jedi==0.17.2 \
+        scikit-learn==0.24.2
 
 ###############################################################################
 # COPY in FAISS wheel and install
@@ -82,27 +86,10 @@ COPY --from=caffe_image /caffe-1.0-py3-none-any.whl /
 RUN pip3 install /caffe-1.0-py3-none-any.whl \
  && rm /caffe-1.0-py3-none-any.whl
 
-###############################################################################
-# SMQTK Installation
-#
-COPY docs /smqtk/source/docs
-COPY etc /smqtk/source/etc
-COPY python /smqtk/source/python
-COPY requirements /smqtk/source/requirements
-COPY src /smqtk/source/src
-COPY TPL /smqtk/source/TPL
-COPY CMakeLists.txt LICENSE.txt pytest.* README.md setup.* setup_env.* \
-     /smqtk/source/
-RUN mkdir /smqtk/build \
- && cd /smqtk/build \
- && cmake \
-    -DCMAKE_BUILD_TYPE:STRING=Release \
-    -DCMAKE_INSTALL_PREFIX:PATH=/usr/local \
-    -DSMQTK_BUILD_FLANN:BOOL=OFF \
-    /smqtk/source \
- && make install -j$(nproc) \
- && cd / \
- && rm -rf smqtk
+# Export language options to use UTF-8, desired by Click
+ENV LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8
+
 # Export language options to use UTF-8, desired by Click
 ENV LC_ALL=C.UTF-8 \
     LANG=C.UTF-8
@@ -111,6 +98,26 @@ ENV LC_ALL=C.UTF-8 \
 # TODO: Clean this up / modernize / don't be running a local database
 RUN ln -s /usr/share/postgresql-common/pg_wrapper /usr/local/bin/pg_ctl \
  && ln -s /usr/share/postgresql-common/pg_wrapper /usr/local/bin/postgres
+
+###############################################################################
+# SMQTK installation
+#
+RUN mkdir /smqtk/
+COPY docs /smqtk/source/docs
+COPY pyproject.toml /smqtk/source
+COPY README.md /smqtk/source
+COPY smqtk_iqr /smqtk/source/smqtk_iqr
+RUN cd /smqtk/source && \
+    pip3 install -U pip && \
+    pip3 install . && \
+    cd / && \
+    rm -rf smqtk
+
+# !!! NOTE THIS KLUDGE !!!
+# This symlink is lost during the smqtk-iqr installation, as pip currently
+# does not support symlinks, so we re-create it here.
+RUN ln -s /usr/local/lib/python3.6/dist-packages/smqtk_iqr/web/search_app/templates/base.html \
+          /usr/local/lib/python3.6/dist-packages/smqtk_iqr/web/search_app/modules/iqr/templates/base.html
 
 # Add ``smqtk`` user
 RUN useradd -mr -s /bin/bash smqtk \
@@ -131,19 +138,19 @@ RUN mkdir -p data/{models,configs,logs,db.psql,db.mongo} \
 
 # Configuration for Matplotlib to just use the Agg backend, not Tkinter
 COPY --chown=smqtk:smqtk \
-     devops/docker/smqtk_iqr_playground/matplotlibrc \
+     docker/smqtk_iqr_playground/matplotlibrc \
      .config/matplotlib/
 
 # Copy in general entrypoint and CPU-variant test script
 COPY --chown=smqtk:smqtk \
-     devops/docker/smqtk_iqr_playground/entrypoint.sh \
-     devops/docker/smqtk_iqr_playground/descr_comp_test.cpu.py \
+     docker/smqtk_iqr_playground/entrypoint.sh \
+     docker/smqtk_iqr_playground/descr_comp_test.cpu.py \
      /home/smqtk/
 
 # Copy in general and CPU-variant configs
 COPY --chown=smqtk:smqtk \
-     devops/docker/smqtk_iqr_playground/default_confs/* \
-     devops/docker/smqtk_iqr_playground/default_confs/cpu/* \
+     docker/smqtk_iqr_playground/default_confs/* \
+     docker/smqtk_iqr_playground/default_confs/cpu/* \
      /home/smqtk/data/configs/
 
 ENTRYPOINT ["/home/smqtk/entrypoint.sh"]
@@ -155,9 +162,9 @@ EXPOSE 5000 5001
 FROM smqtk-cpu AS smqtk-gpu
 # Add GPU-variant test script
 COPY --chown=smqtk:smqtk \
-     devops/docker/smqtk_iqr_playground/descr_comp_test.gpu.py \
+     docker/smqtk_iqr_playground/descr_comp_test.gpu.py \
      /home/smqtk/
 # Overwrite CPU-variance configs with the GPU variants.
 COPY --chown=smqtk:smqtk \
-     devops/docker/smqtk_iqr_playground/default_confs/gpu/* \
+     docker/smqtk_iqr_playground/default_confs/gpu/* \
      /home/smqtk/data/configs/
