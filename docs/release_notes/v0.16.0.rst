@@ -1,6 +1,12 @@
 v0.16.0
 =======
 
+This release adds official Python 3.14 support and testing, with NumPy 2
+compatibility across supported Python versions. It also updates dependencies
+for compatibility and security, adapts session persistence and file downloads
+to PyMongo 4 and Flask 3, and replaces Codecov with coverage checks and reports
+in GitHub Actions.
+
 Updates / New Features
 ----------------------
 
