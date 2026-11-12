@@ -89,10 +89,12 @@ From Git on the Command Line
 Create a new git tag using the new version number (format:
 ``v<MAJOR.<MINOR>.<PATCH>``) on the merge commit for the version update branch
 merger::
+
     $ git tag -a -m "[Major|Minor|Patch] release v#.#.#"
 
 Push this new tag to GitHub (assuming origin remote points to `SMQTK on
-GitHub`_::
+GitHub`_)::
+
     $ git push origin v#.#.#
 
 To add the release notes to GitHub, navigate to the `tags page on GitHub`_
@@ -105,21 +107,25 @@ Create new version release to PYPI
 Make sure the source is checked out on the newest version tag, the repo is
 clean (no uncommited files/edits), and the ``build`` and ``dist`` directories
 are removed::
+
     $ git checkout <VERSION_TAG>
     $ rm -r dist python/smqtk.egg-info
 
 Create the ``build`` and ``dist`` files for the current version with the
 following command(s) from the source tree root directory::
+
     $ python setup.py sdist
 
 Make sure your ``$HOME/.pypirc`` file is up-to-date and includes the following
 section with your username/password::
+
     [pypi]
     username = <username>
     password = <password>
 
 Make sure the ``twine`` python package is installed and is up-to-date and then
 upload dist packages created with::
+
     $ twine upload dist/*
 
 

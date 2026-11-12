@@ -74,7 +74,7 @@ def generate_image_transformations(image_path: str,
                                    crop_tile_stride: Optional[Tuple[int, int]],
                                    brightness_intervals: Optional[int],
                                    contrast_intervals: Optional[int],
-                                   output_dir: str = None,
+                                   output_dir: Optional[str] = None,
                                    output_ext: str = '.png') -> None:
     """
     Transform an input image into different crops or other transforms,

@@ -23,30 +23,33 @@ defaults:
   run:
     shell: bash
 
+permissions:
+  contents: read
+
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 # NOTE: Github actions does not support anchors apparently. Forgive duplication of job
 #       steps.
 jobs:
   lint:
-    runs-on: ubuntu-latest
-    container: python:3.7
+    runs-on: ubuntu-24.04
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
       # Cache local python environment artifacts for the current python version
       # and poetry lockfile hash.
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         id: env-cache
         with:
-          # Confirmed that the `.local` directory doesn't exist until the
-          # `pip install --user` is invoked below, so we can be confident that
-          # only our python stuff is being captured in this cache (intentional).
           path: |
             ~/.cache/pypoetry/virtualenvs/
-            ~/.local
-          key: python-3.7-${{ hashFiles('poetry.lock') }}
+          key: host-ubuntu-24.04-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('poetry.lock') }}
       - name: Setup Environment
         # See: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-using-a-public-action-in-a-subdirectory
         uses: Kitware/SMQTK-Core/.github/actions/python-poetry-setup@master
@@ -54,25 +57,25 @@ jobs:
         run: poetry run flake8
 
   typecheck:
-    runs-on: ubuntu-latest
-    container: python:3.7
+    runs-on: ubuntu-24.04
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.10"
       # Cache local python environment artifacts for the current python version
       # and poetry lockfile hash.
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         id: env-cache
         with:
-          # Confirmed that the `.local` directory doesn't exist until the
-          # `pip install --user` is invoked below, so we can be confident that
-          # only our python stuff is being captured in this cache (intentional).
           path: |
             ~/.cache/pypoetry/virtualenvs/
-            ~/.local
-          key: python-3.7-${{ hashFiles('poetry.lock') }}
+          key: host-ubuntu-24.04-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('poetry.lock') }}
       - name: Setup Environment
         # See: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-using-a-public-action-in-a-subdirectory
         uses: Kitware/SMQTK-Core/.github/actions/python-poetry-setup@master
@@ -80,10 +83,10 @@ jobs:
         run: poetry run mypy
 
   unittests:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     strategy:
       matrix:
-        python-version: [3.7, 3.8, 3.9]
+        python-version: ["3.10", "3.11", "3.12", "3.13", "3.14"]
         # Extras for included, optional plugin support (space-separated lists)
         opt-extra: [
             "",  # no extras
@@ -91,26 +94,26 @@ jobs:
       # We want all python versions tested even if one of them happens to fail
       fail-fast: false
 
-    container: python:${{ matrix.python-version }}
 
     # Steps represent a sequence of tasks that will be executed as part of the job
     steps:
       # Checks-out your repository under $GITHUB_WORKSPACE, so your job can access it
-      - uses: actions/checkout@v2
+      - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "${{ matrix.python-version }}"
       # Cache local python environment artifacts for the current python version
       # and poetry lockfile hash.
-      - uses: actions/cache@v2
+      - uses: actions/cache@v4
         id: env-cache
         with:
-          # Confirmed that the `.local` directory doesn't exist until the
-          # `pip install --user` is invoked below, so we can be confident that
-          # only our python stuff is being captured in this cache (intentional).
           path: |
             ~/.cache/pypoetry/virtualenvs/
-            ~/.local
-          key: python-${{ matrix.python-version }}-${{ hashFiles('poetry.lock') }}
+          key: host-ubuntu-24.04-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('poetry.lock') }}
       - name: Setup Environment
         # See: https://docs.github.com/en/actions/reference/workflow-syntax-for-github-actions#example-using-a-public-action-in-a-subdirectory
         uses: Kitware/SMQTK-Core/.github/actions/python-poetry-setup@master
@@ -127,14 +130,85 @@ jobs:
       - name: Run Unittests
         run: poetry run pytest
 
-      - name: CodeCov report submission
-        # Only upload coverage if we have the token
-        env:
-          HAVE_CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN != '' }}
-        if: ${{ github.event_name != 'schedule' && env.HAVE_CODECOV_TOKEN == 'true' }}
-        uses: codecov/codecov-action@v4.0.1
+      - name: Save coverage data
+        uses: actions/upload-artifact@v7
         with:
-          fail_ci_if_error: true
-          files: coverage.xml
-          flags: unittests
-          token: ${{ secrets.CODECOV_TOKEN }}
+          name: coverage-python-${{ matrix.python-version }}
+          path: |
+            .coverage
+            coverage.xml
+          include-hidden-files: true
+          if-no-files-found: error
+          retention-days: 7
+
+  coverage:
+    runs-on: ubuntu-24.04
+    needs: unittests
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Python
+        id: setup-python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.13"
+      - uses: actions/cache@v4
+        id: env-cache
+        with:
+          path: ~/.cache/pypoetry/virtualenvs/
+          key: host-ubuntu-24.04-${{ runner.arch }}-python-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('poetry.lock') }}-
+      - name: Setup Environment
+        uses: Kitware/SMQTK-Core/.github/actions/python-poetry-setup@master
+      - name: Download coverage data
+        uses: actions/download-artifact@v8
+        with:
+          pattern: coverage-python-*
+          path: coverage-data
+      - name: Check coverage and write reports
+        env:
+          PR_BASE_REF: ${{ github.base_ref }}
+        run: |
+          mkdir -p coverage-reports
+          poetry run coverage combine --keep coverage-data/*/.coverage
+          poetry run coverage xml -o coverage-reports/coverage.xml
+          poetry run coverage xml --include='smqtk_iqr/*' -o coverage-reports/package.xml
+          poetry run coverage xml --include='tests/*' -o coverage-reports/tests.xml
+          poetry run coverage html -d coverage-reports/html
+
+          status=0
+          poetry run coverage report --include='smqtk_iqr/*' --format=markdown \
+            --fail-under=55 > coverage-reports/package.md || status=1
+          poetry run coverage report --include='tests/*' --format=markdown \
+            --fail-under=100 > coverage-reports/tests.md || status=1
+          if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+            poetry run diff-cover coverage-reports/package.xml --compare-branch="origin/$PR_BASE_REF" \
+              --fail-under=80 --format=markdown:coverage-reports/package-diff.md || status=1
+            poetry run diff-cover coverage-reports/tests.xml --compare-branch="origin/$PR_BASE_REF" \
+              --fail-under=100 --format=markdown:coverage-reports/tests-diff.md || status=1
+          fi
+
+          {
+            echo '## Package coverage (minimum 55%)'
+            cat coverage-reports/package.md
+            echo
+            echo '## Test coverage (minimum 100%)'
+            cat coverage-reports/tests.md
+            if [[ "$GITHUB_EVENT_NAME" == "pull_request" ]]; then
+              echo
+              echo '## Changed package lines (minimum 80%)'
+              cat coverage-reports/package-diff.md
+              echo
+              echo '## Changed test lines (minimum 100%)'
+              cat coverage-reports/tests-diff.md
+            fi
+          } >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+      - name: Save coverage reports
+        if: ${{ !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: coverage-report
+          path: coverage-reports/
+          if-no-files-found: error
+          retention-days: 7

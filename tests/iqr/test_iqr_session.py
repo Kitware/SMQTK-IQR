@@ -13,7 +13,7 @@ class TestIqrSession (object):
     """
     Unit tests pertaining to the IqrSession class.
     """
-    iqrs = None  # type: IqrSession
+    iqrs: IqrSession
 
     @classmethod
     def setup_method(cls) -> None:
